@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:y="http://www.yworks.com/xml/graphml" xmlns:yed="http://www.yworks.com/xml/yed/3" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd">
+  <!--Created by yEd 3.13-->
+  <key attr.name="Description" attr.type="string" for="graph" id="d0"/>
+  <key for="port" id="d1" yfiles.type="portgraphics"/>
+  <key for="port" id="d2" yfiles.type="portgeometry"/>
+  <key for="port" id="d3" yfiles.type="portuserdata"/>
+  <key attr.name="url" attr.type="string" for="node" id="d4"/>
+  <key attr.name="description" attr.type="string" for="node" id="d5"/>
+  <key for="node" id="d6" yfiles.type="nodegraphics"/>
+  <key for="graphml" id="d7" yfiles.type="resources"/>
+  <key attr.name="url" attr.type="string" for="edge" id="d8"/>
+  <key attr.name="description" attr.type="string" for="edge" id="d9"/>
+  <key for="edge" id="d10" yfiles.type="edgegraphics"/>
+  <graph edgedefault="directed" id="G">
+    <data key="d0"/>
+    <node id="n0">
+      <data key="d4"/>
+      <data key="d5"/>
+      <data key="d6">
+        <y:UMLClassNode>
+          <y:Geometry height="261.0" width="229.0" x="521.0" y="54.0"/>
+          <y:Fill color="#FFCC00" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="center" autoSizePolicy="content" fontFamily="Dialog" fontSize="13" fontStyle="bold" hasBackgroundColor="false" hasLineColor="false" height="19.1328125" modelName="custom" textColor="#000000" visible="true" width="58.30419921875" x="85.347900390625" y="3.0">CueList<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="-0.03703090122767855" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+          <y:UML clipContent="true" constraint="" omitDetails="false" stereotype="" use3DEffect="false">
+            <y:AttributeLabel>cuelist: etree
+mutestate: dictionary
+levelstate: dictionary
+currentcueindex: integer
+previewcueindex: integer</y:AttributeLabel>
+            <y:MethodLabel>__init__(self,
+     cuefilename: filename string,
+     chancount: integer )
+
+setcurrentcuestate(self,
+     cueindex: integer)
+
+setpreviewcuestate(self,
+     cueindex: integer)</y:MethodLabel>
+          </y:UML>
+        </y:UMLClassNode>
+      </data>
+    </node>
+    <node id="n1">
+      <data key="d4"/>
+      <data key="d5"/>
+      <data key="d6">
+        <y:UMLNoteNode>
+          <y:Geometry height="583.0" width="389.0" x="50.0" y="43.0"/>
+          <y:Fill color="#FFCC00" transparent="false"/>
+          <y:BorderStyle color="#000000" type="line" width="1.0"/>
+          <y:NodeLabel alignment="left" autoSizePolicy="content" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="534.8125" modelName="custom" textColor="#000000" visible="true" width="390.8828125" x="-0.94140625" y="24.09375">cuelistfile XML structure:
+
+&lt;?xml version="1.0"?&gt;
+&lt;show&gt;
+&lt;cue num="000"&gt;
+    &lt;Move&gt;0&lt;/Move&gt;
+    &lt;Id&gt;0&lt;/Id&gt;
+    &lt;Act&gt;0&lt;/Act&gt;
+    &lt;Scene&gt; 0&lt;/Scene&gt;
+    &lt;Page&gt;0&lt;/Page&gt;
+    &lt;Title&gt;Top of Show&lt;/Title&gt;
+    &lt;Cue&gt;None&lt;/Cue&gt;
+    &lt;Entrances&gt;&lt;/Entrances&gt;
+    &lt;Exits&gt;&lt;/Exits&gt;
+    &lt;On_Stage&gt;&lt;/On_Stage&gt;
+    &lt;Note_1&gt;&lt;/Note_1&gt;
+    &lt;Note_2&gt;&lt;/Note_2&gt;
+    &lt;Note_3&gt;&lt;/Note_3&gt;
+&lt;/cue&gt;
+    .
+    .
+    .
+&lt;cue num="099"&gt;
+    &lt;Move&gt;99&lt;/Move&gt;
+    &lt;Id&gt;74B&lt;/Id&gt;
+    &lt;Act&gt;2&lt;/Act&gt;
+    &lt;Scene&gt; 9&lt;/Scene&gt;
+    &lt;Page&gt;74&lt;/Page&gt;
+    &lt;Title&gt;Cratchit's House&lt;/Title&gt;
+    &lt;Cue&gt;Cratchit House Revolves&lt;/Cue&gt;
+    &lt;Entrances&gt;ch1 , ch2 , ch11 , ch4 , ch12 , ch3 &lt;/Entrances&gt;
+    &lt;Exits&gt;&lt;/Exits&gt;
+    &lt;On_Stage&gt;ch1 , ch2 , ch11 , ch4 , ch12 , ch3 &lt;/On_Stage&gt;
+    &lt;Note_1&gt;&lt;/Note_1&gt;
+    &lt;Note_2&gt;&lt;/Note_2&gt;
+    &lt;Note_3&gt;&lt;/Note_3&gt;
+&lt;/cue&gt;
+&lt;/show&gt;<y:LabelModel>
+              <y:SmartNodeLabelModel distance="4.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartNodeLabelModelParameter labelRatioX="0.0" labelRatioY="0.0" nodeRatioX="0.0" nodeRatioY="0.0" offsetX="0.0" offsetY="0.0" upX="0.0" upY="-1.0"/>
+            </y:ModelParameter>
+          </y:NodeLabel>
+        </y:UMLNoteNode>
+      </data>
+    </node>
+  </graph>
+  <data key="d7">
+    <y:Resources/>
+  </data>
+</graphml>
