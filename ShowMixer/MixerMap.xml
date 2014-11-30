@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<mixermap>
+<input chan="1" actor="Ethan Reeves" char="Ebeneezer Scrooge"/>
+<input chan="2" actor="Jon Merchant" char="Bob Cratchit"/>
+<input chan="3" actor="Mitchell Jacobs" char="Tiny Tim"/>
+<input chan="4" actor="Renee Merchant" char="Kathy Cratchit"/>
+<input chan="5" actor="Shannon Drew" char="Mrs. Dilber"/>
+<input chan="6" actor="Helen St. Cyr" char="Miss Dilber"/>
+<input chan="7" actor="Annabelle Meszynski" char="Jollygoode"/>
+<input chan="8" actor="Katie Sass" char="Harty"/>
+<input chan="9" actor="Zac Barnaby" char="Fred/Nephew Harry"/>
+<input chan="10" actor="Matt Katsigianis" char="Tom Jenkins"/>
+<input chan="11" actor="Meghan McKnight" char="Mrs. Cratchit"/>
+<input chan="12" actor="Izzy Unsworth" char="Penny/Peter Cratchit"/>
+<input chan="13" actor="Emma Barnaby" char="Mrs. Pringle/Mr. P"/>
+<input chan="14" actor="Hannah Garcia" char="Bissett the Butcher"/>
+<input chan="15" actor="Hannah Cohen" char="Miss Pringle/Mrs. P"/>
+<input chan="16" actor="Brynna Walsh" char="Punch-n-Judy Man"/>
+<input chan="17" actor="Alyssa Saunders" char="Helen (Fred's Wife)"/>
+<input chan="18" actor="Spencer Murray" char="Christmas Morning Bo"/>
+<input chan="19" actor="Gabe Garcia" char="Jacob Marley"/>
+<input chan="20" actor="Susannah Meszynski" char="Mrs. Carstairs"/>
+<input chan="21" actor="Maddie Waris" char="Bess-Produce Vendor"/>
+<input chan="22" actor="Naomi Cohen" char="Beggar Woman"/>
+<input chan="23" actor="Wine Merchant-Act 1" char="Wine Merchant-Act 1"/>
+<input chan="24" actor="Kacie Leach" char="School Teacher"/>
+<input chan="25" actor="Kazi Fichera" char="Young Ebe"/>
+<input chan="26" actor="Sophia Dube" char="Fan/Jenny"/>
+<input chan="27" actor="Naomi Cohen" char="Beggar Woman"/>
+<input chan="28" actor="Naomi Cohen" char="Beggar Woman"/>
+<input chan="29" actor="Naomi Cohen" char="Beggar Woman"/>
+<input chan="30" actor="Naomi Cohen" char="Beggar Woman"/>
+<input chan="31" actor="Naomi Cohen" char="Beggar Woman"/>
+<input chan="32" actor="SFX" char="SOUND"/>
+</mixermap>
