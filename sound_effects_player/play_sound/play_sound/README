@@ -1,0 +1,3 @@
+Play_sound is a prototype for the sound_effects_player, which will be a
+component of ShowControl, an application to control lighting and sound
+in theatrical productions.
