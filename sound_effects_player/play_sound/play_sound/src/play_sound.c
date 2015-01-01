@@ -21,8 +21,8 @@
 #include <glib/gi18n.h>
 
 /* For testing purposes use the local (not installed) ui file */
-/* #define UI_FILE PACKAGE_DATA_DIR"/ui/play_sound.ui" */
-#define UI_FILE "src/play_sound.ui"
+#define UI_FILE PACKAGE_DATA_DIR"/ui/play_sound.ui"
+/* #define UI_FILE "src/play_sound.ui" */
 
 /* We search for this window in the UI file to find the top-level
  * application window.
