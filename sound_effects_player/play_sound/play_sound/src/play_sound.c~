@@ -1,7 +1,7 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 2; tab-width: 2 -*-  */
 /*
  * play_sound.c
- * Copyright © 2014 John Sauter <John_Sauter@systemeyescomputerstore.com>
+ * Copyright © 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>
  * 
  * play_sound is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,15 +23,20 @@
 
 
 
-/* For testing propose use the local (not installed) ui file */
+/* For testing purposes use the local (not installed) ui file */
 /* #define UI_FILE PACKAGE_DATA_DIR"/ui/play_sound.ui" */
 #define UI_FILE "src/play_sound.ui"
-#define TOP_WINDOW "window"
 
+/* We search for this window in the UI file to find the top-level
+ * application window.
+ */
+#define TOP_WINDOW "window"
 
 G_DEFINE_TYPE (Play_Sound, play_sound, GTK_TYPE_APPLICATION);
 
 /* ANJUTA: Macro PLAY_SOUND_APPLICATION gets Play_Sound - DO NOT REMOVE */
+
+/* The private data associated with the top-level window. */
 struct _Play_SoundPrivate
 {
 	/* The top-level Gstreamer pipeline. */
@@ -43,7 +48,7 @@ struct _Play_SoundPrivate
   /* ANJUTA: Widgets declaration for play_sound.ui - DO NOT REMOVE */
 };
 
-/* Create a new window loading a file */
+/* Create a new window loading a file. */
 static void
 play_sound_new_window (GApplication * app, GFile * file)
 {
@@ -171,7 +176,7 @@ play_sound_get_pipeline (GtkWidget * object)
 /* Find the sound effect information corresponding to a cluster, 
  * given any widget in the cluster. */
 struct sound_effect *
-play_sound_get_sound_effect (GtkWidget object)
+play_sound_get_sound_effect (GtkWidget *object)
 {
 	/* TODO */
 	return NULL;

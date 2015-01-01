@@ -1,7 +1,7 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*-  */
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 2; tab-width: 2 -*-  */
 /*
  * main.c
- * Copyright (C) 2014 John Sauter <John_Sauter@systemeyescomputerstore.com>
+ * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
  * play_sound is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,6 +22,10 @@
 
 #include <glib/gi18n.h>
 
+/* The entry point for the play_sound application.  This is a GTK application,
+ * so much of what is done here is standard biolerplate.  See play_sound.c
+ * for the beginning of actual application-specific code.
+ */
 int
 main (int argc, char *argv[])
 {
@@ -37,6 +41,7 @@ main (int argc, char *argv[])
   GOptionContext *ctx;
   GError *err = NULL;
   const gchar *nano_str;
+  const gchar *check_version_str;
   guint major, minor, micro, nano;
 
 #ifdef ENABLE_NLS
@@ -60,6 +65,22 @@ main (int argc, char *argv[])
     }
   g_option_context_free (ctx);
 
+  /* Print the version of gtk that we are linked against. */
+	major = gtk_get_major_version ();
+  minor = gtk_get_minor_version ();
+  micro = gtk_get_micro_version ();
+  g_print ("This program is linked against gtk &d.%d.%d.\n", major, minor, micro);
+
+  /* Check that the version of gtk is good. */
+  check_version_str =
+    gtk_check_version (GTK_MAJOR_VERSION, GTK_MINOR_VERSION,
+		       GTK_MICRO_VERSION);
+  if (check_version_str != NULL)
+    {
+      g_print (check_version_str);
+      return -1;
+    }
+
   /* Print the version of Gstreamer that we are linked against. */
   gst_version (&major, &minor, &micro, &nano);
 
@@ -71,7 +92,6 @@ main (int argc, char *argv[])
     nano_str = "";
   g_print ("This program is linked against GStreamer %d.%d.%d %s.\n", major,
 	   minor, micro, nano_str);
-
 
   gst_init (&argc, &argv);
 

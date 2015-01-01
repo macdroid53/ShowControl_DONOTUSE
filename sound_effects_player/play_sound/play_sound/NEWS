@@ -1,3 +1,7 @@
+Version 0.5, January 1, 2015
+  Update the copyright date, show the linked version of gtk, some minor
+  cleanups.
+  
 Version 0.4, December 31, 2014
   Some minor improvements in comments, and some declatations in support of
   eventually handling files instead of just a test tone.

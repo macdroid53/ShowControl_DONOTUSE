@@ -1,7 +1,7 @@
 /*
  * gstreamer_utils.h
  *
- * Copyright (C) 2014 - John Sauter (John_Sauter@systemeyescomputerstore.com)
+ * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,5 +18,6 @@
  */
 #include <gst/gst.h>
 
+/* Subroutines defined in gstreamer_utils.c */
 GstElement * setup_gstreamer (void);
 void shutdown_gstreamer (GstElement *pipeline);

@@ -1,7 +1,7 @@
 /*
  * button_clicked.h
  *
- * Copyright (C) 2014 - John Sauter (John_Sauter@systemeyescomputerstore.com)
+ * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
 #include <gtk/gtk.h>
 #include <gst/gst.h>
 
+/* Subroutines defined in button_clicked.c */
 void start_clicked (GtkButton * button, gpointer user_data);
 void stop_clicked (GtkButton * button, gpointer user_data);
 void play_sound_volume_changed (GtkButton * button, gpointer user_data);
+void play_sound_pan_changed (GtkButton * button, gpointer user_data);

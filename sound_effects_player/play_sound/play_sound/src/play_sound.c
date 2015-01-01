@@ -1,7 +1,7 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 2; tab-width: 2 -*-  */
 /*
  * play_sound.c
- * Copyright © 2014 John Sauter <John_Sauter@systemeyescomputerstore.com>
+ * Copyright © 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>
  * 
  * play_sound is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,32 +18,34 @@
  */
 #include "play_sound.h"
 #include "gstreamer_utils.h"
-
 #include <glib/gi18n.h>
 
-
-
-/* For testing propose use the local (not installed) ui file */
+/* For testing purposes use the local (not installed) ui file */
 /* #define UI_FILE PACKAGE_DATA_DIR"/ui/play_sound.ui" */
 #define UI_FILE "src/play_sound.ui"
-#define TOP_WINDOW "window"
 
+/* We search for this window in the UI file to find the top-level
+ * application window.
+ */
+#define TOP_WINDOW "window"
 
 G_DEFINE_TYPE (Play_Sound, play_sound, GTK_TYPE_APPLICATION);
 
 /* ANJUTA: Macro PLAY_SOUND_APPLICATION gets Play_Sound - DO NOT REMOVE */
+
+/* The private data associated with the top-level window. */
 struct _Play_SoundPrivate
 {
-	/* The top-level Gstreamer pipeline. */
-  GstElement *pipeline; 
-	/* The list of sounds we can make.  Each item of the GList points
-	 * to a sound_effect structure. */
-	GList * sound_effects;
+  /* The top-level Gstreamer pipeline. */
+  GstElement *pipeline;
+  /* The list of sounds we can make.  Each item of the GList points
+   * to a sound_effect structure. */
+  GList *sound_effects;
 
   /* ANJUTA: Widgets declaration for play_sound.ui - DO NOT REMOVE */
 };
 
-/* Create a new window loading a file */
+/* Create a new window loading a file. */
 static void
 play_sound_new_window (GApplication * app, GFile * file)
 {
@@ -73,11 +75,9 @@ play_sound_new_window (GApplication * app, GFile * file)
 		  UI_FILE);
     }
 
-
   /* ANJUTA: Widgets initialization for play_sound.ui - DO NOT REMOVE */
 
   g_object_unref (builder);
-
 
   gtk_window_set_application (GTK_WINDOW (window), GTK_APPLICATION (app));
 
@@ -90,7 +90,6 @@ play_sound_new_window (GApplication * app, GFile * file)
 
   gtk_widget_show_all (GTK_WIDGET (window));
 }
-
 
 /* GApplication implementation */
 static void
@@ -159,8 +158,11 @@ play_sound_get_pipeline (GtkWidget * object)
   Play_SoundPrivate *priv;
   GstElement *pipeline_element;
 
+	/* Find the top-level window, which has the private data. */
   toplevel_widget = gtk_widget_get_toplevel (object);
   toplevel_window = GTK_WINDOW (toplevel_widget);
+	/* Work through the pointer structure to the private data,
+	 * which includes the pipeline. */
   app = gtk_window_get_application (toplevel_window);
   self = PLAY_SOUND_APPLICATION (app);
   priv = self->priv;
@@ -171,8 +173,8 @@ play_sound_get_pipeline (GtkWidget * object)
 /* Find the sound effect information corresponding to a cluster, 
  * given any widget in the cluster. */
 struct sound_effect *
-play_sound_get_sound_effect (GtkWidget *object)
+play_sound_get_sound_effect (GtkWidget * object)
 {
-	/* TODO */
-	return NULL;
+  /* TODO */
+  return NULL;
 }

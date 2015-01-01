@@ -1,7 +1,7 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 2; tab-width: 2 -*-  */
 /*
  * play_sound.h
- * Copyright (C) 2014 John Sauter <John_Sauter@systemeyescomputerstore.com>
+ * Copyright © 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>
  * 
  * play_sound is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
