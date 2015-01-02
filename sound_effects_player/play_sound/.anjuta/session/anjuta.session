@@ -3,7 +3,7 @@ Maximized=1
 Geometry=1920x1104+1280+27
 
 [File Loader]
-Files=../../src/play_sound.c#160%%%../../src/play_sound.h#71%%%../../src/main.c#104%%%../../src/button_clicked.c#83%%%../../src/button_clicked.h#4%%%../../src/gstreamer_utils.c#60%%%../../src/gstreamer_utils.h#8%%%../../src/Makefile.am#1%%%../../src/Makefile.in#1%%%../../README#4%%%../../NEWS#12%%%../../../../../../../../../../mnt/data/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.ui
+Files=../../src/play_sound.c#237%%%../../src/play_sound.h#71%%%../../src/main.c#104%%%../../src/button_clicked.c#120%%%../../src/button_clicked.h#4%%%../../src/gstreamer_utils.c#60%%%../../src/gstreamer_utils.h#8%%%../../src/Makefile.am#1%%%../../src/Makefile.in#1%%%../../README#4%%%../../NEWS#3%%%../../../../../../../../../../mnt/data/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.ui
 
 [Document Manager]
 bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
@@ -25,5 +25,4 @@ BuildArgs/Profiling=--enable-maintainer-mode 'CFLAGS=-g -pg' 'CXXFLAGS=-g -pg' '
 BuildArgs/Optimized=--enable-maintainer-mode 'CFLAGS=-O2' 'CXXFLAGS=-O2' 'JFLAGS=-O2' 'FFLAGS=-O2'
 
 [Debugger]
-Breakpoint=0:../../src/play_sound.c:50:0:%%%0:../../src/button_clicked.c:83:0:%%%1:../../src/main.c:54:0:
 Stop at beginning=2
