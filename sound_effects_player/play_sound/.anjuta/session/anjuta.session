@@ -3,7 +3,7 @@ Maximized=1
 Geometry=1920x1104+1280+27
 
 [File Loader]
-Files=../../src/play_sound.c#237%%%../../src/play_sound.h#71%%%../../src/main.c#104%%%../../src/button_clicked.c#120%%%../../src/button_clicked.h#4%%%../../src/gstreamer_utils.c#60%%%../../src/gstreamer_utils.h#8%%%../../src/Makefile.am#1%%%../../src/Makefile.in#1%%%../../README#4%%%../../NEWS#3%%%../../../../../../../../../../mnt/data/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.ui
+Files=../../src/play_sound.c#237%%%../../src/play_sound.h#71%%%../../src/main.c#104%%%../../src/button_clicked.c#120%%%../../src/button_clicked.h#4%%%../../src/gstreamer_utils.c#60%%%../../src/gstreamer_utils.h#8%%%../../src/Makefile.am#1%%%../../src/Makefile.in#1%%%../../README#4%%%../../NEWS#3%%%../../../../../../../../../../mnt/data/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.ui%%%../../../../../../../../../../mnt/data/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.ui
 
 [Document Manager]
 bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
@@ -14,7 +14,10 @@ Run in terminal=2
 Working directories=../../.
 
 [Project Manager]
-Shortcut=play_sound
+Shortcut=play_sound//src//play_sound
+
+[Debugger]
+Stop at beginning=2
 
 [Build]
 Configuration list=1:Default:%%%1:Debug:Debug%%%1:Profiling:Profiling%%%1:Optimized:Optimized%%%1:MinGW32:MinGW32
@@ -23,6 +26,3 @@ BuildArgs/Default=--enable-maintainer-mode
 BuildArgs/Debug=--enable-maintainer-mode 'CFLAGS=-g -O0' 'CXXFLAGS=-g -O0' 'JFLAGS=-g -O0' 'FFLAGS=-g -O0'
 BuildArgs/Profiling=--enable-maintainer-mode 'CFLAGS=-g -pg' 'CXXFLAGS=-g -pg' 'JFLAGS=-g -pg' 'FFLAGS=-g -pg'
 BuildArgs/Optimized=--enable-maintainer-mode 'CFLAGS=-O2' 'CXXFLAGS=-O2' 'JFLAGS=-O2' 'FFLAGS=-O2'
-
-[Debugger]
-Stop at beginning=2

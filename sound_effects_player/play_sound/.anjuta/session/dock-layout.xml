@@ -46,7 +46,7 @@
   </layout>
   <layout name="__default__">
     <dock name="__dock_1" floating="no" width="-1" height="-1" floatx="0" floaty="0" skip-taskbar="yes">
-      <paned orientation="vertical" locked="no" iconified="no" closed="no" position="625">
+      <paned orientation="vertical" locked="no" iconified="no" closed="no" position="804">
         <paned orientation="horizontal" locked="no" iconified="no" closed="no" position="691">
           <notebook orientation="vertical" locked="no" iconified="no" closed="no" page="4">
             <item name="AnjutaFileManager" orientation="vertical" locked="no" iconified="no" closed="no"/>
@@ -79,12 +79,12 @@
         </paned>
         <paned orientation="horizontal" locked="no" iconified="no" closed="no" position="934">
           <item name="AnjutaTerminal" orientation="vertical" locked="no" iconified="no" closed="no"/>
-          <notebook orientation="vertical" locked="no" iconified="no" closed="no" page="4">
+          <notebook orientation="vertical" locked="no" iconified="no" closed="no" page="1">
             <item name="AnjutaDebuggerWatch" orientation="vertical" locked="no" iconified="no" closed="yes"/>
             <item name="AnjutaDebuggerBreakpoints" orientation="vertical" locked="no" iconified="no" closed="no"/>
             <item name="AnjutaDebuggerLocals" orientation="vertical" locked="no" iconified="no" closed="yes"/>
             <item name="AnjutaDebuggerStack" orientation="vertical" locked="no" iconified="no" closed="yes"/>
-            <item name="AnjutaMessageView" orientation="vertical" locked="no" iconified="no" closed="no"/>
+            <item name="AnjutaMessageView" orientation="vertical" locked="no" iconified="no" closed="yes"/>
           </notebook>
         </paned>
       </paned>
