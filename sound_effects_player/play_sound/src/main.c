@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 2; tab-width: 2 -*-  */
 /*
  * main.c
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
@@ -44,6 +43,12 @@ main (int argc, char *argv[])
   const gchar *check_version_str;
   guint major, minor, micro, nano;
 
+  extern const guint glib_major_version;
+  extern const guint glib_minor_version;
+  extern const guint glib_micro_version;
+  extern const guint glib_binary_age;
+  extern const guint glib_interface_age;
+
 #ifdef ENABLE_NLS
   bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
   bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
@@ -64,6 +69,11 @@ main (int argc, char *argv[])
       return -1;
     }
   g_option_context_free (ctx);
+
+  /* Print the version of glib that we are linked against. */
+  g_print ("This program is linked against glib %d.%d.%d ages %d and %d.\n",
+           glib_major_version, glib_minor_version, glib_micro_version,
+           glib_binary_age, glib_interface_age);
 
   /* Print the version of gtk that we are linked against. */
   major = gtk_get_major_version ();
@@ -95,6 +105,8 @@ main (int argc, char *argv[])
            minor, micro, nano_str);
 
   gst_init (&argc, &argv);
+
+  /* Run the program. */
 
   app = play_sound_new ();
   status = g_application_run (G_APPLICATION (app), argc, argv);

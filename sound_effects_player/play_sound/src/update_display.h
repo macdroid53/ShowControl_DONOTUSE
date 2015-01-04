@@ -1,5 +1,5 @@
 /*
- * gstreamer_utils.h
+ * update_display.h
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -16,12 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <gst/gst.h>
 
-/* Subroutines defined in gstreamer_utils.c */
-GstPipeline *setup_gstreamer (void *app);
-void shutdown_gstreamer (GstPipeline * pipeline_element);
-GstBin *play_sound_find_bin (GstPipeline * pipeline_element,
-                             gchar * bin_name);
-GstElement *play_sound_find_volume (GstBin * bin_element);
-void play_sound_debug_dump_pipeline (GstPipeline * pipeline_element);
+#include <gtk/gtk.h>
+
+/* Subroutines defined in update_display.c */
+void update_vu_meter (gpointer * user_data, gint channel, gdouble new_value);

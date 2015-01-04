@@ -1,5 +1,5 @@
 /*
- * gstreamer_utils.h
+ * message_handler.h
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -16,12 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <gst/gst.h>
 
-/* Subroutines defined in gstreamer_utils.c */
-GstPipeline *setup_gstreamer (void *app);
-void shutdown_gstreamer (GstPipeline * pipeline_element);
-GstBin *play_sound_find_bin (GstPipeline * pipeline_element,
-                             gchar * bin_name);
-GstElement *play_sound_find_volume (GstBin * bin_element);
-void play_sound_debug_dump_pipeline (GstPipeline * pipeline_element);
+/* Subroutines declared in message_handler.c */
+gboolean play_sound_message_handler (GstBus * bus_element,
+                                     GstMessage * message,
+                                     gpointer user_data);

@@ -17,16 +17,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <gstreamer_utils.h>
+#include <message_handler.h>
 #include <math.h>
 
 /* Set up the Gstreamer pipeline. */
 GstPipeline *
-setup_gstreamer (void)
+setup_gstreamer (void *app)
 {
   GstElement *source_element, *sink_element, *pan_element, *volume_element;
   GstElement *adder_element;
   GstPipeline *pipeline_element;
   GstElement *bin_element, *final_bin_element;
+  GstElement *level_element;
+  GstBus *bus;
   gchar *sound_name, *pad_name;
   gint i;
   gdouble frequency;
@@ -45,7 +48,7 @@ setup_gstreamer (void)
   for (i = 3; i >= 0; i--)
     {
       /* Create the bin, source and filter elements for sound effect i. */
-      frequency = 440.0 * (pow (2.0, ((i+1.0) / 12.0)));
+      frequency = 440.0 * (pow (2.0, ((i + 1.0) / 12.0)));
       sound_name = g_strdup_printf ("tone %d", i);
       bin_element = gst_bin_new (sound_name);
       g_free (sound_name);
@@ -90,18 +93,19 @@ setup_gstreamer (void)
   final_bin_element = gst_bin_new ("final");
   sink_element = gst_element_factory_make ("autoaudiosink", "sink");
   adder_element = gst_element_factory_make ("adder", "adder");
+  level_element = gst_element_factory_make ("level", "master level");
   if ((final_bin_element == NULL) || (sink_element == NULL)
-      || (adder_element == NULL))
+      || (adder_element == NULL) || (level_element == NULL))
     {
       GST_ERROR ("Unable to create the final gstreamer elements.\n");
       return NULL;
     }
 
-  /* Put the adder and sink into the final bin. */
-  gst_bin_add_many (GST_BIN (final_bin_element), adder_element,
-		    sink_element, NULL);
+  /* Put the adder, level and sink into the final bin. */
+  gst_bin_add_many (GST_BIN (final_bin_element), adder_element, level_element,
+                    sink_element, NULL);
 
-  /* The input of the final bin is the inputs of the adder. */
+  /* The input to the final bin is the inputs to the adder. */
   for (i = 0; i < 4; i++)
     {
       sink_pad = gst_element_get_request_pad (adder_element, "sink_%u");
@@ -111,8 +115,9 @@ setup_gstreamer (void)
       g_free (pad_name);
     }
 
-  /* Link the adder to the sink. */
-  gst_element_link (adder_element, sink_element);
+  /* Link the adder to the level, and the level to the sink. */
+  gst_element_link (adder_element, level_element);
+  gst_element_link (level_element, sink_element);
 
   /* Place the final bin in the pipeline. */
   gst_bin_add (GST_BIN (pipeline_element), final_bin_element);
@@ -142,6 +147,11 @@ setup_gstreamer (void)
       g_free (sound_name);
     }
 
+  /* Make sure we will get level messages. */
+  g_object_set (level_element, "post-messages", TRUE, NULL);
+  bus = gst_element_get_bus (GST_ELEMENT (pipeline_element));
+  gst_bus_add_watch (bus, play_sound_message_handler, app);
+
   /* Now that the pipeline is constructed, start it running.
    * Note that all of the bins providing input to the adder are muted,
    * so there will be no sound until a button is pushed. */
@@ -152,7 +162,7 @@ setup_gstreamer (void)
       GST_ERROR ("Unable to start the gstreamer pipeline.\n");
       return NULL;
     }
-  
+
   /* For debugging, write out a graphical representation of the pipeline. */
   play_sound_debug_dump_pipeline (pipeline_element);
 
@@ -163,7 +173,7 @@ setup_gstreamer (void)
  * of the gstreamer pipeline.
  */
 void
-play_sound_debug_dump_pipeline (GstPipeline *pipeline_element)
+play_sound_debug_dump_pipeline (GstPipeline * pipeline_element)
 {
   gst_debug_bin_to_dot_file_with_ts (GST_BIN (pipeline_element),
                                      GST_DEBUG_GRAPH_SHOW_ALL,

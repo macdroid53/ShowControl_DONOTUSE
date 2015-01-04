@@ -94,7 +94,8 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_play_sound_OBJECTS = main.$(OBJEXT) play_sound.$(OBJEXT) \
-	button_clicked.$(OBJEXT) gstreamer_utils.$(OBJEXT)
+	button_clicked.$(OBJEXT) gstreamer_utils.$(OBJEXT) \
+	message_handler.$(OBJEXT) update_display.$(OBJEXT)
 play_sound_OBJECTS = $(am_play_sound_OBJECTS)
 am__DEPENDENCIES_1 =
 play_sound_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -361,7 +362,11 @@ play_sound_SOURCES = \
 	button_clicked.c \
 	button_clicked.h \
 	gstreamer_utils.c \
-	gstreamer_utils.h	
+	gstreamer_utils.h \
+	message_handler.c \
+	message_handler.h \
+	update_display.c \
+	update_display.h	
 
 play_sound_LDFLAGS = \
 	-Wl,--export-dynamic
@@ -465,7 +470,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/button_clicked.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gstreamer_utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message_handler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/play_sound.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/update_display.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

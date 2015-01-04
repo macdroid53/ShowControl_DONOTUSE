@@ -48,28 +48,30 @@ struct _Play_Sound
 };
 
 GType
-play_sound_get_type (void)
-  G_GNUC_CONST;
+play_sound_get_type (void) G_GNUC_CONST;
      Play_Sound *play_sound_new (void);
 
 /* Information about a sound effect we might play.  This includes the 
  * cluster the sound is displayed in, if any, the name of the sound file, 
  * and the Gstreamer bin that controls the sound. */
-     struct sound_effect_str
-     {
-       GtkWidget *cluster;
-       gchar *file_name;
-       GstBin *sound_control;
-     };
+ struct sound_effect_str
+ {
+   GtkWidget *cluster;
+   gchar *file_name;
+   GstBin *sound_control;
+ };
 
 /* Callbacks */
 
 /* Given a widget, get its pipeline. */
-     GstPipeline *play_sound_get_pipeline (GtkWidget * object);
+ GstPipeline *play_sound_get_pipeline (GtkWidget * object);
 
 /* Given a widget in a cluster, get its sound_effect structure. */
-     struct sound_effect_str *play_sound_get_sound_effect (GtkWidget *
+ struct sound_effect_str *play_sound_get_sound_effect (GtkWidget *
                                                            object);
+
+/* Given the application, find the common area above the clusters. */
+ GtkWidget *play_sound_find_common_area (GtkApplication * app);
 
 G_END_DECLS
 #endif /* _APPLICATION_H_ */

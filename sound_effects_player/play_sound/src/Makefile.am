@@ -26,7 +26,11 @@ play_sound_SOURCES = \
 	button_clicked.c \
 	button_clicked.h \
 	gstreamer_utils.c \
-	gstreamer_utils.h	
+	gstreamer_utils.h \
+	message_handler.c \
+	message_handler.h \
+	update_display.c \
+	update_display.h	
 
 
 play_sound_LDFLAGS = \

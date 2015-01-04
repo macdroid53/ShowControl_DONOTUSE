@@ -38,6 +38,12 @@ struct _Play_SoundPrivate
   /* The top-level Gstreamer pipeline. */
   GstPipeline *pipeline;
 
+  /* The top-level gtk window. */
+  GtkWidget *top_window;
+
+  /* The common area, needed for updating the display asynchronously. */
+  GtkWidget *common_area;
+
   /* The list of sounds we can make.  Each item of the GList points
    * to a sound_effect structure. */
   GList *sound_effects;
@@ -52,8 +58,8 @@ struct _Play_SoundPrivate
 static void
 play_sound_new_window (GApplication * app, GFile * file)
 {
-  GtkWidget *window;
-
+  GtkWidget *top_window;
+  GtkWidget *common_area;
   GtkBuilder *builder;
   GError *error = NULL;
   struct sound_effect_str *sound_effect;
@@ -75,15 +81,24 @@ play_sound_new_window (GApplication * app, GFile * file)
       g_error_free (error);
     }
 
-  /* Auto-connect signal handlers */
+  /* Auto-connect signal handlers. */
   gtk_builder_connect_signals (builder, app);
 
-  /* Get the top-level window object from the ui file */
-  window = GTK_WIDGET (gtk_builder_get_object (builder, TOP_WINDOW));
-  if (!window)
+  /* Get the top-level window object from the ui file. */
+  top_window = GTK_WIDGET (gtk_builder_get_object (builder, TOP_WINDOW));
+  priv->top_window = GTK_WIDGET (top_window);
+  if (!top_window)
     {
       g_critical ("Widget \"%s\" is missing in file %s.", TOP_WINDOW,
                   UI_FILE);
+    }
+
+  /* Also get the common area. */
+  common_area = GTK_WIDGET (gtk_builder_get_object (builder, "common_area"));
+  priv->common_area = GTK_WIDGET (common_area);
+  if (!common_area)
+    {
+      g_critical ("Widget common_area is missing in file %s.", UI_FILE);
     }
 
   /* Remember where the clusters are. */
@@ -104,23 +119,27 @@ play_sound_new_window (GApplication * app, GFile * file)
 
   g_object_unref (builder);
 
-  gtk_window_set_application (GTK_WINDOW (window), GTK_APPLICATION (app));
+  gtk_window_set_application (GTK_WINDOW (top_window), GTK_APPLICATION (app));
 
   if (file != NULL)
     {
       /* TODO: Add code here to open the file in the new window */
     }
-  /* Set up Gstreamer for playing tones. */
-  priv->pipeline = setup_gstreamer ();
+  /* Set up Gstreamer for playing tones.  We pass the application so
+   * setup_gstreamer can cause it to be passed to the message handler, 
+   * which will use it to find the display.  */
+  priv->pipeline = setup_gstreamer (app);
 
   /* Set up the remainder of the private data. */
   priv->sound_effects = NULL;
 
-/* setup_gstreamer created four test tones.  Place them in the first
+  /* setup_gstreamer created four test tones.  Place them in the first
    * four clusters. */
   for (i = 0; i < 4; i++)
     {
       sound_effect = g_malloc (sizeof (struct sound_effect_str));
+    
+      /* Find the cluster that will hold this sound effect. */
       sound_effect->cluster = NULL;
       for (cluster_list = priv->clusters; cluster_list != NULL;
            cluster_list = cluster_list->next)
@@ -136,14 +155,19 @@ play_sound_new_window (GApplication * app, GFile * file)
           g_free (cluster_name);
         }
       g_free (cluster_name);
+      /* Set the name of the sound effect. */
       sound_name = g_strdup_printf ("tone %d", i);
       sound_effect->file_name = sound_name;
+      /* Set the pointer to the gstreamer bin that plays the sound. */
       sound_effect->sound_control =
         play_sound_find_bin (priv->pipeline, sound_name);
+      /* Add this sound effect to the list of sound effects. */
       priv->sound_effects =
         g_list_prepend (priv->sound_effects, sound_effect);
     }
-  gtk_widget_show_all (GTK_WIDGET (window));
+
+  /* The display is initialized; time to show it. */
+  gtk_widget_show_all (GTK_WIDGET (top_window));
 }
 
 /* GApplication implementation */
@@ -220,7 +244,7 @@ play_sound_new (void)
                        G_APPLICATION_HANDLES_OPEN, NULL);
 }
 
-/* Find a cluster's pipeline, given any widget in the cluster. */
+/* Find the pipeline, given any widget in the application. */
 GstPipeline *
 play_sound_get_pipeline (GtkWidget * object)
 {
@@ -235,7 +259,7 @@ play_sound_get_pipeline (GtkWidget * object)
   toplevel_widget = gtk_widget_get_toplevel (object);
   toplevel_window = GTK_WINDOW (toplevel_widget);
   /* Work through the pointer structure to the private data,
-   * which includes the pipeline. */
+   * which includes a pointer to the pipeline. */
   app = gtk_window_get_application (toplevel_window);
   self = PLAY_SOUND_APPLICATION (app);
   priv = self->priv;
@@ -244,7 +268,7 @@ play_sound_get_pipeline (GtkWidget * object)
 }
 
 /* Find the sound effect information corresponding to a cluster, 
- * given the widget corresponding to the cluster. Return NULL if
+ * given a widget inside that cluster. Return NULL if
  * the cluster is not running a sound effect. */
 struct sound_effect_str *
 play_sound_get_sound_effect (GtkWidget * object)
@@ -262,7 +286,7 @@ play_sound_get_sound_effect (GtkWidget * object)
   gboolean sound_effect_found;
 
   /* Work up from the given widget until we find one whose name starts
-   * with "cluster_".   This is probably unnecessary.  */
+   * with "cluster_". */
 
   this_object = object;
   do
@@ -277,7 +301,7 @@ play_sound_get_sound_effect (GtkWidget * object)
     }
   while (this_object != NULL);
 
-  /* Now we find the application's private data, where the sound effects
+  /* Find the application's private data, where the sound effects
    * information is kept.  First we find the top-level window, 
    * which has the private data. */
   toplevel_widget = gtk_widget_get_toplevel (object);
@@ -287,7 +311,7 @@ play_sound_get_sound_effect (GtkWidget * object)
   self = PLAY_SOUND_APPLICATION (app);
   priv = self->priv;
 
-  /* Now we search through the sound effects for the one attached
+  /* Then we search through the sound effects for the one attached
    * to this cluster. */
   sound_effect_list = priv->sound_effects;
   sound_effect_found = FALSE;
@@ -305,4 +329,19 @@ play_sound_get_sound_effect (GtkWidget * object)
     return (sound_effect);
 
   return NULL;
+}
+
+/* Given a gstreamer element, Find the area above the top of the clusters, 
+ * so it can be updated.  The parameter passed is the application, which
+ * was passed through gstreamer_setup and the gstreamer signaling system
+ * as an opaque value.  */
+GtkWidget *
+play_sound_find_common_area (GtkApplication * app)
+{
+  Play_SoundPrivate *priv = PLAY_SOUND_APPLICATION (app)->priv;
+  GtkWidget *common_area;
+
+  common_area = priv->common_area;
+
+  return (common_area);
 }

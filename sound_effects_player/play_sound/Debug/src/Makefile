@@ -94,7 +94,8 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_play_sound_OBJECTS = main.$(OBJEXT) play_sound.$(OBJEXT) \
-	button_clicked.$(OBJEXT) gstreamer_utils.$(OBJEXT)
+	button_clicked.$(OBJEXT) gstreamer_utils.$(OBJEXT) \
+	message_handler.$(OBJEXT) update_display.$(OBJEXT)
 play_sound_OBJECTS = $(am_play_sound_OBJECTS)
 am__DEPENDENCIES_1 =
 play_sound_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -266,10 +267,10 @@ OTOOL64 =
 PACKAGE = play_sound
 PACKAGE_BUGREPORT = John_Sauter@systemeyescomputerstore.com
 PACKAGE_NAME = play_sound
-PACKAGE_STRING = play_sound 0.10
+PACKAGE_STRING = play_sound 0.11
 PACKAGE_TARNAME = play_sound
 PACKAGE_URL = 
-PACKAGE_VERSION = 0.10
+PACKAGE_VERSION = 0.11
 PATH_SEPARATOR = :
 PKG_CONFIG = /usr/bin/pkg-config
 PKG_CONFIG_LIBDIR = 
@@ -286,7 +287,7 @@ SET_MAKE =
 SHELL = /bin/sh
 STRIP = strip
 USE_NLS = yes
-VERSION = 0.10
+VERSION = 0.11
 XGETTEXT = /usr/bin/xgettext
 abs_builddir = /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/Debug/src
 abs_srcdir = /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src
@@ -361,7 +362,11 @@ play_sound_SOURCES = \
 	button_clicked.c \
 	button_clicked.h \
 	gstreamer_utils.c \
-	gstreamer_utils.h	
+	gstreamer_utils.h \
+	message_handler.c \
+	message_handler.h \
+	update_display.c \
+	update_display.h	
 
 play_sound_LDFLAGS = \
 	-Wl,--export-dynamic
@@ -465,7 +470,9 @@ distclean-compile:
 include ./$(DEPDIR)/button_clicked.Po
 include ./$(DEPDIR)/gstreamer_utils.Po
 include ./$(DEPDIR)/main.Po
+include ./$(DEPDIR)/message_handler.Po
 include ./$(DEPDIR)/play_sound.Po
+include ./$(DEPDIR)/update_display.Po
 
 .c.o:
 	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
