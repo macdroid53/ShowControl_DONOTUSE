@@ -36,7 +36,7 @@ G_DEFINE_TYPE (Play_Sound, play_sound, GTK_TYPE_APPLICATION);
 struct _Play_SoundPrivate
 {
   /* The top-level Gstreamer pipeline. */
-  GstElement *pipeline;
+  GstPipeline *pipeline;
 
   /* The list of sounds we can make.  Each item of the GList points
    * to a sound_effect structure. */
@@ -44,7 +44,7 @@ struct _Play_SoundPrivate
 
   /* The list of clusters that might contain sound effects. */
   GList *clusters;
-  
+
   /* ANJUTA: Widgets declaration for play_sound.ui - DO NOT REMOVE */
 };
 
@@ -62,6 +62,8 @@ play_sound_new_window (GApplication * app, GFile * file)
   GtkWidget *cluster_widget;
   GList *cluster_list;
   const gchar *widget_name;
+  gchar *sound_name;
+  gint i;
 
   Play_SoundPrivate *priv = PLAY_SOUND_APPLICATION (app)->priv;
 
@@ -81,22 +83,23 @@ play_sound_new_window (GApplication * app, GFile * file)
   if (!window)
     {
       g_critical ("Widget \"%s\" is missing in file %s.", TOP_WINDOW,
-		  UI_FILE);
+                  UI_FILE);
     }
 
   /* Remember where the clusters are. */
   priv->clusters = NULL;
-  for (cluster_number=0;cluster_number<16;++cluster_number)
-  {
-	cluster_name = g_strdup_printf ("cluster_%2.2d", cluster_number);
-	cluster_widget = GTK_WIDGET (gtk_builder_get_object (builder, cluster_name));
-	if (cluster_widget != NULL)
-	{
-	  priv->clusters = g_list_prepend (priv->clusters, cluster_widget);
-	}
-	g_free (cluster_name);
-  }
-  
+  for (cluster_number = 0; cluster_number < 16; ++cluster_number)
+    {
+      cluster_name = g_strdup_printf ("cluster_%2.2d", cluster_number);
+      cluster_widget =
+        GTK_WIDGET (gtk_builder_get_object (builder, cluster_name));
+      if (cluster_widget != NULL)
+        {
+          priv->clusters = g_list_prepend (priv->clusters, cluster_widget);
+        }
+      g_free (cluster_name);
+    }
+
   /* ANJUTA: Widgets initialization for play_sound.ui - DO NOT REMOVE */
 
   g_object_unref (builder);
@@ -113,25 +116,33 @@ play_sound_new_window (GApplication * app, GFile * file)
   /* Set up the remainder of the private data. */
   priv->sound_effects = NULL;
 
-  /* We currently have only one sound effect. 
-   * Place it in the first cluster. */
-  sound_effect = g_malloc (sizeof (struct sound_effect_str));
-  sound_effect->cluster = NULL;
-  for (cluster_list = priv->clusters; cluster_list != NULL; cluster_list = cluster_list->next)
-  {
-	cluster_widget = cluster_list->data;
-	widget_name = gtk_widget_get_name (cluster_widget);
-	if (g_ascii_strcasecmp (widget_name, "cluster_00") == 0)
-	{
-	  sound_effect->cluster = cluster_widget;
-	  break;
-	}
-  }
- 
-  sound_effect->file_name = g_strdup ("test tone");
-  sound_effect->sound_control = GST_BIN (priv->pipeline);
-  priv->sound_effects = g_list_prepend (priv->sound_effects, sound_effect);
-
+/* setup_gstreamer created four test tones.  Place them in the first
+   * four clusters. */
+  for (i = 0; i < 4; i++)
+    {
+      sound_effect = g_malloc (sizeof (struct sound_effect_str));
+      sound_effect->cluster = NULL;
+      for (cluster_list = priv->clusters; cluster_list != NULL;
+           cluster_list = cluster_list->next)
+        {
+          cluster_widget = cluster_list->data;
+          widget_name = gtk_widget_get_name (cluster_widget);
+          cluster_name = g_strdup_printf ("cluster_%2.2d", i);
+          if (g_ascii_strcasecmp (widget_name, cluster_name) == 0)
+            {
+              sound_effect->cluster = cluster_widget;
+              break;
+            }
+          g_free (cluster_name);
+        }
+      g_free (cluster_name);
+      sound_name = g_strdup_printf ("tone %d", i);
+      sound_effect->file_name = sound_name;
+      sound_effect->sound_control =
+        play_sound_find_bin (priv->pipeline, sound_name);
+      priv->sound_effects =
+        g_list_prepend (priv->sound_effects, sound_effect);
+    }
   gtk_widget_show_all (GTK_WIDGET (window));
 }
 
@@ -144,7 +155,7 @@ play_sound_activate (GApplication * application)
 
 static void
 play_sound_open (GApplication * application, GFile ** files, gint n_files,
-		 const gchar * hint)
+                 const gchar * hint)
 {
   gint i;
 
@@ -157,13 +168,13 @@ play_sound_init (Play_Sound * object)
 {
   object->priv =
     G_TYPE_INSTANCE_GET_PRIVATE (object, PLAY_SOUND_TYPE_APPLICATION,
-				 Play_SoundPrivate);
+                                 Play_SoundPrivate);
 }
 
 static void
 play_sound_finalize (GObject * object)
 {
-  GstElement *pipeline_element;
+  GstPipeline *pipeline_element;
   GList *sound_effect_list;
   GList *next_sound_effect;
   struct sound_effect_str *sound_effect;
@@ -183,7 +194,7 @@ play_sound_finalize (GObject * object)
       g_free (sound_effect->file_name);
       g_free (sound_effect);
       self->priv->sound_effects =
-	g_list_delete_link (self->priv->sound_effects, sound_effect_list);
+        g_list_delete_link (self->priv->sound_effects, sound_effect_list);
       sound_effect_list = next_sound_effect;
     }
 
@@ -205,12 +216,12 @@ Play_Sound *
 play_sound_new (void)
 {
   return g_object_new (play_sound_get_type (), "application-id",
-		       "org.gnome.play_sound", "flags",
-		       G_APPLICATION_HANDLES_OPEN, NULL);
+                       "org.gnome.play_sound", "flags",
+                       G_APPLICATION_HANDLES_OPEN, NULL);
 }
 
 /* Find a cluster's pipeline, given any widget in the cluster. */
-GstElement *
+GstPipeline *
 play_sound_get_pipeline (GtkWidget * object)
 {
   GtkWidget *toplevel_widget;
@@ -218,7 +229,7 @@ play_sound_get_pipeline (GtkWidget * object)
   GtkApplication *app;
   Play_Sound *self;
   Play_SoundPrivate *priv;
-  GstElement *pipeline_element;
+  GstPipeline *pipeline_element;
 
   /* Find the top-level window, which has the private data. */
   toplevel_widget = gtk_widget_get_toplevel (object);
@@ -258,10 +269,10 @@ play_sound_get_sound_effect (GtkWidget * object)
     {
       widget_name = gtk_widget_get_name (this_object);
       if (g_str_has_prefix (widget_name, "cluster_"))
-	{
-	  cluster_widget = this_object;
-	  break;
-	}
+        {
+          cluster_widget = this_object;
+          break;
+        }
       this_object = gtk_widget_get_parent (this_object);
     }
   while (this_object != NULL);
@@ -284,14 +295,14 @@ play_sound_get_sound_effect (GtkWidget * object)
     {
       sound_effect = sound_effect_list->data;
       if (sound_effect->cluster == cluster_widget)
-	{
-		sound_effect_found = TRUE;
-	break;
-	  }
+        {
+          sound_effect_found = TRUE;
+          break;
+        }
       sound_effect_list = sound_effect_list->next;
     }
   if (sound_effect_found)
-	return (sound_effect);
-  
+    return (sound_effect);
+
   return NULL;
 }

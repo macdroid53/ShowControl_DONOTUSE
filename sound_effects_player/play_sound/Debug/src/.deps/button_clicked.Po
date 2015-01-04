@@ -645,6 +645,7 @@ button_clicked.o: \
  /usr/include/gstreamer-1.0/gst/gstutils.h \
  /usr/include/gstreamer-1.0/gst/gstparse.h \
  /usr/include/gstreamer-1.0/gst/gstcompat.h \
+ /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/gstreamer_utils.h \
  /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.h
 
 /usr/include/stdc-predef.h:
@@ -2068,5 +2069,7 @@ button_clicked.o: \
 /usr/include/gstreamer-1.0/gst/gstparse.h:
 
 /usr/include/gstreamer-1.0/gst/gstcompat.h:
+
+/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/gstreamer_utils.h:
 
 /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.h:

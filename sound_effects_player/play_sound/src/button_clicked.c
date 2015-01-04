@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "button_clicked.h"
+#include "gstreamer_utils.h"
 #include "play_sound.h"
 
 /* The Start button has been pushed.  Turn the sound effect on. */
@@ -25,15 +26,26 @@ start_clicked (GtkButton * button, gpointer user_data)
 {
   struct sound_effect_str *sound_effect;
   GstBin *bin_element;
+  GstElement *volume_element;
+  GstPipeline *pipeline_element;
 
   sound_effect = play_sound_get_sound_effect (user_data);
   if (sound_effect == NULL)
     return;
   bin_element = sound_effect->sound_control;
-  gst_element_set_state (GST_ELEMENT (bin_element), GST_STATE_PLAYING);
+  volume_element = play_sound_find_volume (bin_element);
+  /* Unmute the bin to hear its sound. */
+  g_object_set (volume_element, "mute", FALSE, NULL);
 
   /* Change the text on the button from "Start" to "Playing". */
   gtk_button_set_label (button, "Playing");
+
+  /* For debugging, output an annotated, graphical representation
+   * of the pipeline.
+   */
+  pipeline_element = play_sound_get_pipeline (user_data);
+  play_sound_debug_dump_pipeline (pipeline_element);
+
   return;
 }
 
@@ -43,6 +55,8 @@ stop_clicked (GtkButton * button, gpointer user_data)
 {
   struct sound_effect_str *sound_effect;
   GstBin *bin_element;
+  GstElement *volume_element;
+  GstPipeline *pipeline_element;
   GtkButton *start_button = NULL;
   GtkWidget *parent_container;
   GList *children_list = NULL;
@@ -52,7 +66,9 @@ stop_clicked (GtkButton * button, gpointer user_data)
   if (sound_effect == NULL)
     return;
   bin_element = sound_effect->sound_control;
-  gst_element_set_state (GST_ELEMENT (bin_element), GST_STATE_PAUSED);
+  volume_element = play_sound_find_volume (bin_element);
+  /* Mute the volume, so we no longer hear it. */
+  g_object_set (volume_element, "mute", TRUE, NULL);
 
   /* Find the start button and set its text back to "Start". 
    * The start button will be in the stop button's parent container,
@@ -64,14 +80,21 @@ stop_clicked (GtkButton * button, gpointer user_data)
     {
       child_name = gtk_widget_get_name (children_list->data);
       if (g_ascii_strcasecmp (child_name, "start_button") == 0)
-	{
-	  start_button = children_list->data;
-	  break;
-	}
+        {
+          start_button = children_list->data;
+          break;
+        }
       children_list = children_list->next;
     }
   g_list_free (children_list);
   gtk_button_set_label (start_button, "Start");
+
+  /* For debugging, output an annotated, graphical representation
+   * of the pipeline.
+   */
+  pipeline_element = play_sound_get_pipeline (user_data);
+  play_sound_debug_dump_pipeline (pipeline_element);
+
   return;
 }
 
@@ -99,10 +122,10 @@ play_sound_volume_changed (GtkButton * button, gpointer user_data)
     {
       child_name = gtk_widget_get_name (children_list->data);
       if (g_ascii_strcasecmp (child_name, "volume_label") == 0)
-	{
-	  volume_label = children_list->data;
-	  break;
-	}
+        {
+          volume_label = children_list->data;
+          break;
+        }
       children_list = children_list->next;
     }
   g_list_free (children_list);
@@ -113,7 +136,7 @@ play_sound_volume_changed (GtkButton * button, gpointer user_data)
        * If there isn't, do nothing. */
       sound_effect = play_sound_get_sound_effect (user_data);
       if (sound_effect == NULL)
-	return;
+        return;
 
       /* The sound_effect structure records where the Gstreamer bin is
        * for this sound effect.  That bin contains the volume control.
@@ -121,7 +144,7 @@ play_sound_volume_changed (GtkButton * button, gpointer user_data)
       bin_element = sound_effect->sound_control;
       volume_element = gst_bin_get_by_name (GST_BIN (bin_element), "volume");
       if (volume_element == NULL)
-	return;
+        return;
 
       new_value = gtk_scale_button_get_value (GTK_SCALE_BUTTON (button));
       /* Set the volume of the sound. */
@@ -160,10 +183,10 @@ play_sound_pan_changed (GtkButton * button, gpointer user_data)
     {
       child_name = gtk_widget_get_name (children_list->data);
       if (g_ascii_strcasecmp (child_name, "pan_label") == 0)
-	{
-	  pan_label = children_list->data;
-	  break;
-	}
+        {
+          pan_label = children_list->data;
+          break;
+        }
       children_list = children_list->next;
     }
   g_list_free (children_list);
@@ -174,7 +197,7 @@ play_sound_pan_changed (GtkButton * button, gpointer user_data)
        * If there isn't, do nothing. */
       sound_effect = play_sound_get_sound_effect (user_data);
       if (sound_effect == NULL)
-	return;
+        return;
 
       /* The sound_effect structure records where the Gstreamer bin is
        * for this sound effect.  That bin contains the pan control.
@@ -182,7 +205,7 @@ play_sound_pan_changed (GtkButton * button, gpointer user_data)
       bin_element = sound_effect->sound_control;
       pan_element = gst_bin_get_by_name (GST_BIN (bin_element), "pan");
       if (pan_element == NULL)
-	return;
+        return;
 
       new_value = gtk_scale_button_get_value (GTK_SCALE_BUTTON (button));
       /* Set the panorama position of the sound. */
@@ -192,18 +215,18 @@ play_sound_pan_changed (GtkButton * button, gpointer user_data)
       /* Update the text of the pan label.  0.0 corresponds to Center, 
        * negative numbers to left, and positive numbers to right. */
       if (new_value == 0.0)
-	gtk_label_set_text (pan_label, "Center");
+        gtk_label_set_text (pan_label, "Center");
       else
-	{
-	  if (new_value < 0.0)
-	    value_string =
-	      g_strdup_printf ("Left %4.0f%%", -(new_value * 100.0));
-	  else
-	    value_string =
-	      g_strdup_printf ("Right%4.0f%%", new_value * 100.0);
-	  gtk_label_set_text (pan_label, value_string);
-	  g_free (value_string);
-	}
+        {
+          if (new_value < 0.0)
+            value_string =
+              g_strdup_printf ("Left %4.0f%%", -(new_value * 100.0));
+          else
+            value_string =
+              g_strdup_printf ("Right%4.0f%%", new_value * 100.0);
+          gtk_label_set_text (pan_label, value_string);
+          g_free (value_string);
+        }
     }
 
   return;

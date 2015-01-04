@@ -25,6 +25,9 @@
 /* Define if your <locale.h> file defines LC_MESSAGES. */
 #define HAVE_LC_MESSAGES 1
 
+/* Define to 1 if you have the `m' library (-lm). */
+#define HAVE_LIBM 1
+
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
@@ -66,7 +69,7 @@
 #define PACKAGE_NAME "play_sound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "play_sound 0.9"
+#define PACKAGE_STRING "play_sound 0.10"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "play_sound"
@@ -75,10 +78,10 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.9"
+#define PACKAGE_VERSION "0.10"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.9"
+#define VERSION "0.10"

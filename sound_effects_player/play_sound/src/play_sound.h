@@ -24,53 +24,52 @@
 #include <gst/gst.h>
 
 G_BEGIN_DECLS
-
 #define PLAY_SOUND_TYPE_APPLICATION             (play_sound_get_type ())
 #define PLAY_SOUND_APPLICATION(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), PLAY_SOUND_TYPE_APPLICATION, Play_Sound))
 #define PLAY_SOUND_APPLICATION_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), PLAY_SOUND_TYPE_APPLICATION, Play_SoundClass))
 #define PLAY_SOUND_IS_APPLICATION(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), PLAY_SOUND_TYPE_APPLICATION))
 #define PLAY_SOUND_IS_APPLICATION_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), PLAY_SOUND_TYPE_APPLICATION))
 #define PLAY_SOUND_APPLICATION_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), PLAY_SOUND_TYPE_APPLICATION, Play_SoundClass))
-
 typedef struct _Play_SoundClass Play_SoundClass;
 typedef struct _Play_Sound Play_Sound;
 typedef struct _Play_SoundPrivate Play_SoundPrivate;
 
 struct _Play_SoundClass
 {
-	GtkApplicationClass parent_class;
+  GtkApplicationClass parent_class;
 };
 
 struct _Play_Sound
 {
-	GtkApplication parent_instance;
+  GtkApplication parent_instance;
 
-	Play_SoundPrivate *priv;
+  Play_SoundPrivate *priv;
 
 };
 
-GType play_sound_get_type (void) G_GNUC_CONST;
-Play_Sound *play_sound_new (void);
+GType
+play_sound_get_type (void)
+  G_GNUC_CONST;
+     Play_Sound *play_sound_new (void);
 
 /* Information about a sound effect we might play.  This includes the 
  * cluster the sound is displayed in, if any, the name of the sound file, 
  * and the Gstreamer bin that controls the sound. */
-struct sound_effect_str
-{
-	GtkWidget *cluster;
-	gchar *file_name;
-	GstBin *sound_control;
-};
+     struct sound_effect_str
+     {
+       GtkWidget *cluster;
+       gchar *file_name;
+       GstBin *sound_control;
+     };
 
 /* Callbacks */
 
 /* Given a widget, get its pipeline. */
-GstElement *play_sound_get_pipeline (GtkWidget *object);
+     GstPipeline *play_sound_get_pipeline (GtkWidget * object);
 
 /* Given a widget in a cluster, get its sound_effect structure. */
-struct sound_effect_str *play_sound_get_sound_effect (GtkWidget *object);
+     struct sound_effect_str *play_sound_get_sound_effect (GtkWidget *
+                                                           object);
 
 G_END_DECLS
-
 #endif /* _APPLICATION_H_ */
-

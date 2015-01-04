@@ -70,12 +70,12 @@ main (int argc, char *argv[])
   minor = gtk_get_minor_version ();
   micro = gtk_get_micro_version ();
   g_print ("This program is linked against gtk %d.%d.%d.\n", major, minor,
-	   micro);
+           micro);
 
   /* Check that the version of gtk is good. */
   check_version_str =
     gtk_check_version (GTK_MAJOR_VERSION, GTK_MINOR_VERSION,
-		       GTK_MICRO_VERSION);
+                       GTK_MICRO_VERSION);
   if (check_version_str != NULL)
     {
       g_print (check_version_str);
@@ -92,7 +92,7 @@ main (int argc, char *argv[])
   else
     nano_str = "";
   g_print ("This program is linked against GStreamer %d.%d.%d%s.\n", major,
-	   minor, micro, nano_str);
+           minor, micro, nano_str);
 
   gst_init (&argc, &argv);
 

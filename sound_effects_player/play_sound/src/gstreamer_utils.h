@@ -19,5 +19,9 @@
 #include <gst/gst.h>
 
 /* Subroutines defined in gstreamer_utils.c */
-GstElement * setup_gstreamer (void);
-void shutdown_gstreamer (GstElement *pipeline);
+GstPipeline *setup_gstreamer (void);
+void shutdown_gstreamer (GstPipeline * pipeline_element);
+GstBin *play_sound_find_bin (GstPipeline * pipeline_element,
+                             gchar * bin_name);
+GstElement *play_sound_find_volume (GstBin * bin_element);
+void play_sound_debug_dump_pipeline (GstPipeline * pipeline_element);
