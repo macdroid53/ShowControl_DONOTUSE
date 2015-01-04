@@ -231,7 +231,7 @@
 % Pages styles
 \makeatletter
 \newcommand\ps@Standard{
-  \renewcommand\@oddhead{My Ideal Sound Effects Player\hfill \hfill December 21, 2014}
+  \renewcommand\@oddhead{My Ideal Sound Effects Player\hfill \hfill January 4, 2015}
   \renewcommand\@evenhead{\@oddhead}
   \renewcommand\@oddfoot{\hfill Page \thepage{} of ?}
   \renewcommand\@evenfoot{\@oddfoot}
@@ -243,7 +243,7 @@
 \renewcommand\theDrawing{\arabic{Drawing}}
 \title{}
 \author{John Sauter}
-\date{2014-12-21T04:50:43.502510496}
+\date{2015-01-04T15:14:15.467341557}
 \begin{document}
 \section{My Ideal Sound Effects Player}
 \subsection{Roles}
@@ -326,13 +326,13 @@ ignored][Warning: Draw object ignored]Drawing
 \end{minipage}
 \end{figure}
 \subsection{The Gstreamer plug-in}
-The sound effects player includes a gstreamer plug-in which is designed
-to meet its needs. \ It is a pipeline with four filter elements: the
-looper, the attack-decay-sustain part of the amplitude envelope, the
-release part of the amplitude envelope, and the volume adjustment.
-\ The input to the pipeline is assumed to be seekable, such as the WAV
-file parser, which outputs up to eight channels. \ If a sound does not
-use looping or a non-zero starting position, no seeking is done.
+The sound effects player includes a custom gstreamer plug-in which is
+designed to meet its needs. \ It is a bin with four filter elements:
+the looper, the attack-decay-sustain part of the amplitude envelope,
+the release part of the amplitude envelope, and the volume adjustment.
+\ The input to the bin is assumed to be seekable, such as the WAV file
+parser, which outputs up to eight channels. \ If a sound does not use
+looping or a non-zero starting position, no seeking is done.
 
 The amplitude envelope design is based on electronic musical
 instruments. \ The ADSR envelope has four parts: attack, decay, sustain
@@ -348,9 +348,9 @@ and release. \ It is described by six numbers:
 \item the release duration time. \ 
 \end{itemize}
 Note that the release start time can be modified by an external action
-while the sound effect is playing, so the release start time specified
-by the sound designer is its initial value. \ The release duration time
-can be infinite.
+or reaching the end of the WAV file while the sound effect is playing,
+so the release start time specified by the sound designer is its
+initial value. \ The release duration time can be infinite.
 
 Internally, 
 
@@ -373,7 +373,7 @@ release fades the wind out.
 
 In addition to the envelope information we have the following additional
 parameters specified by the sound designer, some of which are used
-elsewhere in the pipeline, or in the application:
+elsewhere in the bin, or in the application:
 
 \liststyleLviii
 \begin{itemize}
@@ -412,7 +412,7 @@ When a sound effect is triggered, the following local variables are set:
 equal to the loop to time; otherwise it is set to false.
 \end{itemize}
 \subsubsection[Looper]{Looper}
-The first element in the pipeline is the looper. \ It sinks data from a
+The first element in the bin is the looper. \ It sinks data from a
 seekable source, such as the WAV file parser. \ It accepts audio/x-raw
 sound samples in S16LE, S32LE, F32LE or F64LE format. \ The input value
 is converted to F64LE for internal processing. \ At each time step, the
@@ -529,23 +529,22 @@ sequencer, the value of note velocity may be specified in the sequence
 item; if it is not, and there is no Note On in its sequencer history,
 the velocity is set to 127.0. \ 
 
-After this processing is complete the values are forwarded to whatever
-the application has specified for the next stage of gstreamer
-processing as audio/x-raw, format F64LE or F32LE. Eventually the sound
-data will reach a speaker.
+After this processing is complete the values are presented on the
+bin{\textquotesingle}s source pad as audio/x-raw, format F64LE or
+F32LE.
 
-The operator{\textquotesingle}s volume level and the pausing condition
-are controlled by the sound effects operator during the performance.
-\ The application signals changes in these variables to the pipeline.
-\ 
+The operator{\textquotesingle}s volume level, the
+operator{\textquotesingle}s pan value and the pausing condition are
+controlled by the sound effects operator during the performance. \ The
+application signals changes in these variables to the bin. 
 
 The sound effects operator can use a function key as a convenient way to
-trigger the sound, and can adjust the panning in real time.
+trigger the sound.
 
 \subsubsection{Note Off}
 If the sound was triggered by a Note On MIDI event, a corresponding Note
-Off initiates the release of the sound by signaling to the pipeline.
-\ The release process
+Off initiates the release of the sound by signaling to the bin. \ The
+release process
 
 \liststyleLxiii
 \begin{enumerate}
@@ -786,8 +785,8 @@ if they specify the same cluster as the Offer Sound, will use that
 cluster, hiding the offering of the sound. \ If more than one sound
 plays at the same time (not counting release), other sounds must use
 different clusters. \ The offered sound becomes active again when no
-sound is playing on its cluster. \ This rule permits continuity of the
-operator volume and pan adjustment.
+sound is playing on its cluster. \ This exception permits continuity of
+the operator volume and pan adjustment.
 
 The importance number in the Start Sound sequence item controls the
 display of information about the current sound. \ If this number is 0
@@ -952,8 +951,8 @@ running due to a Start Sound with that Q\_number, leaving all others
 running. \ Q\_list and Q\_path are ignored. \ When a sound is paused,
 the looper element stops counting time, stops advancing its position,
 and outputs only silence (0.0) on all channels. \ The echo element in
-the pipeline is not affected, so a sound may continue to echo after it
-is stopped.
+the sound effect{\textquotesingle}s gstreamer bin is not affected, so a
+sound may continue to echo after it is stopped.
 \item Load (05\textsubscript{16}): positions the sequencer to the
 Operator Wait sequence item with the specified Q\_number.
 \item Set (06\textsubscript{16}): Adjust the operator{\textquotesingle}s
@@ -1040,10 +1039,10 @@ The sound effects player is a gstreamer application and uses its custom
 plug-in, described above, along with several standard plugins. \ To
 avoid requiring a high-speed computer, the complete pipeline is
 constructed when a project is loaded or a sound effect modified; it is
-not changed while sound is playing to avoid glitching the sound. \ The
-pipeline structure looks like this:
+not changed while sound is playing. \ The pipeline structure looks like
+this:
 
-The application creates the following gstreamer pipeline for each sound
+The application creates the following gstreamer bin for each sound
 effect defined in the project:
 
 \liststyleLxviii
@@ -1052,7 +1051,7 @@ effect defined in the project:
 waveforms
 \item a wavparse element, which converts the WAV file into up to eight
 channels of raw audio
-\item the custom pipeline described above, which provides the amplitude
+\item the custom bin described above, which provides the amplitude
 envelope, looping, pause, and volume adjustment
 \item an echo element, which has delay, intensity and feedback controls.
 \ These are specified by the sound effects designer, and can be edited.
@@ -1067,35 +1066,34 @@ the product of the designer pan value and the operator pan value,
 represented as 0.0 for center, -1.0 for full left and +1.0 for full
 right. \ The output from this element is always two channels. \ If the
 WAV file contains more than two channels, this element is not placed in
-the pipeline, and the output of the previous element is connected
-directly to the input of the next element.
+the bin, and the output of the previous element is connected directly
+to the input of the next element.
 \item A deinterleave element, which separates each channel of its input
 into a different output stream.
 \end{enumerate}
-The result of this processing is a single-channel stream for each
-channel of each sound effect. \ Each of these pipelines is paused until
-its sound is started. \ The remainder of the gstreamer pipeline looks
-like this:
+The output of these bins is a single-channel gstreamer source for each
+channel of each sound effect. Each of these bins is muted until its
+sound is started. \ The gstreamer pipeline contains all of the above
+bins plus one additional bin, which contains:
 
 \liststyleLxix
 \begin{enumerate}
-\item Eight Funnel elements, one for each output of the sound effects
-player. \ The connection between the outputs of the sound effects
-pipeline and the inputs of each funnel is specified by the sound
-effects designer, and can be edited. \ The information is retained in
-the project file. \ The default is that output channel 1 gets channel 1
-from each sound effect, output channel 2 gets all the channel 2s, etc.
-\ Note that each sound effects pipeline ends with a minimum of two
-channels.
+\item Eight adder elements, one for each output of the sound effects
+player. \ The connection between the sources of the sound effects bins
+and the sinks of each adder is specified by the sound effects designer,
+and can be edited. \ The information is retained in the project file.
+\ The default is that output channel 1 gets channel 1 from each sound
+effect bin, output channel 2 gets all the channel 2s, etc. \ Note that
+each sound effects bin ends with a minimum of two gstreamer sources.
 \item An Interleave element, which combines the outputs of the eight
-funnel elements into a single stream with eight channels.
+adder elements into a single stream with eight channels.
 \item A Volume element, which implements the master volume control.
 \item A Level element, which extracts level information from the stream
 for display.
-\item Another Volume element, which implements the mute control.
-\item An ALSAsink element, which sends the stream to an output device.
-\ The name of the output device is set in Preferences for the software
-sound effects player; for the fancy console it is fixed to the device
+\item Another Volume element, which implements the master mute control.
+\item A sink element, which sends the stream to an output device. \ For
+the software implementation it defaults to autoaudiosink, which finds a
+good output device. \ For the fancy console it is fixed to the device
 that drives the eight XLR connectors.
 \end{enumerate}
 \subsection[Tools]{Tools}
@@ -1662,6 +1660,11 @@ goal to justify the fixed gstreamer pipeline.
 Based on what I have learned about gstreamer, update the volume
 definition to be a floating-point number between 0.0 and 4.0, and
 update the time base to nanoseconds.
+
+\subsubsection{January 4, 2014}
+It is actually the adder, not the funnel, that provides the mixing of
+many sounds into one. \ Also some updating of the gstreamer information
+based on prototyping.
 
 
 \bigskip
