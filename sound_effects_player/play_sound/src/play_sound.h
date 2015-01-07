@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 2; tab-width: 2 -*-  */
 /*
  * play_sound.h
  * Copyright © by 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>

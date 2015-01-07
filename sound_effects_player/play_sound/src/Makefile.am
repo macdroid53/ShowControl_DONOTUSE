@@ -4,7 +4,7 @@
 
 
 uidir = $(pkgdatadir)/ui
-ui_DATA = play_sound.ui
+ui_DATA = play_sound.ui app-menu.ui
 
 
 AM_CPPFLAGS = \
@@ -30,7 +30,9 @@ play_sound_SOURCES = \
 	message_handler.c \
 	message_handler.h \
 	update_display.c \
-	update_display.h	
+	update_display.h \
+	menu_handler.c \
+	menu_handler.h	
 
 
 play_sound_LDFLAGS = \

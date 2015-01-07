@@ -17,6 +17,7 @@
  */
 #include "play_sound.h"
 #include "gstreamer_utils.h"
+#include <menu_handler.h>
 #include <glib/gi18n.h>
 
 /* For testing purposes use the local (not installed) ui file */
@@ -125,6 +126,10 @@ play_sound_new_window (GApplication * app, GFile * file)
     {
       /* TODO: Add code here to open the file in the new window */
     }
+
+  /* Set up the menu. */
+  play_sound_menu_init (app, PACKAGE_DATA_DIR "/ui/app-menu.ui");
+
   /* Set up Gstreamer for playing tones.  We pass the application so
    * setup_gstreamer can cause it to be passed to the message handler, 
    * which will use it to find the display.  */
@@ -138,7 +143,7 @@ play_sound_new_window (GApplication * app, GFile * file)
   for (i = 0; i < 4; i++)
     {
       sound_effect = g_malloc (sizeof (struct sound_effect_str));
-    
+
       /* Find the cluster that will hold this sound effect. */
       sound_effect->cluster = NULL;
       for (cluster_list = priv->clusters; cluster_list != NULL;

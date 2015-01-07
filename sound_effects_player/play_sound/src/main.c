@@ -104,12 +104,14 @@ main (int argc, char *argv[])
   g_print ("This program is linked against GStreamer %d.%d.%d%s.\n", major,
            minor, micro, nano_str);
 
+  /* Initialize gstreamer */
   gst_init (&argc, &argv);
 
   /* Run the program. */
-
   app = play_sound_new ();
   status = g_application_run (G_APPLICATION (app), argc, argv);
+
+  /* We are done. */
   g_object_unref (app);
 
   return status;
