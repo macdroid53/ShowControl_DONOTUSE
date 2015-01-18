@@ -1,6 +1,6 @@
 /*
  * play_sound.c
- * Copyright © 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>
+ * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  * 
  * play_sound is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,7 +17,8 @@
  */
 #include "play_sound.h"
 #include "gstreamer_utils.h"
-#include <menu_handler.h>
+#include "menu_handler.h"
+#include "network_subroutines.h"
 #include <glib/gi18n.h>
 
 /* For testing purposes use the local (not installed) ui file */
@@ -51,6 +52,9 @@ struct _Play_SoundPrivate
 
   /* The list of clusters that might contain sound effects. */
   GList *clusters;
+
+  /* A buffer for network messages. */
+  gchar *network_buffer;
 
   /* ANJUTA: Widgets declaration for play_sound.ui - DO NOT REMOVE */
 };
@@ -171,6 +175,9 @@ play_sound_new_window (GApplication * app, GFile * file)
         g_list_prepend (priv->sound_effects, sound_effect);
     }
 
+  /* Listen for network messages. */
+  priv->network_buffer = network_init (app);
+  
   /* The display is initialized; time to show it. */
   gtk_widget_show_all (GTK_WIDGET (top_window));
 }
@@ -336,7 +343,7 @@ play_sound_get_sound_effect (GtkWidget * object)
   return NULL;
 }
 
-/* Given a gstreamer element, Find the area above the top of the clusters, 
+/* Find the area above the top of the clusters, 
  * so it can be updated.  The parameter passed is the application, which
  * was passed through gstreamer_setup and the gstreamer signaling system
  * as an opaque value.  */
@@ -349,4 +356,16 @@ play_sound_find_common_area (GtkApplication * app)
   common_area = priv->common_area;
 
   return (common_area);
+}
+
+/* Find the network buffer.  The parameter passed is the application, which
+ * was passed through the various gio callbacks as an opaque value.  */
+gchar *
+play_sound_get_network_buffer (GtkApplication *app)
+{
+   Play_SoundPrivate *priv = PLAY_SOUND_APPLICATION (app)->priv;
+  gchar *network_buffer;
+
+  network_buffer = priv->network_buffer;
+  return (network_buffer);
 }

@@ -1,6 +1,6 @@
 /*
  * play_sound.h
- * Copyright © by 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>
+ * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  * 
  * play_sound is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -71,6 +71,9 @@ play_sound_get_type (void) G_GNUC_CONST;
 
 /* Given the application, find the common area above the clusters. */
  GtkWidget *play_sound_find_common_area (GtkApplication * app);
+
+/* Given the application, find the network buffer. */
+gchar *play_sound_get_network_buffer (GtkApplication *app);
 
 G_END_DECLS
 #endif /* _APPLICATION_H_ */

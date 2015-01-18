@@ -96,7 +96,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_play_sound_OBJECTS = main.$(OBJEXT) play_sound.$(OBJEXT) \
 	button_clicked.$(OBJEXT) gstreamer_utils.$(OBJEXT) \
 	message_handler.$(OBJEXT) update_display.$(OBJEXT) \
-	menu_handler.$(OBJEXT)
+	menu_handler.$(OBJEXT) network_subroutines.$(OBJEXT)
 play_sound_OBJECTS = $(am_play_sound_OBJECTS)
 am__DEPENDENCIES_1 =
 play_sound_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -269,10 +269,10 @@ OTOOL64 =
 PACKAGE = play_sound
 PACKAGE_BUGREPORT = John_Sauter@systemeyescomputerstore.com
 PACKAGE_NAME = play_sound
-PACKAGE_STRING = play_sound 0.12
+PACKAGE_STRING = play_sound 0.13
 PACKAGE_TARNAME = play_sound
 PACKAGE_URL = 
-PACKAGE_VERSION = 0.12
+PACKAGE_VERSION = 0.13
 PATH_SEPARATOR = :
 PKG_CONFIG = /usr/bin/pkg-config
 PKG_CONFIG_LIBDIR = 
@@ -289,7 +289,7 @@ SET_MAKE =
 SHELL = /bin/sh
 STRIP = strip
 USE_NLS = yes
-VERSION = 0.12
+VERSION = 0.13
 XGETTEXT = /usr/bin/xgettext
 abs_builddir = /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/Debug/src
 abs_srcdir = /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src
@@ -370,7 +370,9 @@ play_sound_SOURCES = \
 	update_display.c \
 	update_display.h \
 	menu_handler.c \
-	menu_handler.h	
+	menu_handler.h \
+	network_subroutines.c \
+	network_subroutines.h	
 
 play_sound_LDFLAGS = \
 	-Wl,--export-dynamic
@@ -476,6 +478,7 @@ include ./$(DEPDIR)/gstreamer_utils.Po
 include ./$(DEPDIR)/main.Po
 include ./$(DEPDIR)/menu_handler.Po
 include ./$(DEPDIR)/message_handler.Po
+include ./$(DEPDIR)/network_subroutines.Po
 include ./$(DEPDIR)/play_sound.Po
 include ./$(DEPDIR)/update_display.Po
 

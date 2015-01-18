@@ -32,7 +32,9 @@ play_sound_SOURCES = \
 	update_display.c \
 	update_display.h \
 	menu_handler.c \
-	menu_handler.h	
+	menu_handler.h \
+	network_subroutines.c \
+	network_subroutines.h	
 
 
 play_sound_LDFLAGS = \

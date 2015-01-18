@@ -1,10 +1,9 @@
-play_sound.o: \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.c \
- /usr/include/stdc-predef.h \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.h \
- /usr/include/gtk-3.0/gtk/gtk.h /usr/include/gtk-3.0/gdk/gdk.h \
- /usr/include/gtk-3.0/gdk/gdkconfig.h /usr/include/glib-2.0/glib.h \
- /usr/include/glib-2.0/glib/galloca.h /usr/include/glib-2.0/glib/gtypes.h \
+network_subroutines.o: \
+ /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/network_subroutines.c \
+ /usr/include/stdc-predef.h /usr/include/gtk-3.0/gtk/gtk.h \
+ /usr/include/gtk-3.0/gdk/gdk.h /usr/include/gtk-3.0/gdk/gdkconfig.h \
+ /usr/include/glib-2.0/glib.h /usr/include/glib-2.0/glib/galloca.h \
+ /usr/include/glib-2.0/glib/gtypes.h \
  /usr/lib64/glib-2.0/include/glibconfig.h \
  /usr/include/glib-2.0/glib/gmacros.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
@@ -575,6 +574,7 @@ play_sound.o: \
  /usr/include/gtk-3.0/gtk/deprecated/gtkvscale.h \
  /usr/include/gtk-3.0/gtk/deprecated/gtkvscrollbar.h \
  /usr/include/gtk-3.0/gtk/deprecated/gtkvseparator.h \
+ /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.h \
  /usr/include/gstreamer-1.0/gst/gst.h \
  /usr/include/gstreamer-1.0/gst/glib-compat.h \
  /usr/include/gstreamer-1.0/gst/gstenumtypes.h \
@@ -645,15 +645,9 @@ play_sound.o: \
  /usr/include/gstreamer-1.0/gst/gstutils.h \
  /usr/include/gstreamer-1.0/gst/gstparse.h \
  /usr/include/gstreamer-1.0/gst/gstcompat.h \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/gstreamer_utils.h \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/menu_handler.h \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/network_subroutines.h \
- /usr/include/glib-2.0/glib/gi18n.h /usr/include/libintl.h \
- /usr/include/string.h
+ /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/network_subroutines.h
 
 /usr/include/stdc-predef.h:
-
-/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.h:
 
 /usr/include/gtk-3.0/gtk/gtk.h:
 
@@ -1927,6 +1921,8 @@ play_sound.o: \
 
 /usr/include/gtk-3.0/gtk/deprecated/gtkvseparator.h:
 
+/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.h:
+
 /usr/include/gstreamer-1.0/gst/gst.h:
 
 /usr/include/gstreamer-1.0/gst/glib-compat.h:
@@ -2073,14 +2069,4 @@ play_sound.o: \
 
 /usr/include/gstreamer-1.0/gst/gstcompat.h:
 
-/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/gstreamer_utils.h:
-
-/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/menu_handler.h:
-
 /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/network_subroutines.h:
-
-/usr/include/glib-2.0/glib/gi18n.h:
-
-/usr/include/libintl.h:
-
-/usr/include/string.h:

@@ -1,3 +1,6 @@
+Version 0.13, January 18, 2015
+  Add the ability to receive text over the network.
+  
 Version 0.12, January 7, 2014
   Add a menu.  It just contains an empty preferences and Quit.
   
