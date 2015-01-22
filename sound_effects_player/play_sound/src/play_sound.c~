@@ -404,7 +404,7 @@ play_sound_start_cluster (int cluster_no, GApplication * app)
   struct sound_effect_str *sound_effect = NULL;
   gboolean sound_effect_found;
   GList *children_list;
-  GtkButton *start_button = NULL;
+  GtkButton *start_button;
   const gchar *child_name;
 
   /* Search through the sound effects for the one attached
@@ -457,7 +457,7 @@ play_sound_stop_cluster (int cluster_no, GApplication * app)
   struct sound_effect_str *sound_effect = NULL;
   gboolean sound_effect_found;
   GList *children_list;
-  GtkButton *stop_button = NULL;
+  GtkButton *stop_button;
   const gchar *child_name;
 
   /* Search through the sound effects for the one attached
@@ -484,7 +484,7 @@ play_sound_stop_cluster (int cluster_no, GApplication * app)
       while (children_list != NULL)
         {
           child_name = gtk_widget_get_name (children_list->data);
-          if (g_ascii_strcasecmp (child_name, "stop_button") == 0)
+          if (g_ascii_strcasecmp (child_name, "start_button") == 0)
             {
               stop_button = children_list->data;
               break;

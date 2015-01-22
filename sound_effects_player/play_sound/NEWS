@@ -1,16 +1,19 @@
+Version 0.14, January 22, 2015
+  Parse and execute start, stop and quit commands received over the network.
+
 Version 0.13, January 18, 2015
   Add the ability to receive text over the network.
   
-Version 0.12, January 7, 2014
+Version 0.12, January 7, 2015
   Add a menu.  It just contains an empty preferences and Quit.
   
-Version 0.11, January 4, 2014
+Version 0.11, January 4, 2015
   Add a VU meter.
   
-Version 0.10, January 4, 2014
+Version 0.10, January 4, 2015
   Provide more than one sound.
 
-Version 0.9, January 3, 2014
+Version 0.9, January 3, 2015
   Add scroll bars to the cluster section.
 
 Version 0.8, January 2, 2015
@@ -27,7 +30,7 @@ Version 0.5, January 1, 2015
   cleanups.
   
 Version 0.4, December 31, 2014
-  Some minor improvements in comments, and some declatations in support of
+  Some minor improvements in comments, and some declarations in support of
   eventually handling files instead of just a test tone.
 
 Version 0.3, December 29, 2014
@@ -37,4 +40,4 @@ Version 0.2, December 28, 2014
   Improved comments, connected volume control.
 	
 Version 0.1, December 28, 2014
-  Initial distribution, very little functionality.
+  Initial version, little more than a default project.

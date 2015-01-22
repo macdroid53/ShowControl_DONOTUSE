@@ -96,7 +96,8 @@ PROGRAMS = $(bin_PROGRAMS)
 am_play_sound_OBJECTS = main.$(OBJEXT) play_sound.$(OBJEXT) \
 	button_clicked.$(OBJEXT) gstreamer_utils.$(OBJEXT) \
 	message_handler.$(OBJEXT) update_display.$(OBJEXT) \
-	menu_handler.$(OBJEXT) network_subroutines.$(OBJEXT)
+	menu_handler.$(OBJEXT) network_subroutines.$(OBJEXT) \
+	parse_subroutines.$(OBJEXT)
 play_sound_OBJECTS = $(am_play_sound_OBJECTS)
 am__DEPENDENCIES_1 =
 play_sound_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -372,7 +373,9 @@ play_sound_SOURCES = \
 	menu_handler.c \
 	menu_handler.h \
 	network_subroutines.c \
-	network_subroutines.h	
+	network_subroutines.h \
+	parse_subroutines.c \
+	parse_subroutines.h	
 
 play_sound_LDFLAGS = \
 	-Wl,--export-dynamic
@@ -479,6 +482,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_handler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message_handler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/network_subroutines.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/play_sound.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/update_display.Po@am__quote@
 

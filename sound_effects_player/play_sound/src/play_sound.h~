@@ -50,13 +50,15 @@ GType
 play_sound_get_type (void) G_GNUC_CONST;
      Play_Sound *play_sound_new (void);
 
-/* Information about a sound effect we might play */
+/* Information about a sound effect we might play.  This includes the 
+ * cluster the sound is displayed in, if any, the name of the sound file, 
+ * and the Gstreamer bin that controls the sound. */
  struct sound_effect_str
  {
-   GtkWidget *cluster;    /* The cluster the sound is in, if any */
-   gchar *file_name;      /* The name of the file holding the sound */
+   GtkWidget *cluster;  /* The cluster the sound is in */
+   gchar *file_name;  /* The name of the file holding the sound */
    GstBin *sound_control; /* The Gstreamer bin for this sound effect */
-   gint cluster_number;   /* The number of the cluster the sound is in */
+       gint cluster_number; /
  };
 
 /* Callbacks */

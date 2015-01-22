@@ -44,9 +44,9 @@ receive_data_callback (GObject * source_object, GAsyncResult * result,
       if (error)
         g_error_free (error);
       g_input_stream_close (istream, NULL, NULL);
-    }
-  if (nread != 0)
-    {
+  }
+    if (nread != 0)
+  {
       network_buffer = play_sound_get_network_buffer (user_data);
       network_buffer[nread] = '\0';
       /* Because network data is streamed, data may be received in

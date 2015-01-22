@@ -1,24 +1,31 @@
-play_sound.o: \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.c \
- /usr/include/stdc-predef.h \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.h \
+parse_subroutines.o: \
+ /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/parse_subroutines.c \
+ /usr/include/stdc-predef.h /usr/include/stdlib.h /usr/include/features.h \
+ /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h \
+ /usr/include/gnu/stubs.h /usr/include/gnu/stubs-64.h \
+ /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
+ /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
+ /usr/include/endian.h /usr/include/bits/endian.h \
+ /usr/include/bits/byteswap.h /usr/include/bits/types.h \
+ /usr/include/bits/typesizes.h /usr/include/bits/byteswap-16.h \
+ /usr/include/sys/types.h /usr/include/time.h /usr/include/sys/select.h \
+ /usr/include/bits/select.h /usr/include/bits/sigset.h \
+ /usr/include/bits/time.h /usr/include/sys/sysmacros.h \
+ /usr/include/bits/pthreadtypes.h /usr/include/alloca.h \
+ /usr/include/bits/stdlib-float.h \
+ /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/parse_subroutines.h \
  /usr/include/gtk-3.0/gtk/gtk.h /usr/include/gtk-3.0/gdk/gdk.h \
  /usr/include/gtk-3.0/gdk/gdkconfig.h /usr/include/glib-2.0/glib.h \
  /usr/include/glib-2.0/glib/galloca.h /usr/include/glib-2.0/glib/gtypes.h \
  /usr/lib64/glib-2.0/include/glibconfig.h \
  /usr/include/glib-2.0/glib/gmacros.h \
- /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/limits.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/syslimits.h \
- /usr/include/limits.h /usr/include/features.h /usr/include/sys/cdefs.h \
- /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
- /usr/include/gnu/stubs-64.h /usr/include/bits/posix1_lim.h \
+ /usr/include/limits.h /usr/include/bits/posix1_lim.h \
  /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
  /usr/include/bits/posix2_lim.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/float.h \
- /usr/include/glib-2.0/glib/gversionmacros.h /usr/include/time.h \
- /usr/include/bits/time.h /usr/include/bits/types.h \
- /usr/include/bits/typesizes.h /usr/include/xlocale.h \
+ /usr/include/glib-2.0/glib/gversionmacros.h /usr/include/xlocale.h \
  /usr/include/glib-2.0/glib/garray.h \
  /usr/include/glib-2.0/glib/gasyncqueue.h \
  /usr/include/glib-2.0/glib/gthread.h \
@@ -26,10 +33,9 @@ play_sound.o: \
  /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stdarg.h \
  /usr/include/glib-2.0/glib/gquark.h \
  /usr/include/glib-2.0/glib/gbacktrace.h /usr/include/signal.h \
- /usr/include/bits/sigset.h /usr/include/bits/signum.h \
- /usr/include/bits/siginfo.h /usr/include/bits/sigaction.h \
- /usr/include/bits/sigcontext.h /usr/include/bits/sigstack.h \
- /usr/include/sys/ucontext.h /usr/include/bits/pthreadtypes.h \
+ /usr/include/bits/signum.h /usr/include/bits/siginfo.h \
+ /usr/include/bits/sigaction.h /usr/include/bits/sigcontext.h \
+ /usr/include/bits/sigstack.h /usr/include/sys/ucontext.h \
  /usr/include/bits/sigthread.h /usr/include/glib-2.0/glib/gbase64.h \
  /usr/include/glib-2.0/glib/gbitlock.h \
  /usr/include/glib-2.0/glib/gbookmarkfile.h \
@@ -83,13 +89,9 @@ play_sound.o: \
  /usr/include/glib-2.0/glib/deprecated/gcompletion.h \
  /usr/include/glib-2.0/glib/deprecated/gmain.h \
  /usr/include/glib-2.0/glib/deprecated/grel.h \
- /usr/include/glib-2.0/glib/deprecated/gthread.h /usr/include/sys/types.h \
- /usr/include/endian.h /usr/include/bits/endian.h \
- /usr/include/bits/byteswap.h /usr/include/bits/byteswap-16.h \
- /usr/include/sys/select.h /usr/include/bits/select.h \
- /usr/include/sys/sysmacros.h /usr/include/pthread.h /usr/include/sched.h \
- /usr/include/bits/sched.h /usr/include/bits/setjmp.h \
- /usr/include/gtk-3.0/gdk/gdkversionmacros.h \
+ /usr/include/glib-2.0/glib/deprecated/gthread.h /usr/include/pthread.h \
+ /usr/include/sched.h /usr/include/bits/sched.h \
+ /usr/include/bits/setjmp.h /usr/include/gtk-3.0/gdk/gdkversionmacros.h \
  /usr/include/gtk-3.0/gdk/gdkapplaunchcontext.h \
  /usr/include/glib-2.0/gio/gio.h /usr/include/glib-2.0/gio/giotypes.h \
  /usr/include/glib-2.0/gio/gioenums.h /usr/include/glib-2.0/glib-object.h \
@@ -575,6 +577,7 @@ play_sound.o: \
  /usr/include/gtk-3.0/gtk/deprecated/gtkvscale.h \
  /usr/include/gtk-3.0/gtk/deprecated/gtkvscrollbar.h \
  /usr/include/gtk-3.0/gtk/deprecated/gtkvseparator.h \
+ /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.h \
  /usr/include/gstreamer-1.0/gst/gst.h \
  /usr/include/gstreamer-1.0/gst/glib-compat.h \
  /usr/include/gstreamer-1.0/gst/gstenumtypes.h \
@@ -644,18 +647,61 @@ play_sound.o: \
  /usr/include/gstreamer-1.0/gst/gsttypefindfactory.h \
  /usr/include/gstreamer-1.0/gst/gstutils.h \
  /usr/include/gstreamer-1.0/gst/gstparse.h \
- /usr/include/gstreamer-1.0/gst/gstcompat.h \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/gstreamer_utils.h \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/menu_handler.h \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/network_subroutines.h \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/parse_subroutines.h \
- /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/button_clicked.h \
- /usr/include/glib-2.0/glib/gi18n.h /usr/include/libintl.h \
- /usr/include/string.h
+ /usr/include/gstreamer-1.0/gst/gstcompat.h
 
 /usr/include/stdc-predef.h:
 
-/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.h:
+/usr/include/stdlib.h:
+
+/usr/include/features.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-64.h:
+
+/usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h:
+
+/usr/include/bits/waitflags.h:
+
+/usr/include/bits/waitstatus.h:
+
+/usr/include/endian.h:
+
+/usr/include/bits/endian.h:
+
+/usr/include/bits/byteswap.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/bits/byteswap-16.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/time.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/bits/select.h:
+
+/usr/include/bits/sigset.h:
+
+/usr/include/bits/time.h:
+
+/usr/include/sys/sysmacros.h:
+
+/usr/include/bits/pthreadtypes.h:
+
+/usr/include/alloca.h:
+
+/usr/include/bits/stdlib-float.h:
+
+/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/parse_subroutines.h:
 
 /usr/include/gtk-3.0/gtk/gtk.h:
 
@@ -673,23 +719,11 @@ play_sound.o: \
 
 /usr/include/glib-2.0/glib/gmacros.h:
 
-/usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/stddef.h:
-
 /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/limits.h:
 
 /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/syslimits.h:
 
 /usr/include/limits.h:
-
-/usr/include/features.h:
-
-/usr/include/sys/cdefs.h:
-
-/usr/include/bits/wordsize.h:
-
-/usr/include/gnu/stubs.h:
-
-/usr/include/gnu/stubs-64.h:
 
 /usr/include/bits/posix1_lim.h:
 
@@ -702,14 +736,6 @@ play_sound.o: \
 /usr/lib/gcc/x86_64-redhat-linux/4.9.2/include/float.h:
 
 /usr/include/glib-2.0/glib/gversionmacros.h:
-
-/usr/include/time.h:
-
-/usr/include/bits/time.h:
-
-/usr/include/bits/types.h:
-
-/usr/include/bits/typesizes.h:
 
 /usr/include/xlocale.h:
 
@@ -731,8 +757,6 @@ play_sound.o: \
 
 /usr/include/signal.h:
 
-/usr/include/bits/sigset.h:
-
 /usr/include/bits/signum.h:
 
 /usr/include/bits/siginfo.h:
@@ -744,8 +768,6 @@ play_sound.o: \
 /usr/include/bits/sigstack.h:
 
 /usr/include/sys/ucontext.h:
-
-/usr/include/bits/pthreadtypes.h:
 
 /usr/include/bits/sigthread.h:
 
@@ -878,22 +900,6 @@ play_sound.o: \
 /usr/include/glib-2.0/glib/deprecated/grel.h:
 
 /usr/include/glib-2.0/glib/deprecated/gthread.h:
-
-/usr/include/sys/types.h:
-
-/usr/include/endian.h:
-
-/usr/include/bits/endian.h:
-
-/usr/include/bits/byteswap.h:
-
-/usr/include/bits/byteswap-16.h:
-
-/usr/include/sys/select.h:
-
-/usr/include/bits/select.h:
-
-/usr/include/sys/sysmacros.h:
 
 /usr/include/pthread.h:
 
@@ -1929,6 +1935,8 @@ play_sound.o: \
 
 /usr/include/gtk-3.0/gtk/deprecated/gtkvseparator.h:
 
+/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.h:
+
 /usr/include/gstreamer-1.0/gst/gst.h:
 
 /usr/include/gstreamer-1.0/gst/glib-compat.h:
@@ -2074,19 +2082,3 @@ play_sound.o: \
 /usr/include/gstreamer-1.0/gst/gstparse.h:
 
 /usr/include/gstreamer-1.0/gst/gstcompat.h:
-
-/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/gstreamer_utils.h:
-
-/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/menu_handler.h:
-
-/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/network_subroutines.h:
-
-/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/parse_subroutines.h:
-
-/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/button_clicked.h:
-
-/usr/include/glib-2.0/glib/gi18n.h:
-
-/usr/include/libintl.h:
-
-/usr/include/string.h:

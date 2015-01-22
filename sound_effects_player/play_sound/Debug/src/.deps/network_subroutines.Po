@@ -645,6 +645,7 @@ network_subroutines.o: \
  /usr/include/gstreamer-1.0/gst/gstutils.h \
  /usr/include/gstreamer-1.0/gst/gstparse.h \
  /usr/include/gstreamer-1.0/gst/gstcompat.h \
+ /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/parse_subroutines.h \
  /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/network_subroutines.h
 
 /usr/include/stdc-predef.h:
@@ -2068,5 +2069,7 @@ network_subroutines.o: \
 /usr/include/gstreamer-1.0/gst/gstparse.h:
 
 /usr/include/gstreamer-1.0/gst/gstcompat.h:
+
+/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/parse_subroutines.h:
 
 /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/network_subroutines.h:

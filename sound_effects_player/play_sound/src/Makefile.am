@@ -34,7 +34,9 @@ play_sound_SOURCES = \
 	menu_handler.c \
 	menu_handler.h \
 	network_subroutines.c \
-	network_subroutines.h	
+	network_subroutines.h \
+	parse_subroutines.c \
+	parse_subroutines.h	
 
 
 play_sound_LDFLAGS = \

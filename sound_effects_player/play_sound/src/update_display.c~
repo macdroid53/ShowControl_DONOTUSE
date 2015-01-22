@@ -35,7 +35,7 @@ update_vu_meter (gpointer * user_data, gint channel, gdouble new_value)
   GtkBox *channel_row = NULL;
   gint64 channel_number;
 
-  common_area = play_sound_find_common_area (G_APPLICATION (user_data));
+  common_area = play_sound_find_common_area (GTK_APPLICATION (user_data));
 
   /* Find the VU meter in the common area. */
   children_list = gtk_container_get_children (GTK_CONTAINER (common_area));
