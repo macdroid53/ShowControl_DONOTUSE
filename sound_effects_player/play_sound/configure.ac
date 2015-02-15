@@ -1,11 +1,12 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl Created by Anjuta application wizard.
+dnl Created originally by the Anjuta application wizard.
 
-AC_INIT(play_sound, 0.15, [John_Sauter@systemeyescomputerstore.com], play_sound)
+AC_INIT(play_sound, 0.16, [John_Sauter@systemeyescomputerstore.com], play_sound)
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([1.11])
 AM_SILENT_RULES([yes])
 AM_MAINTAINER_MODE([enable])
+AC_CONFIG_MACRO_DIR([m4])
 AC_PROG_CC
 AC_CHECK_LIB([m], [pow])
 

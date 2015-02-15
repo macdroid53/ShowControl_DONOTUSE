@@ -1,5 +1,7 @@
 ## Process this file with automake to produce Makefile.in
-## Created by Anjuta
+## Created originally by Anjuta
+
+ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = src po
 
@@ -17,6 +19,7 @@ INTLTOOL_FILES = intltool-extract.in \
 	intltool-update.in
 
 EXTRA_DIST = \
+	autogen.sh \
 	$(INTLTOOL_FILES)
 
 DISTCLEANFILES = intltool-extract \

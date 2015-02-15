@@ -15,7 +15,6 @@ Working directories=../../.
 
 [Project Manager]
 Shortcut=play_sound
-Expand=play_sound%%%play_sound//src%%%play_sound//src//play_sound
 
 [Build]
 Configuration list=1:Default:%%%1:Debug:Debug%%%1:Profiling:Profiling%%%1:Optimized:Optimized%%%1:MinGW32:MinGW32

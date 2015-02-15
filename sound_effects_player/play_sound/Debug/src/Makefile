@@ -84,7 +84,10 @@ subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/intltool.m4 \
+	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
+	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
+	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -270,10 +273,10 @@ OTOOL64 =
 PACKAGE = play_sound
 PACKAGE_BUGREPORT = John_Sauter@systemeyescomputerstore.com
 PACKAGE_NAME = play_sound
-PACKAGE_STRING = play_sound 0.14
+PACKAGE_STRING = play_sound 0.16
 PACKAGE_TARNAME = play_sound
 PACKAGE_URL = 
-PACKAGE_VERSION = 0.14
+PACKAGE_VERSION = 0.16
 PATH_SEPARATOR = :
 PKG_CONFIG = /usr/bin/pkg-config
 PKG_CONFIG_LIBDIR = 
@@ -290,7 +293,7 @@ SET_MAKE =
 SHELL = /bin/sh
 STRIP = strip
 USE_NLS = yes
-VERSION = 0.14
+VERSION = 0.16
 XGETTEXT = /usr/bin/xgettext
 abs_builddir = /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/Debug/src
 abs_srcdir = /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src
