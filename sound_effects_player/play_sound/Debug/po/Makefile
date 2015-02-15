@@ -19,7 +19,7 @@
 
 GETTEXT_PACKAGE = play_sound
 PACKAGE = play_sound
-VERSION = 0.16
+VERSION = 0.17
 
 SHELL = /bin/sh
 
@@ -66,7 +66,9 @@ DISTFILES = Makefile.in.in POTFILES.in $(POFILES)
 EXTRA_DISTFILES = ChangeLog POTFILES.skip Makevars LINGUAS
 
 POTFILES = \
-	/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/main.c
+	/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/main.c \
+	/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/app-menu.ui \
+	/home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.ui
 
 CATALOGS=$(shell LINGUAS="$(USE_LINGUAS)"; for lang in $$LINGUAS; do printf "$$lang.gmo "; done)
 

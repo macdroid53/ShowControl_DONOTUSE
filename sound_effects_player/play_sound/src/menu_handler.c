@@ -48,8 +48,9 @@ play_sound_menu_init (GApplication * app, gchar * file_name)
 {
   GtkBuilder *builder;
   GError *error = NULL;
-  GObject *top_menu_object;
   GMenuModel *app_menu;
+  GMenuModel *menu_bar;
+  
   const gchar *quit_accels[2] = { "<Ctrl>Q", NULL };
 
   g_action_map_add_action_entries (G_ACTION_MAP (app),
@@ -71,13 +72,12 @@ play_sound_menu_init (GApplication * app, gchar * file_name)
   /* Auto-connect signal handlers. */
   gtk_builder_connect_signals (builder, app);
 
-  /* Find the top-level menu item and tell the application about it. */
-  top_menu_object = gtk_builder_get_object (builder, "appmenu");
-  if (top_menu_object != NULL)
-    {
-      app_menu = G_MENU_MODEL (top_menu_object);
-      gtk_application_set_app_menu (GTK_APPLICATION (app), app_menu);
-    }
+  /* Find the application menu and the menu bar. */
+  app_menu = (GMenuModel *) gtk_builder_get_object (builder, "appmenu");
+  menu_bar = (GMenuModel *) gtk_builder_get_object (builder, "menubar");
+  gtk_application_set_app_menu (GTK_APPLICATION (app), app_menu);
+  gtk_application_set_menubar (GTK_APPLICATION (app), menu_bar);
+  
   g_object_unref (builder);
   
   return;

@@ -32,7 +32,9 @@
                         <property name="name">01</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -45,7 +47,9 @@
                         <property name="name">02</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -58,7 +62,9 @@
                         <property name="name">03</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -71,7 +77,9 @@
                         <property name="name">04</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -84,7 +92,9 @@
                         <property name="name">05</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -97,7 +107,9 @@
                         <property name="name">06</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -110,7 +122,9 @@
                         <property name="name">07</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -123,7 +137,9 @@
                         <property name="name">08</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -136,7 +152,9 @@
                         <property name="name">09</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -149,7 +167,9 @@
                         <property name="name">10</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -162,7 +182,9 @@
                         <property name="name">11</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -175,7 +197,9 @@
                         <property name="name">12</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -188,7 +212,9 @@
                         <property name="name">13</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -201,7 +227,9 @@
                         <property name="name">14</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -214,7 +242,9 @@
                         <property name="name">15</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -227,7 +257,9 @@
                         <property name="name">16</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -240,7 +272,9 @@
                         <property name="name">17</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -253,7 +287,9 @@
                         <property name="name">18</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -266,7 +302,9 @@
                         <property name="name">19</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -279,7 +317,9 @@
                         <property name="name">20</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -292,7 +332,9 @@
                         <property name="name">21</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -305,7 +347,9 @@
                         <property name="name">22</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -318,7 +362,9 @@
                         <property name="name">23</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -331,7 +377,9 @@
                         <property name="name">24</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -344,7 +392,9 @@
                         <property name="name">25</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -357,7 +407,9 @@
                         <property name="name">26</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -370,7 +422,9 @@
                         <property name="name">27</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -383,7 +437,9 @@
                         <property name="name">28</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -396,7 +452,9 @@
                         <property name="name">29</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -409,7 +467,9 @@
                         <property name="name">30</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -422,7 +482,9 @@
                         <property name="name">31</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -435,7 +497,9 @@
                         <property name="name">32</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -448,7 +512,9 @@
                         <property name="name">33</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -461,7 +527,9 @@
                         <property name="name">34</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -474,7 +542,9 @@
                         <property name="name">35</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -487,7 +557,9 @@
                         <property name="name">36</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -500,7 +572,9 @@
                         <property name="name">37</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -513,7 +587,9 @@
                         <property name="name">38</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -526,7 +602,9 @@
                         <property name="name">39</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -539,7 +617,9 @@
                         <property name="name">40</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -552,7 +632,9 @@
                         <property name="name">41</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -565,7 +647,9 @@
                         <property name="name">42</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -578,7 +662,9 @@
                         <property name="name">43</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -591,7 +677,9 @@
                         <property name="name">44</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -604,7 +692,9 @@
                         <property name="name">45</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -617,7 +707,9 @@
                         <property name="name">46</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -630,7 +722,9 @@
                         <property name="name">47</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -643,7 +737,9 @@
                         <property name="name">48</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -656,7 +752,9 @@
                         <property name="name">49</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -669,7 +767,9 @@
                         <property name="name">50</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -694,7 +794,9 @@
                         <property name="name">01</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -707,7 +809,9 @@
                         <property name="name">02</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -720,7 +824,9 @@
                         <property name="name">03</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -733,7 +839,9 @@
                         <property name="name">04</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -746,7 +854,9 @@
                         <property name="name">05</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -759,7 +869,9 @@
                         <property name="name">06</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -772,7 +884,9 @@
                         <property name="name">07</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -785,7 +899,9 @@
                         <property name="name">08</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -798,7 +914,9 @@
                         <property name="name">09</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -811,7 +929,9 @@
                         <property name="name">10</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -824,7 +944,9 @@
                         <property name="name">11</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -837,7 +959,9 @@
                         <property name="name">12</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -850,7 +974,9 @@
                         <property name="name">13</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -863,7 +989,9 @@
                         <property name="name">14</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -876,7 +1004,9 @@
                         <property name="name">15</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -889,7 +1019,9 @@
                         <property name="name">16</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -902,7 +1034,9 @@
                         <property name="name">17</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -915,7 +1049,9 @@
                         <property name="name">18</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -928,7 +1064,9 @@
                         <property name="name">19</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -941,7 +1079,9 @@
                         <property name="name">20</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -954,7 +1094,9 @@
                         <property name="name">21</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -967,7 +1109,9 @@
                         <property name="name">22</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -980,7 +1124,9 @@
                         <property name="name">23</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -993,7 +1139,9 @@
                         <property name="name">24</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1006,7 +1154,9 @@
                         <property name="name">25</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1019,7 +1169,9 @@
                         <property name="name">26</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1032,7 +1184,9 @@
                         <property name="name">27</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1045,7 +1199,9 @@
                         <property name="name">28</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1058,7 +1214,9 @@
                         <property name="name">29</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1071,7 +1229,9 @@
                         <property name="name">30</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1084,7 +1244,9 @@
                         <property name="name">31</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1097,7 +1259,9 @@
                         <property name="name">32</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1110,7 +1274,9 @@
                         <property name="name">33</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1123,7 +1289,9 @@
                         <property name="name">34</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1136,7 +1304,9 @@
                         <property name="name">35</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1149,7 +1319,9 @@
                         <property name="name">36</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1162,7 +1334,9 @@
                         <property name="name">37</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1175,7 +1349,9 @@
                         <property name="name">38</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1188,7 +1364,9 @@
                         <property name="name">39</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1201,7 +1379,9 @@
                         <property name="name">40</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1214,7 +1394,9 @@
                         <property name="name">41</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1227,7 +1409,9 @@
                         <property name="name">42</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1240,7 +1424,9 @@
                         <property name="name">43</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1253,7 +1439,9 @@
                         <property name="name">44</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1266,7 +1454,9 @@
                         <property name="name">45</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1279,7 +1469,9 @@
                         <property name="name">46</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1292,7 +1484,9 @@
                         <property name="name">47</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1305,7 +1499,9 @@
                         <property name="name">48</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1318,7 +1514,9 @@
                         <property name="name">49</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1331,7 +1529,9 @@
                         <property name="name">50</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">label</property>
+                        <property name="label" translatable="yes"> </property>
+                        <property name="width_chars">1</property>
+                        <property name="max_width_chars">1</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>

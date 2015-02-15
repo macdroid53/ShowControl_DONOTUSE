@@ -47,18 +47,20 @@
   </layout>
   <layout name="__default__">
     <dock name="__dock_1" floating="no" width="-1" height="-1" floatx="0" floaty="0" skip-taskbar="yes">
-      <paned orientation="vertical" locked="no" iconified="no" closed="no" position="521">
-        <paned orientation="horizontal" locked="no" iconified="no" closed="no" position="620">
-          <notebook orientation="vertical" locked="no" iconified="no" closed="no" page="6">
-            <item name="AnjutaFileManager" orientation="vertical" locked="no" iconified="no" closed="no"/>
-            <item name="AnjutaProjectManager" orientation="vertical" locked="no" iconified="no" closed="no"/>
-            <item name="AnjutaSymbolBrowser" orientation="horizontal" locked="no" iconified="no" closed="yes"/>
-            <item name="AnjutaSymbolDB" orientation="vertical" locked="no" iconified="no" closed="yes"/>
-            <item name="AnjutaDevhelpIndex" orientation="vertical" locked="no" iconified="no" closed="yes"/>
+      <paned orientation="vertical" locked="no" iconified="no" closed="no" position="778">
+        <paned orientation="horizontal" locked="no" iconified="no" closed="no" position="905">
+          <paned orientation="horizontal" locked="no" iconified="no" closed="no" position="304">
+            <notebook orientation="vertical" locked="no" iconified="no" closed="no" page="1">
+              <item name="AnjutaFileManager" orientation="vertical" locked="no" iconified="no" closed="no"/>
+              <item name="AnjutaProjectManager" orientation="vertical" locked="no" iconified="no" closed="no"/>
+              <item name="AnjutaSymbolBrowser" orientation="horizontal" locked="no" iconified="no" closed="yes"/>
+              <item name="AnjutaSymbolDB" orientation="vertical" locked="no" iconified="no" closed="yes"/>
+              <item name="AnjutaDevhelpIndex" orientation="vertical" locked="no" iconified="no" closed="yes"/>
+              <item name="AnjutaGladePalette" orientation="vertical" locked="no" iconified="no" closed="yes"/>
+              <item name="AnjutaDebuggerRegisters" orientation="vertical" locked="no" iconified="no" closed="yes"/>
+            </notebook>
             <item name="AnjutaGladeTree" orientation="vertical" locked="no" iconified="no" closed="no"/>
-            <item name="AnjutaGladePalette" orientation="vertical" locked="no" iconified="no" closed="no"/>
-            <item name="AnjutaDebuggerRegisters" orientation="vertical" locked="no" iconified="no" closed="yes"/>
-          </notebook>
+          </paned>
           <paned orientation="horizontal" locked="no" iconified="no" closed="no" position="500">
             <paned orientation="vertical" locked="no" iconified="no" closed="no" position="200">
               <notebook orientation="vertical" locked="no" iconified="no" closed="yes" page="-1"/>
@@ -71,7 +73,7 @@
                 <item name="AnjutaSamplePlugin" orientation="horizontal" locked="no" iconified="no" closed="yes"/>
                 <item name="AnjutaGladeEditor" orientation="horizontal" locked="no" iconified="no" closed="yes"/>
                 <item name="AnjutaSubversionLogViewer" orientation="horizontal" locked="no" iconified="no" closed="yes"/>
-                <item name="AnjutaDebuggerMemory" orientation="vertical" locked="no" iconified="no" closed="no"/>
+                <item name="AnjutaDebuggerMemory" orientation="vertical" locked="no" iconified="no" closed="yes"/>
               </notebook>
             </paned>
             <notebook orientation="vertical" locked="no" iconified="no" closed="yes" page="-1"/>
@@ -79,13 +81,13 @@
         </paned>
         <paned orientation="vertical" locked="no" iconified="no" closed="no" position="135">
           <item name="AnjutaDebuggerLocals" orientation="vertical" locked="no" iconified="no" closed="yes"/>
-          <paned orientation="vertical" locked="no" iconified="no" closed="no" position="166">
+          <paned orientation="vertical" locked="no" iconified="no" closed="no" position="75">
             <item name="AnjutaTerminal" orientation="vertical" locked="no" iconified="no" closed="no"/>
-            <notebook orientation="vertical" locked="no" iconified="no" closed="no" page="2">
+            <notebook orientation="vertical" locked="no" iconified="no" closed="no" page="1">
               <item name="AnjutaDebuggerWatch" orientation="vertical" locked="no" iconified="no" closed="yes"/>
               <item name="AnjutaDebuggerBreakpoints" orientation="vertical" locked="no" iconified="no" closed="no"/>
-              <item name="AnjutaMessageView" orientation="vertical" locked="no" iconified="no" closed="no"/>
               <item name="AnjutaDebuggerStack" orientation="vertical" locked="no" iconified="no" closed="yes"/>
+              <item name="AnjutaMessageView" orientation="vertical" locked="no" iconified="no" closed="yes"/>
             </notebook>
           </paned>
         </paned>
