@@ -19,7 +19,7 @@
 
 GETTEXT_PACKAGE = play_sound
 PACKAGE = play_sound
-VERSION = 0.17
+VERSION = 0.18
 
 SHELL = /bin/sh
 

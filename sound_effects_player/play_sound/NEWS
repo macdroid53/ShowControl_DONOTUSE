@@ -1,3 +1,6 @@
+Version 0.18, no date yet
+  Make the dependence on GTK+-3.0 version 3.14 clearer.
+  
 Version 0.17, February 15, 2015
   Add a menu bar
   
