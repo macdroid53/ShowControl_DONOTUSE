@@ -43,7 +43,7 @@ struct _Play_SoundPrivate
   GstPipeline *pipeline;
 
   /* The top-level gtk window. */
-  GtkWidget *top_window;
+  GtkWindow *top_window;
 
   /* The common area, needed for updating the display asynchronously. */
   GtkWidget *common_area;
@@ -61,6 +61,9 @@ struct _Play_SoundPrivate
   /* The persistent parser information. */
   void *parser_info;
 
+  /* The key-value file that holds parameters for the program. */
+  GKeyFile *parameter_file;
+  
   /* ANJUTA: Widgets declaration for play_sound.ui - DO NOT REMOVE */
 };
 
@@ -68,7 +71,7 @@ struct _Play_SoundPrivate
 static void
 play_sound_new_window (GApplication * app, GFile * file)
 {
-  GtkWidget *top_window;
+  GtkWindow *top_window;
   GtkWidget *common_area;
   GtkBuilder *builder;
   GError *error = NULL;
@@ -95,8 +98,8 @@ play_sound_new_window (GApplication * app, GFile * file)
   gtk_builder_connect_signals (builder, app);
 
   /* Get the top-level window object from the ui file. */
-  top_window = GTK_WIDGET (gtk_builder_get_object (builder, TOP_WINDOW));
-  priv->top_window = GTK_WIDGET (top_window);
+  top_window = GTK_WINDOW (gtk_builder_get_object (builder, TOP_WINDOW));
+  priv->top_window = top_window;
   if (!top_window)
     {
       g_critical ("Widget \"%s\" is missing in file %s.", TOP_WINDOW,
@@ -129,7 +132,7 @@ play_sound_new_window (GApplication * app, GFile * file)
 
   g_object_unref (builder);
 
-  gtk_window_set_application (GTK_WINDOW (top_window), GTK_APPLICATION (app));
+  gtk_window_set_application (top_window, GTK_APPLICATION (app));
 
   if (file != NULL)
     {
@@ -392,6 +395,44 @@ play_sound_get_parse_info (GApplication * app)
 
   parser_info = priv->parser_info;
   return (parser_info);
+}
+
+/* Find the top-level window, to use as the transient parent for
+ * dialogs. */
+GtkWindow *
+play_sound_get_top_window (GApplication * app)
+{
+  Play_SoundPrivate *priv = PLAY_SOUND_APPLICATION (app)->priv;
+  GtkWindow *top_window;
+
+  top_window = priv->top_window;
+  return (top_window);
+}
+
+/* Find the key-value file which contains the parameters. */
+GKeyFile *
+play_sound_get_parameter_file (GApplication * app)
+{
+  Play_SoundPrivate *priv = PLAY_SOUND_APPLICATION (app)->priv;
+  GKeyFile *parameter_file;
+
+  parameter_file = priv->parameter_file;
+  return (parameter_file);
+}
+
+/* Set the key-value file which contains the parameters. */
+void
+play_sound_set_parameter_file (GKeyFile * parameter_file, GApplication * app)
+{
+  Play_SoundPrivate *priv = PLAY_SOUND_APPLICATION (app)->priv;
+
+  if (priv->parameter_file != NULL)
+    {
+      g_key_file_free (priv->parameter_file);
+      priv->parameter_file = NULL;
+    }
+  priv->parameter_file = parameter_file;
+  return;
 }
 
 /* Start playing the sound in a specified cluster. */
