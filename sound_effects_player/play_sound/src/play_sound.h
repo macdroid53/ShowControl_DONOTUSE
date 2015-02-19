@@ -69,8 +69,8 @@ struct sound_effect_str *play_sound_get_sound_effect (GtkWidget * object);
 /* Given the application, find the common area above the clusters. */
 GtkWidget *play_sound_find_common_area (GApplication * app);
 
-/* Given the application, find the network buffer. */
-gchar *play_sound_get_network_buffer (GApplication * app);
+/* Given the application, find the network information. */
+void *play_sound_get_network_data (GApplication * app);
 
 /* Given the application, find the parser information. */
 void *play_sound_get_parse_info (GApplication * app);

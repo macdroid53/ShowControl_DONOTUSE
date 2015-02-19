@@ -55,8 +55,8 @@ struct _Play_SoundPrivate
   /* The list of clusters that might contain sound effects. */
   GList *clusters;
 
-  /* A buffer for network messages. */
-  gchar *network_buffer;
+  /* The persistent network information. */
+  void *network_data;
 
   /* The persistent parser information. */
   void *parser_info;
@@ -190,7 +190,7 @@ play_sound_new_window (GApplication * app, GFile * file)
   priv->parser_info = parse_init (app);
 
   /* Listen for network messages. */
-  priv->network_buffer = network_init (app);
+  priv->network_data = network_init (app);
 
   /* The display is initialized; time to show it. */
   gtk_widget_show_all (GTK_WIDGET (top_window));
@@ -372,20 +372,19 @@ play_sound_find_common_area (GApplication * app)
   return (common_area);
 }
 
-/* Find the network buffer.  The parameter passed is the application, which
+/* Find the network information.  The parameter passed is the application, which
  * was passed through the various gio callbacks as an opaque value.  */
-gchar *
-play_sound_get_network_buffer (GApplication * app)
+void *
+play_sound_get_network_data (GApplication * app)
 {
   Play_SoundPrivate *priv = PLAY_SOUND_APPLICATION (app)->priv;
-  gchar *network_buffer;
+  void *network_data;
 
-  network_buffer = priv->network_buffer;
-  return (network_buffer);
+  network_data = priv->network_data;
+  return (network_data);
 }
 
-/* Find the parser information.  The parameter passed is the application,
- * which was passed through the various gio callbacks as an opaque value.
+/* Find the parser information.  The parameter passed is the application.
  */
 void *
 play_sound_get_parse_info (GApplication * app)

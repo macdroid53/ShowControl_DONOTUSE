@@ -1,3 +1,6 @@
+Version 0.19, February 19, 2015
+  Use the preferences file to specify the network port.
+    
 Version 0.18, February 16, 2015
   Make the dependence on GTK+-3.0 version 3.14 clearer.
   Begin work on the Open menu item.
