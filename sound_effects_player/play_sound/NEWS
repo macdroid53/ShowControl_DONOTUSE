@@ -1,3 +1,7 @@
+Version 0.20, no date yet
+  Add desktop and icon files to make the application launchable
+  from the desktop GUI.
+  
 Version 0.19, February 19, 2015
   Use the preferences file to specify the network port.
     

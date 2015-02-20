@@ -82,8 +82,9 @@ subdir = .
 DIST_COMMON = INSTALL NEWS README AUTHORS ChangeLog \
 	$(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
-	$(srcdir)/config.h.in $(dist_doc_DATA) COPYING compile \
-	config.guess config.sub depcomp install-sh missing ltmain.sh
+	$(srcdir)/config.h.in $(dist_desktop_DATA) $(dist_doc_DATA) \
+	COPYING compile config.guess config.sub depcomp install-sh \
+	missing ltmain.sh
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/intltool.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
@@ -151,8 +152,9 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(docdir)"
-DATA = $(dist_doc_DATA)
+am__installdirs = "$(DESTDIR)$(desktopdir)" "$(DESTDIR)$(docdir)" \
+	"$(DESTDIR)$(iconsdir)"
+DATA = $(dist_desktop_DATA) $(dist_doc_DATA) $(icons_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -298,10 +300,10 @@ OTOOL64 =
 PACKAGE = play_sound
 PACKAGE_BUGREPORT = John_Sauter@systemeyescomputerstore.com
 PACKAGE_NAME = play_sound
-PACKAGE_STRING = play_sound 0.19
+PACKAGE_STRING = play_sound 0.20
 PACKAGE_TARNAME = play_sound
 PACKAGE_URL = 
-PACKAGE_VERSION = 0.19
+PACKAGE_VERSION = 0.20
 PATH_SEPARATOR = :
 PKG_CONFIG = /usr/bin/pkg-config
 PKG_CONFIG_LIBDIR = 
@@ -318,7 +320,7 @@ SET_MAKE =
 SHELL = /bin/sh
 STRIP = strip
 USE_NLS = yes
-VERSION = 0.19
+VERSION = 0.20
 XGETTEXT = /usr/bin/xgettext
 abs_builddir = /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/Debug
 abs_srcdir = /home/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound
@@ -390,8 +392,14 @@ INTLTOOL_FILES = intltool-extract.in \
 
 EXTRA_DIST = \
 	autogen.sh \
-	$(INTLTOOL_FILES)
+	play_sound.desktop \
+	play_sound_icon.png \
+$(INTLTOOL_FILES)
 
+iconsdir = ${datadir}/icons/hicolor/48x48/apps
+icons_DATA = play_sound_icon.png
+desktopdir = ${datadir}/applications
+dist_desktop_DATA = play_sound.desktop
 DISTCLEANFILES = intltool-extract \
 	intltool-merge \
 	intltool-update \
@@ -459,6 +467,27 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
+install-dist_desktopDATA: $(dist_desktop_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(dist_desktop_DATA)'; test -n "$(desktopdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(desktopdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(desktopdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(desktopdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(desktopdir)" || exit $$?; \
+	done
+
+uninstall-dist_desktopDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_desktop_DATA)'; test -n "$(desktopdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(desktopdir)'; $(am__uninstall_files_from_dir)
 install-dist_docDATA: $(dist_doc_DATA)
 	@$(NORMAL_INSTALL)
 	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
@@ -480,6 +509,27 @@ uninstall-dist_docDATA:
 	@list='$(dist_doc_DATA)'; test -n "$(docdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
 	dir='$(DESTDIR)$(docdir)'; $(am__uninstall_files_from_dir)
+install-iconsDATA: $(icons_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(icons_DATA)'; test -n "$(iconsdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(iconsdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(iconsdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(iconsdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(iconsdir)" || exit $$?; \
+	done
+
+uninstall-iconsDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(icons_DATA)'; test -n "$(iconsdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(iconsdir)'; $(am__uninstall_files_from_dir)
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run 'make' without going through this Makefile.
@@ -780,7 +830,7 @@ check: check-recursive
 all-am: Makefile $(DATA) config.h
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(docdir)"; do \
+	for dir in "$(DESTDIR)$(desktopdir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(iconsdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -836,7 +886,8 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-dist_docDATA
+install-data-am: install-dist_desktopDATA install-dist_docDATA \
+	install-iconsDATA
 
 install-dvi: install-dvi-recursive
 
@@ -882,7 +933,8 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-dist_docDATA uninstall-local
+uninstall-am: uninstall-dist_desktopDATA uninstall-dist_docDATA \
+	uninstall-iconsDATA uninstall-local
 
 .MAKE: $(am__recursive_targets) all install-am install-strip
 
@@ -894,14 +946,16 @@ uninstall-am: uninstall-dist_docDATA uninstall-local
 	distclean-hdr distclean-libtool distclean-tags distcleancheck \
 	distdir distuninstallcheck dvi dvi-am html html-am info \
 	info-am install install-am install-data install-data-am \
-	install-dist_docDATA install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
+	install-dist_desktopDATA install-dist_docDATA install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-iconsDATA install-info install-info-am \
+	install-man install-pdf install-pdf-am install-ps \
+	install-ps-am install-strip installcheck installcheck-am \
+	installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-dist_docDATA uninstall-local
+	uninstall-am uninstall-dist_desktopDATA uninstall-dist_docDATA \
+	uninstall-iconsDATA uninstall-local
 
 
 # Remove doc directory on uninstall

@@ -3,7 +3,7 @@ Maximized=1
 Geometry=1920x1104+1920+27
 
 [File Loader]
-Files=../../src/play_sound.c#204%%%../../src/play_sound.h#88%%%../../src/main.c#118%%%../../src/button_clicked.c#91%%%../../src/button_clicked.h#4%%%../../src/gstreamer_utils.c#170%%%../../src/gstreamer_utils.h#22%%%../../src/Makefile.am#1%%%../../src/Makefile.in#1%%%../../README#4%%%../../NEWS#1%%%../../src/message_handler.c#23%%%../../src/message_handler.h#20%%%../../src/update_display.c#38%%%../../src/update_display.h#24%%%../../src/indent.sh#1%%%../../src/menu_handler.c#188%%%../../src/menu_handler.h#24%%%../../src/network_subroutines.c#137%%%../../src/network_subroutines.h#25%%%../../src/parse_subroutines.c#88%%%../../src/parse_subroutines.h#28%%%../../../../../../../../../../mnt/data/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/app-menu.ui%%%../../../../../../../../../../mnt/data/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.ui
+Files=../../src/play_sound.c#204%%%../../src/play_sound.h#88%%%../../src/main.c#118%%%../../src/button_clicked.c#91%%%../../src/button_clicked.h#4%%%../../src/gstreamer_utils.c#170%%%../../src/gstreamer_utils.h#22%%%../../src/Makefile.am#1%%%../../src/Makefile.in#1%%%../../README#4%%%../../NEWS#1%%%../../src/message_handler.c#23%%%../../src/message_handler.h#20%%%../../src/update_display.c#38%%%../../src/update_display.h#24%%%../../src/indent.sh#1%%%../../src/menu_handler.c#188%%%../../src/menu_handler.h#24%%%../../src/network_subroutines.c#137%%%../../src/network_subroutines.h#25%%%../../src/parse_subroutines.c#88%%%../../src/parse_subroutines.h#28%%%../../../../../../../../../../mnt/data/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/play_sound.ui%%%../../../../../../../../../../mnt/data/jsauter/Projects/Theatre/show_control/sound_effects_player/gstreamer_projects/play_sound/src/app-menu.ui
 
 [Document Manager]
 bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
@@ -14,8 +14,11 @@ Run in terminal=2
 Working directories=../../.
 
 [Project Manager]
-Shortcut=play_sound//src//play_sound
-Expand=play_sound%%%play_sound//src%%%play_sound//src//play_sound
+Shortcut=play_sound
+
+[Debugger]
+Breakpoint=0:../../src/main.c:29:0:%%%0:../../src/play_sound.c:72:0:%%%0:../../src/play_sound.c:133:0:%%%0:../../src/gstreamer_utils.c:167:0:%%%0:../../src/play_sound.c:190:0:%%%1:../../src/play_sound.c:203:0:
+Stop at beginning=2
 
 [Build]
 Configuration list=1:Default:%%%1:Debug:Debug%%%1:Profiling:Profiling%%%1:Optimized:Optimized%%%1:MinGW32:MinGW32
@@ -24,7 +27,3 @@ BuildArgs/Default=--enable-maintainer-mode
 BuildArgs/Debug=--enable-maintainer-mode 'CFLAGS=-g -O0' 'CXXFLAGS=-g -O0' 'JFLAGS=-g -O0' 'FFLAGS=-g -O0'
 BuildArgs/Profiling=--enable-maintainer-mode 'CFLAGS=-g -pg' 'CXXFLAGS=-g -pg' 'JFLAGS=-g -pg' 'FFLAGS=-g -pg'
 BuildArgs/Optimized=--enable-maintainer-mode 'CFLAGS=-O2' 'CXXFLAGS=-O2' 'JFLAGS=-O2' 'FFLAGS=-O2'
-
-[Debugger]
-Breakpoint=0:../../src/main.c:29:0:%%%0:../../src/play_sound.c:72:0:%%%0:../../src/play_sound.c:133:0:%%%0:../../src/gstreamer_utils.c:167:0:%%%0:../../src/play_sound.c:190:0:%%%1:../../src/play_sound.c:203:0:
-Stop at beginning=2

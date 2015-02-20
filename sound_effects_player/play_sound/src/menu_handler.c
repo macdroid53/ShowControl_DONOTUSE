@@ -92,26 +92,26 @@ open_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
 
       g_free (filename);
       gtk_widget_destroy (dialog);
-      
+
       /* Remember the key value file, in case we want to write it out later. */
       play_sound_set_parameter_file (parameter_file, app);
 
       /* The only item currently in the preferences file is the
        * network port.  Fetch it. */
-      network_port = g_key_file_get_integer (parameter_file,
-					     "network",
-					     "port",
-					     &err);
+      network_port =
+        g_key_file_get_integer (parameter_file, "network", "port", &err);
       if (err != NULL)
-	{
-	  g_printerr ("Network port not in preferences file: %s\n",
-		      err->message);
-	  g_error_free (err);
-	  return;
-	}
+        {
+          g_printerr ("Network port not in preferences file: %s\n",
+                      err->message);
+          g_error_free (err);
+          return;
+        }
       network_set_port (network_port, app);
     }
-  
+  else
+    gtk_widget_destroy (dialog);
+
   return;
 }
 

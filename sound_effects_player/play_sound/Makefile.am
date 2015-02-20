@@ -20,7 +20,15 @@ INTLTOOL_FILES = intltool-extract.in \
 
 EXTRA_DIST = \
 	autogen.sh \
-	$(INTLTOOL_FILES)
+	play_sound.desktop \
+	play_sound_icon.png \
+$(INTLTOOL_FILES)
+
+iconsdir=${datadir}/icons/hicolor/48x48/apps
+icons_DATA = play_sound_icon.png
+
+desktopdir=${datadir}/applications
+dist_desktop_DATA = play_sound.desktop
 
 DISTCLEANFILES = intltool-extract \
 	intltool-merge \
