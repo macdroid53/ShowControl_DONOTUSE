@@ -1,0 +1,8 @@
+# Sample project file for play_sound.
+
+[general]
+version=0.21
+
+[network]
+port=1501
+
