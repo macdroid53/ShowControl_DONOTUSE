@@ -22,8 +22,8 @@
 /* Subroutines defined in parse_subroutines.c */
 
 /* Initialize the parser. */
-void *parse_init (GApplication *app);
+void *parse_init (GApplication * app);
 
 /* Accept text, divide or accumulate it into commands, 
  * and execute those commands. */
-void parse_text (gchar *text, GApplication *app);
+void parse_text (gchar * text, GApplication * app);

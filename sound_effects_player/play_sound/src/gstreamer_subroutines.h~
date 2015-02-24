@@ -1,11 +1,11 @@
 /*
- * network_subroutines.h
+ * gstreamer_subroutines.h
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -16,16 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include <gst/gst.h>
-#include <gio/gio.h>
 
-#define network_buffer_size 8000
-
-/* Subroutines defined in network_subroutines.c */
-
-/* Initialize. */
-void *network_init (GApplication * app);
-
-/* set the port number. */
-void network_set_port (int port_number, GApplication * app);
+/* Subroutines defined in gstreamer_subroutines.c */
+GstPipeline *gstreamer_init (void *app);
+void gstreamer_shutdown (GstPipeline * pipeline_element);
+GstBin *gstreamer_find_bin (GstPipeline * pipeline_element,
+                             gchar * bin_name);
+GstElement *gstreamer_find_volume (GstBin * bin_element);
+void gstreamer_dump_pipeline (GstPipeline * pipeline_element);

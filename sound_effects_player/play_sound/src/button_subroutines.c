@@ -1,5 +1,5 @@
 /*
- * button_clicked.c
+ * button_subroutines.c
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -16,13 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "button_clicked.h"
-#include "gstreamer_utils.h"
+#include "button_subroutines.h"
+#include "gstreamer_subroutines.h"
 #include "play_sound.h"
 
 /* The Start button has been pushed.  Turn the sound effect on. */
 void
-start_clicked (GtkButton * button, gpointer user_data)
+button_start_clicked (GtkButton * button, gpointer user_data)
 {
   struct sound_effect_str *sound_effect;
   GstBin *bin_element;
@@ -33,7 +33,7 @@ start_clicked (GtkButton * button, gpointer user_data)
   if (sound_effect == NULL)
     return;
   bin_element = sound_effect->sound_control;
-  volume_element = play_sound_find_volume (bin_element);
+  volume_element = gstreamer_find_volume (bin_element);
   /* Unmute the bin to hear its sound. */
   g_object_set (volume_element, "mute", FALSE, NULL);
 
@@ -44,14 +44,14 @@ start_clicked (GtkButton * button, gpointer user_data)
    * of the pipeline.
    */
   pipeline_element = play_sound_get_pipeline (user_data);
-  play_sound_debug_dump_pipeline (pipeline_element);
+  gstreamer_dump_pipeline (pipeline_element);
 
   return;
 }
 
 /* The stop button has been pushed.  Turn the sound effect off. */
 void
-stop_clicked (GtkButton * button, gpointer user_data)
+button_stop_clicked (GtkButton * button, gpointer user_data)
 {
   struct sound_effect_str *sound_effect;
   GstBin *bin_element;
@@ -66,7 +66,7 @@ stop_clicked (GtkButton * button, gpointer user_data)
   if (sound_effect == NULL)
     return;
   bin_element = sound_effect->sound_control;
-  volume_element = play_sound_find_volume (bin_element);
+  volume_element = gstreamer_find_volume (bin_element);
   /* Mute the volume, so we no longer hear it. */
   g_object_set (volume_element, "mute", TRUE, NULL);
 
@@ -93,7 +93,7 @@ stop_clicked (GtkButton * button, gpointer user_data)
    * of the pipeline.
    */
   pipeline_element = play_sound_get_pipeline (user_data);
-  play_sound_debug_dump_pipeline (pipeline_element);
+  gstreamer_dump_pipeline (pipeline_element);
 
   return;
 }
@@ -101,7 +101,7 @@ stop_clicked (GtkButton * button, gpointer user_data)
 /* The volume slider has been moved.  Update the volume and the display. 
  * The user data is the widget being controlled. */
 void
-play_sound_volume_changed (GtkButton * button, gpointer user_data)
+button_volume_changed (GtkButton * button, gpointer user_data)
 {
   GtkLabel *volume_label = NULL;
   GtkWidget *parent_container;
@@ -162,7 +162,7 @@ play_sound_volume_changed (GtkButton * button, gpointer user_data)
 
 /* The pan slider has been moved.  Update the pan and display. */
 void
-play_sound_pan_changed (GtkButton * button, gpointer user_data)
+button_pan_changed (GtkButton * button, gpointer user_data)
 {
   GtkLabel *pan_label = NULL;
   GtkWidget *parent_container;

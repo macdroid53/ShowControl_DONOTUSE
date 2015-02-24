@@ -1609,7 +1609,7 @@
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <signal name="clicked" handler="start_clicked" object="cluster_00" swapped="no"/>
+                                    <signal name="clicked" handler="button_start_clicked" object="cluster_00" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1626,7 +1626,7 @@
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="resize_mode">immediate</property>
-                                    <signal name="clicked" handler="stop_clicked" object="cluster_00" swapped="no"/>
+                                    <signal name="clicked" handler="button_stop_clicked" object="cluster_00" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1675,7 +1675,7 @@
                                         <property name="receives_default">True</property>
                                         <property name="focus_on_click">False</property>
                                         <property name="value">50</property>
-                                        <signal name="value-changed" handler="play_sound_pan_changed" object="cluster_00" swapped="no"/>
+                                        <signal name="value-changed" handler="button_pan_changed" object="cluster_00" swapped="no"/>
                                         <child internal-child="plus_button">
                                           <object class="GtkButton" id="scalebutton-plus_button1">
                                             <property name="can_focus">True</property>
@@ -1737,7 +1737,7 @@
 audio-volume-high-symbolic
 audio-volume-low-symbolic
 audio-volume-medium-symbolic</property>
-                                        <signal name="value-changed" handler="play_sound_volume_changed" object="cluster_00" swapped="no"/>
+                                        <signal name="value-changed" handler="button_volume_changed" object="cluster_00" swapped="no"/>
                                         <child internal-child="plus_button">
                                           <object class="GtkButton" id="volumebutton-plus_button1">
                                             <property name="can_focus">True</property>
@@ -1815,7 +1815,7 @@ audio-volume-medium-symbolic</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <signal name="clicked" handler="start_clicked" object="cluster_01" swapped="no"/>
+                                    <signal name="clicked" handler="button_start_clicked" object="cluster_01" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1832,7 +1832,7 @@ audio-volume-medium-symbolic</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="resize_mode">immediate</property>
-                                    <signal name="clicked" handler="stop_clicked" object="cluster_01" swapped="no"/>
+                                    <signal name="clicked" handler="button_stop_clicked" object="cluster_01" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -1881,7 +1881,7 @@ audio-volume-medium-symbolic</property>
                                         <property name="receives_default">True</property>
                                         <property name="focus_on_click">False</property>
                                         <property name="value">50</property>
-                                        <signal name="value-changed" handler="play_sound_pan_changed" object="cluster_01" swapped="no"/>
+                                        <signal name="value-changed" handler="button_pan_changed" object="cluster_01" swapped="no"/>
                                         <child internal-child="plus_button">
                                           <object class="GtkButton" id="scalebutton-plus_button">
                                             <property name="can_focus">True</property>
@@ -1941,7 +1941,7 @@ audio-volume-medium-symbolic</property>
 audio-volume-high-symbolic
 audio-volume-low-symbolic
 audio-volume-medium-symbolic</property>
-                                        <signal name="value-changed" handler="play_sound_volume_changed" object="cluster_01" swapped="no"/>
+                                        <signal name="value-changed" handler="button_volume_changed" object="cluster_01" swapped="no"/>
                                         <child internal-child="plus_button">
                                           <object class="GtkButton" id="volumebutton-plus_button">
                                             <property name="can_focus">True</property>
@@ -2018,7 +2018,7 @@ audio-volume-medium-symbolic</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <signal name="clicked" handler="start_clicked" object="cluster_02" swapped="no"/>
+                                    <signal name="clicked" handler="button_start_clicked" object="cluster_02" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -2035,7 +2035,7 @@ audio-volume-medium-symbolic</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="resize_mode">immediate</property>
-                                    <signal name="clicked" handler="stop_clicked" object="cluster_02" swapped="no"/>
+                                    <signal name="clicked" handler="button_stop_clicked" object="cluster_02" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -2084,7 +2084,7 @@ audio-volume-medium-symbolic</property>
                                         <property name="receives_default">True</property>
                                         <property name="focus_on_click">False</property>
                                         <property name="value">50</property>
-                                        <signal name="value-changed" handler="play_sound_pan_changed" object="cluster_02" swapped="no"/>
+                                        <signal name="value-changed" handler="button_pan_changed" object="cluster_02" swapped="no"/>
                                         <child internal-child="plus_button">
                                           <object class="GtkButton" id="scalebutton-plus_button3">
                                             <property name="can_focus">True</property>
@@ -2143,7 +2143,7 @@ audio-volume-medium-symbolic</property>
 audio-volume-high-symbolic
 audio-volume-low-symbolic
 audio-volume-medium-symbolic</property>
-                                        <signal name="value-changed" handler="play_sound_volume_changed" object="cluster_02" swapped="no"/>
+                                        <signal name="value-changed" handler="button_volume_changed" object="cluster_02" swapped="no"/>
                                         <child internal-child="plus_button">
                                           <object class="GtkButton" id="volumebutton-plus_button3">
                                             <property name="can_focus">True</property>
@@ -2222,7 +2222,7 @@ audio-volume-medium-symbolic</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <signal name="clicked" handler="start_clicked" object="cluster_03" swapped="no"/>
+                                    <signal name="clicked" handler="button_start_clicked" object="cluster_03" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -2239,7 +2239,7 @@ audio-volume-medium-symbolic</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
                                     <property name="resize_mode">immediate</property>
-                                    <signal name="clicked" handler="stop_clicked" object="cluster_03" swapped="no"/>
+                                    <signal name="clicked" handler="button_stop_clicked" object="cluster_03" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -2288,7 +2288,7 @@ audio-volume-medium-symbolic</property>
                                         <property name="receives_default">True</property>
                                         <property name="focus_on_click">False</property>
                                         <property name="value">50</property>
-                                        <signal name="value-changed" handler="play_sound_pan_changed" object="cluster_03" swapped="no"/>
+                                        <signal name="value-changed" handler="button_pan_changed" object="cluster_03" swapped="no"/>
                                         <child internal-child="plus_button">
                                           <object class="GtkButton" id="scalebutton-plus_button5">
                                             <property name="can_focus">True</property>
@@ -2349,7 +2349,7 @@ audio-volume-medium-symbolic</property>
 audio-volume-high-symbolic
 audio-volume-low-symbolic
 audio-volume-medium-symbolic</property>
-                                        <signal name="value-changed" handler="play_sound_volume_changed" object="cluster_03" swapped="no"/>
+                                        <signal name="value-changed" handler="button_volume_changed" object="cluster_03" swapped="no"/>
                                         <child internal-child="plus_button">
                                           <object class="GtkButton" id="volumebutton-plus_button5">
                                             <property name="can_focus">True</property>

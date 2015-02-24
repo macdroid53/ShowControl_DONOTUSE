@@ -1,5 +1,5 @@
 /*
- * message_handler.h
+ * message_subroutines.h
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -20,6 +20,5 @@
 #include <gst/gst.h>
 
 /* Subroutines declared in message_handler.c */
-gboolean play_sound_message_handler (GstBus * bus_element,
-                                     GstMessage * message,
-                                     gpointer user_data);
+gboolean message_handler (GstBus * bus_element, GstMessage * message,
+                          gpointer user_data);

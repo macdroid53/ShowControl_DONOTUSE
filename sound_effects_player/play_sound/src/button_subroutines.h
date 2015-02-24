@@ -1,5 +1,5 @@
 /*
- * menu_handler.h
+ * button_subroutines.h
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -16,8 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include <gtk/gtk.h>
-/* Subroutines defined in menu_handler.c */
+#include <gst/gst.h>
 
-void play_sound_menu_init (GApplication *app, gchar *file_name);
+/* Subroutines defined in button_subroutines.c */
+void button_start_clicked (GtkButton * button, gpointer user_data);
+void button_stop_clicked (GtkButton * button, gpointer user_data);
+void button_volume_changed (GtkButton * button, gpointer user_data);
+void button_pan_changed (GtkButton * button, gpointer user_data);

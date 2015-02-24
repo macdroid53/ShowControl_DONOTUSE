@@ -16,11 +16,11 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "play_sound.h"
-#include "gstreamer_utils.h"
-#include "menu_handler.h"
+#include "gstreamer_subroutines.h"
+#include "menu_subroutines.h"
 #include "network_subroutines.h"
 #include "parse_subroutines.h"
-#include "button_clicked.h"
+#include "button_subroutines.h"
 #include <glib/gi18n.h>
 
 /* For testing purposes use the local (not installed) ui file */
@@ -63,7 +63,7 @@ struct _Play_SoundPrivate
 
   /* The key-value file that holds parameters for the program. */
   GKeyFile *parameter_file;
-  
+
   /* ANJUTA: Widgets declaration for play_sound.ui - DO NOT REMOVE */
 };
 
@@ -140,12 +140,12 @@ play_sound_new_window (GApplication * app, GFile * file)
     }
 
   /* Set up the menu. */
-  play_sound_menu_init (app, PACKAGE_DATA_DIR "/ui/app-menu.ui");
+  menu_init (app, PACKAGE_DATA_DIR "/ui/app-menu.ui");
 
   /* Set up Gstreamer for playing tones.  We pass the application so
    * setup_gstreamer can cause it to be passed to the message handler, 
    * which will use it to find the display.  */
-  priv->pipeline = setup_gstreamer (app);
+  priv->pipeline = gstreamer_init (app);
 
   /* Set up the remainder of the private data. */
   priv->sound_effects = NULL;
@@ -177,7 +177,7 @@ play_sound_new_window (GApplication * app, GFile * file)
       sound_effect->file_name = sound_name;
       /* Set the pointer to the gstreamer bin that plays the sound. */
       sound_effect->sound_control =
-        play_sound_find_bin (priv->pipeline, sound_name);
+        gstreamer_find_bin (priv->pipeline, sound_name);
       /* Put the cluster number at the top level, so we can search
        * for it quickly. */
       sound_effect->cluster_number = i;
@@ -232,7 +232,7 @@ play_sound_finalize (GObject * object)
 
   /* Shut down gstreamer and deallocate all of its storage. */
   pipeline_element = self->priv->pipeline;
-  shutdown_gstreamer (pipeline_element);
+  gstreamer_shutdown (pipeline_element);
 
   /* Deallocate the list of sound effects. */
   sound_effect_list = self->priv->sound_effects;
@@ -482,7 +482,7 @@ play_sound_start_cluster (int cluster_no, GApplication * app)
 
       /* Invoke the start button, so the sound starts to play and
        * and button appearance is updated. */
-      start_clicked (start_button, cluster_widget);
+      button_start_clicked (start_button, cluster_widget);
     }
   return;
 }
@@ -535,7 +535,7 @@ play_sound_stop_cluster (int cluster_no, GApplication * app)
 
       /* Invoke the stop button, so the sound stops playing and
        * and the appearance of the start button is updated. */
-      stop_clicked (stop_button, cluster_widget);
+      button_stop_clicked (stop_button, cluster_widget);
     }
   return;
 }

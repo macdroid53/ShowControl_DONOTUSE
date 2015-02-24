@@ -1,5 +1,5 @@
 /*
- * update_display.c
+ * display_subroutines.c
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -18,12 +18,13 @@
  */
 
 #include <gtk/gtk.h>
-#include <update_display.h>
-#include <play_sound.h>
+#include "display_subroutines.h"
+#include "play_sound.h"
 
 /* Update the VU meter. */
 void
-update_vu_meter (gpointer * user_data, gint channel, gdouble new_value)
+display_update_vu_meter (gpointer * user_data, gint channel,
+                         gdouble new_value, gdouble peak_dB, gdouble decay_dB)
 {
   GtkWidget *common_area;
   GList *children_list;

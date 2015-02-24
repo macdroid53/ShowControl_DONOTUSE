@@ -1,5 +1,5 @@
 /*
- * menu_handler.c
+ * menu_subroutines.c
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -18,7 +18,7 @@
  */
 
 #include <gtk/gtk.h>
-#include "menu_handler.h"
+#include "menu_subroutines.h"
 #include "network_subroutines.h"
 #include "play_sound.h"
 
@@ -150,7 +150,7 @@ static GActionEntry app_entries[] = {
 
 /* Initialize the menu. */
 void
-play_sound_menu_init (GApplication * app, gchar * file_name)
+menu_init (GApplication * app, gchar * file_name)
 {
   GtkBuilder *builder;
   GError *error = NULL;

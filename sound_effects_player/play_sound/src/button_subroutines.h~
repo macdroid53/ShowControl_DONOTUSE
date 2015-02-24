@@ -1,5 +1,5 @@
 /*
- * gstreamer_utils.h
+ * button_subroutines.h
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -16,12 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <gtk/gtk.h>
 #include <gst/gst.h>
 
-/* Subroutines defined in gstreamer_utils.c */
-GstPipeline *setup_gstreamer (void *app);
-void shutdown_gstreamer (GstPipeline * pipeline_element);
-GstBin *play_sound_find_bin (GstPipeline * pipeline_element,
-                             gchar * bin_name);
-GstElement *play_sound_find_volume (GstBin * bin_element);
-void play_sound_debug_dump_pipeline (GstPipeline * pipeline_element);
+/* Subroutines defined in button_subroutines.c */
+void button_start_clicked (GtkButton * button, gpointer user_data);
+void button_stop_clicked (GtkButton * button, gpointer user_data);
+void button_volume_changed (GtkButton * button, gpointer user_data);
+void button_pan_changed (GtkButton * button, gpointer user_data);

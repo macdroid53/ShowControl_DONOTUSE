@@ -23,20 +23,20 @@ play_sound_SOURCES = \
 	main.c \
 	play_sound.h \
 	play_sound.c \
-	button_clicked.c \
-	button_clicked.h \
-	gstreamer_utils.c \
-	gstreamer_utils.h \
-	message_handler.c \
-	message_handler.h \
-	update_display.c \
-	update_display.h \
-	menu_handler.c \
-	menu_handler.h \
 	network_subroutines.c \
 	network_subroutines.h \
 	parse_subroutines.c \
-	parse_subroutines.h	
+	parse_subroutines.h \
+	button_subroutines.c \
+	button_subroutines.h \
+	gstreamer_subroutines.c \
+	gstreamer_subroutines.h \
+	menu_subroutines.c \
+	menu_subroutines.h \
+	message_subroutines.c \
+	message_subroutines.h \
+	display_subroutines.c \
+	display_subroutines.h	
 
 
 play_sound_LDFLAGS = \

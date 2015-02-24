@@ -97,10 +97,10 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_play_sound_OBJECTS = main.$(OBJEXT) play_sound.$(OBJEXT) \
-	button_clicked.$(OBJEXT) gstreamer_utils.$(OBJEXT) \
-	message_handler.$(OBJEXT) update_display.$(OBJEXT) \
-	menu_handler.$(OBJEXT) network_subroutines.$(OBJEXT) \
-	parse_subroutines.$(OBJEXT)
+	network_subroutines.$(OBJEXT) parse_subroutines.$(OBJEXT) \
+	button_subroutines.$(OBJEXT) gstreamer_subroutines.$(OBJEXT) \
+	menu_subroutines.$(OBJEXT) message_subroutines.$(OBJEXT) \
+	display_subroutines.$(OBJEXT)
 play_sound_OBJECTS = $(am_play_sound_OBJECTS)
 am__DEPENDENCIES_1 =
 play_sound_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -365,20 +365,20 @@ play_sound_SOURCES = \
 	main.c \
 	play_sound.h \
 	play_sound.c \
-	button_clicked.c \
-	button_clicked.h \
-	gstreamer_utils.c \
-	gstreamer_utils.h \
-	message_handler.c \
-	message_handler.h \
-	update_display.c \
-	update_display.h \
-	menu_handler.c \
-	menu_handler.h \
 	network_subroutines.c \
 	network_subroutines.h \
 	parse_subroutines.c \
-	parse_subroutines.h	
+	parse_subroutines.h \
+	button_subroutines.c \
+	button_subroutines.h \
+	gstreamer_subroutines.c \
+	gstreamer_subroutines.h \
+	menu_subroutines.c \
+	menu_subroutines.h \
+	message_subroutines.c \
+	message_subroutines.h \
+	display_subroutines.c \
+	display_subroutines.h	
 
 play_sound_LDFLAGS = \
 	-Wl,--export-dynamic
@@ -479,15 +479,15 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/button_clicked.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gstreamer_utils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/button_subroutines.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/display_subroutines.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gstreamer_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_handler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message_handler.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_subroutines.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/network_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/play_sound.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/update_display.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

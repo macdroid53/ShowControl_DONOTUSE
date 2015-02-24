@@ -3,7 +3,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src po
+SUBDIRS = src po doc
 
 dist_doc_DATA = \
 	README \
@@ -11,7 +11,11 @@ dist_doc_DATA = \
 	AUTHORS \
 	ChangeLog \
 	INSTALL \
-	NEWS
+	NEWS \
+	doc/sound_effects_player.odt \
+	doc/sound_effects_player.pdf \
+	doc/sound_effects_player.rtf \
+	doc/sound_effects_player.tex
 
 
 INTLTOOL_FILES = intltool-extract.in \

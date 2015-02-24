@@ -1,5 +1,5 @@
 /*
- * message_handler.c
+ * message_subroutines.c
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -23,16 +23,16 @@
  * disable GLib depreciation warnings. */
 #define GLIB_DISABLE_DEPRECATION_WARNINGS
 
-#include <message_handler.h>
+#include "message_subroutines.h"
 #include <math.h>
 #include <gst/gst.h>
-#include <update_display.h>
+#include "display_subroutines.h"
 
 /* Process a message from the pipeline. User_data is the 
  * application, so we can reach the display.  */
 gboolean
-play_sound_message_handler (GstBus * bus_element, GstMessage * message,
-                            gpointer user_data)
+message_handler (GstBus * bus_element, GstMessage * message,
+                 gpointer user_data)
 {
   /* We care only about messages from the level element, which show
    * the sound level on each channel. */
@@ -84,7 +84,7 @@ play_sound_message_handler (GstBus * bus_element, GstMessage * message,
               /* Converting from dB to normal gives us a value between 
                * 0.0 and 1.0. */
               rms = pow (10, rms_dB / 20);
-              update_vu_meter (user_data, i, rms);
+              display_update_vu_meter (user_data, i, rms, peak_dB, decay_dB);
             }
         }
     }

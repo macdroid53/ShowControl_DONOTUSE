@@ -377,14 +377,18 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = src po
+SUBDIRS = src po doc
 dist_doc_DATA = \
 	README \
 	COPYING \
 	AUTHORS \
 	ChangeLog \
 	INSTALL \
-	NEWS
+	NEWS \
+	doc/sound_effects_player.odt \
+	doc/sound_effects_player.pdf \
+	doc/sound_effects_player.rtf \
+	doc/sound_effects_player.tex
 
 INTLTOOL_FILES = intltool-extract.in \
 	intltool-merge.in \

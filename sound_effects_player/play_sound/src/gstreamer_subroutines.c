@@ -1,5 +1,5 @@
 /*
- * gstreamer_utils.c
+ * gstreamer_subroutines.c
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -16,13 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <gstreamer_utils.h>
-#include <message_handler.h>
+#include "gstreamer_subroutines.h"
+#include "message_subroutines.h"
 #include <math.h>
 
 /* Set up the Gstreamer pipeline. */
 GstPipeline *
-setup_gstreamer (void *app)
+gstreamer_init (void *app)
 {
   GstElement *source_element, *sink_element, *pan_element, *volume_element;
   GstElement *adder_element;
@@ -150,7 +150,7 @@ setup_gstreamer (void *app)
   /* Make sure we will get level messages. */
   g_object_set (level_element, "post-messages", TRUE, NULL);
   bus = gst_element_get_bus (GST_ELEMENT (pipeline_element));
-  gst_bus_add_watch (bus, play_sound_message_handler, app);
+  gst_bus_add_watch (bus, message_handler, app);
 
   /* Now that the pipeline is constructed, start it running.
    * Note that all of the bins providing input to the adder are muted,
@@ -164,7 +164,7 @@ setup_gstreamer (void *app)
     }
 
   /* For debugging, write out a graphical representation of the pipeline. */
-  play_sound_debug_dump_pipeline (pipeline_element);
+  gstreamer_dump_pipeline (pipeline_element);
 
   return pipeline_element;
 }
@@ -173,7 +173,7 @@ setup_gstreamer (void *app)
  * of the gstreamer pipeline.
  */
 void
-play_sound_debug_dump_pipeline (GstPipeline * pipeline_element)
+gstreamer_dump_pipeline (GstPipeline * pipeline_element)
 {
   gst_debug_bin_to_dot_file_with_ts (GST_BIN (pipeline_element),
                                      GST_DEBUG_GRAPH_SHOW_ALL,
@@ -183,7 +183,7 @@ play_sound_debug_dump_pipeline (GstPipeline * pipeline_element)
 
 /* Find a gstreamer bin, given its name. */
 GstBin *
-play_sound_find_bin (GstPipeline * pipeline_element, gchar * bin_name)
+gstreamer_find_bin (GstPipeline * pipeline_element, gchar * bin_name)
 {
   GstElement *bin_element;
 
@@ -193,7 +193,7 @@ play_sound_find_bin (GstPipeline * pipeline_element, gchar * bin_name)
 
 /* Find the volume control in a bin. */
 GstElement *
-play_sound_find_volume (GstBin * bin_element)
+gstreamer_find_volume (GstBin * bin_element)
 {
   GstElement *volume_element;
 
@@ -203,7 +203,7 @@ play_sound_find_volume (GstBin * bin_element)
 
 /* We are done with Gstreamer; shut it down. */
 void
-shutdown_gstreamer (GstPipeline * pipeline_element)
+gstreamer_shutdown (GstPipeline * pipeline_element)
 {
   gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_NULL);
   g_object_unref (pipeline_element);

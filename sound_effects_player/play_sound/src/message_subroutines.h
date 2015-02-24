@@ -1,5 +1,5 @@
 /*
- * button_clicked.h
+ * message_subroutines.h
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -16,11 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-#include <gtk/gtk.h>
+
 #include <gst/gst.h>
 
-/* Subroutines defined in button_clicked.c */
-void start_clicked (GtkButton * button, gpointer user_data);
-void stop_clicked (GtkButton * button, gpointer user_data);
-void play_sound_volume_changed (GtkButton * button, gpointer user_data);
-void play_sound_pan_changed (GtkButton * button, gpointer user_data);
+/* Subroutines declared in message_handler.c */
+gboolean message_handler (GstBus * bus_element, GstMessage * message,
+                          gpointer user_data);
