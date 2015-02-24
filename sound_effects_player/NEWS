@@ -1,0 +1,73 @@
+Version 0.23, no date yet
+  Rename play_sound to sound_effects_player.
+  
+Version 0.22, February 24, 2015
+  Add some documentation and move to consistent names and idioms in the
+  source files.
+  
+Version 0.21, February 23, 2015
+  Listen for UDP datagrams rather than for TCP streams.
+  
+Version 0.20, February 21, 2015
+  Add desktop and icon files to make the application launchable
+  from the desktop GUI.
+  
+Version 0.19, February 19, 2015
+  Use the project file to specify the network port.
+    
+Version 0.18, February 16, 2015
+  Make the dependence on GTK+-3.0 version 3.14 clearer.
+  Begin work on the Open menu item.
+    
+Version 0.17, February 15, 2015
+  Add a menu bar
+  
+Version 0.16, February 15, 2015
+  Update to current Autoconfigure best practices.
+  
+Version 0.15, January 27, 2015
+  Require version 3.14 of GTK+, due to gtk_application_set_accels_for_action.
+  
+Version 0.14, January 22, 2015
+  Parse and execute start, stop and quit commands received over the network.
+
+Version 0.13, January 18, 2015
+  Add the ability to receive text over the network.
+  
+Version 0.12, January 7, 2015
+  Add a menu.  It just contains an empty preferences and Quit.
+  
+Version 0.11, January 4, 2015
+  Add a VU meter.
+  
+Version 0.10, January 4, 2015
+  Provide more than one sound.
+
+Version 0.9, January 3, 2015
+  Add scroll bars to the cluster section.
+
+Version 0.8, January 2, 2015
+  Have a cluster play only its own sound.  Make the GUI prettier.
+
+Version 0.7, January 1, 2015
+  Continue work on multiple clusters.
+  
+Version 0.6, January 1, 2015
+  Start work on multiple clusters.
+  
+Version 0.5, January 1, 2015
+  Update the copyright date, show the linked version of gtk, some minor
+  cleanups.
+  
+Version 0.4, December 31, 2014
+  Some minor improvements in comments, and some declarations in support of
+  eventually handling files instead of just a test tone.
+
+Version 0.3, December 29, 2014
+  Added pan control
+
+Version 0.2, December 28, 2014
+  Improved comments, connected volume control.
+	
+Version 0.1, December 28, 2014
+  Initial version, little more than a default project.
