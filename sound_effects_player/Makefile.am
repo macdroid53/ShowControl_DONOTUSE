@@ -3,7 +3,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src po doc
+SUBDIRS = src po doc icons
 
 dist_doc_DATA = \
 	README \
@@ -25,11 +25,12 @@ INTLTOOL_FILES = intltool-extract.in \
 EXTRA_DIST = \
 	autogen.sh \
 	sound_effects_player.desktop \
-	sound_effects_player_icon.png \
-$(INTLTOOL_FILES)
+	icons/sound_effects_player_icon.png \
+	icons/sound_effects_player_icon_hires.png \
+	$(INTLTOOL_FILES)
 
 iconsdir=${datadir}/icons/hicolor/48x48/apps
-icons_DATA = sound_effects_player_icon.png
+icons_DATA = icons/sound_effects_player_icon.png
 
 desktopdir=${datadir}/applications
 dist_desktop_DATA = sound_effects_player.desktop
