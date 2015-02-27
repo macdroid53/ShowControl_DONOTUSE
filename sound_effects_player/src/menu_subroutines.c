@@ -37,9 +37,26 @@ quit_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
   g_application_quit (G_APPLICATION (app));
 }
 
+/* Reset the project to its defaults. */
 static void
 new_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
 {
+  xmlDocPtr project_file;
+
+  xmlLineNumbersDefault (1);
+  xmlThrDefIndentTreeOutput (1);
+  xmlKeepBlanksDefault (0);
+  xmlThrDefTreeIndentString ("    ");
+  project_file =
+    xmlParseDoc ((xmlChar *) "<?xml version=\"1.0\" "
+                 "encoding=\"utf-8\"?> <project>"
+                 "<general> <version>1.0</version>"
+                 "</general> <network> <port>1500</port>"
+                 "</network> </project>");
+  sep_set_project_file (project_file, app);
+  network_set_port (1500, app);
+
+  return;
 }
 
 /* Dig through the xml file looking for the network port.  When we find it,
@@ -90,20 +107,27 @@ open_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
    * application window. */
   parent_window = sep_get_top_window ((GApplication *) app);
 
+  /* Configure the dialogue: choosing multiple files is not permitted. */
   dialog =
-    gtk_file_chooser_dialog_new ("Open File", parent_window, file_action,
-                                 "_Cancel", GTK_RESPONSE_CANCEL, "_Open",
-                                 GTK_RESPONSE_ACCEPT, NULL);
+    gtk_file_chooser_dialog_new ("Open Project File", parent_window,
+                                 file_action, "_Cancel", GTK_RESPONSE_CANCEL,
+                                 "_Open", GTK_RESPONSE_ACCEPT, NULL);
+  chooser = GTK_FILE_CHOOSER (dialog);
+  gtk_file_chooser_set_select_multiple (chooser, FALSE);
+
   /* Use the file dialog to ask for a file to read. */
   res = gtk_dialog_run (GTK_DIALOG (dialog));
   if (res == GTK_RESPONSE_ACCEPT)
     {
       /* We have a file name. */
-      chooser = GTK_FILE_CHOOSER (dialog);
       filename = gtk_file_chooser_get_filename (chooser);
       gtk_widget_destroy (dialog);
 
       /* Read the file as an XML file. */
+      xmlLineNumbersDefault (1);
+      xmlThrDefIndentTreeOutput (1);
+      xmlKeepBlanksDefault (0);
+      xmlThrDefTreeIndentString ("    ");
       project_file = xmlParseFile (filename);
       if (project_file == NULL)
         {
@@ -112,7 +136,8 @@ open_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
           return;
         }
 
-      g_free (filename);
+      /* Remember the file name. */
+      sep_set_project_filename (filename, app);
 
       /* Remember the data from the XML file, in case we want to write it out 
        * later. */
@@ -151,6 +176,75 @@ save_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
 {
 }
 
+/* Write the project information to an XML file. */
+static void
+save_as_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
+{
+
+  GtkWidget *dialog;
+  GtkFileChooser *chooser;
+  GtkFileChooserAction file_action = GTK_FILE_CHOOSER_ACTION_SAVE;
+  GtkWindow *parent_window;
+  gint res;
+  gchar *filename;
+  xmlDocPtr project_file;
+
+  /* Get the top-level window to use as the transient parent for
+   * the dialog.  This makes sure the dialog appears over the
+   * application window. */
+  parent_window = sep_get_top_window ((GApplication *) app);
+
+  /* Configure the dialogue: prompt on specifying an existing file,
+   * allow folder creation, and specify the current project file
+   * name if one exists, or a default name if not. */
+  dialog =
+    gtk_file_chooser_dialog_new ("Save Project File", parent_window,
+                                 file_action, "_Cancel", GTK_RESPONSE_CANCEL,
+                                 "_Save", GTK_RESPONSE_ACCEPT, NULL);
+  chooser = GTK_FILE_CHOOSER (dialog);
+  gtk_file_chooser_set_do_overwrite_confirmation (chooser, TRUE);
+  gtk_file_chooser_set_create_folders (chooser, TRUE);
+  filename = sep_get_project_filename (app);
+  if (filename == NULL)
+    {
+      filename = g_strdup ("Nameless_project.xml");
+      sep_set_project_filename (filename, app);
+    }
+  gtk_file_chooser_set_filename (chooser, filename);
+
+  /* Use the file dialog to ask for a file to write. */
+  res = gtk_dialog_run (GTK_DIALOG (dialog));
+  if (res == GTK_RESPONSE_ACCEPT)
+    {
+      /* We have a file name. */
+      filename = gtk_file_chooser_get_filename (chooser);
+      gtk_widget_destroy (dialog);
+
+      /* Write the project data as an XML file. */
+      project_file = sep_get_project_file (app);
+      if (project_file == NULL)
+        {
+          /* We don't have a project file--create one. */
+          xmlLineNumbersDefault (1);
+          xmlThrDefIndentTreeOutput (1);
+          xmlKeepBlanksDefault (0);
+          xmlThrDefTreeIndentString ("    ");
+          project_file =
+            xmlParseDoc ((xmlChar *) "<?xml version=\"1.0\" "
+                         "encoding=\"utf-8\"?> <project>"
+                         "<general> <version>1.0</version>"
+                         "</general> <network> <port>1500</port>"
+                         "</network> </project>");
+          sep_set_project_file (project_file, app);
+        }
+      xmlSaveFormatFileEnc (filename, project_file, "utf-8", 1);
+      sep_set_project_filename (filename, app);
+    }
+
+  return;
+}
+
+
 static void
 copy_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
 {
@@ -174,6 +268,7 @@ static GActionEntry app_entries[] = {
   {"new", new_activated, NULL, NULL, NULL},
   {"open", open_activated, NULL, NULL, NULL},
   {"save", save_activated, NULL, NULL, NULL},
+  {"save_as", save_as_activated, NULL, NULL, NULL},
   {"copy", copy_activated, NULL, NULL, NULL},
   {"cut", cut_activated, NULL, NULL, NULL},
   {"paste", paste_activated, NULL, NULL, NULL}

@@ -62,6 +62,10 @@ struct _Sound_Effects_PlayerPrivate
   /* The XML file that holds parameters for the program. */
   xmlDocPtr project_file;
 
+  /* The name of that file, for use in Save and as the default file
+   * name for Save As. */
+  gchar *project_filename;
+  
   /* ANJUTA: Widgets declaration for sound_effects_player.ui - DO NOT REMOVE */
 };
 
@@ -445,6 +449,34 @@ sep_set_project_file (xmlDocPtr project_file, GApplication * app)
   return;
 }
 
+/* Find the name of the project file. */
+gchar *
+sep_get_project_filename (GApplication * app)
+{
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+  gchar * project_filename;
+  
+  project_filename = priv->project_filename;
+  return (project_filename);
+}
+
+/* Set the name of the project file. */
+void
+sep_set_project_filename (gchar *filename, GApplication * app)
+{
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+
+  if (priv->project_filename != NULL)
+    {
+      g_free (priv->project_filename);
+      priv->project_filename = NULL;
+    }
+  priv->project_filename = filename;
+
+  return;
+}  
 /* Start playing the sound in a specified cluster. */
 void
 sep_start_cluster (int cluster_no, GApplication * app)
