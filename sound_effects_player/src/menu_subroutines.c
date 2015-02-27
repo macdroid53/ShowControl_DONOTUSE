@@ -18,6 +18,8 @@
  */
 
 #include <gtk/gtk.h>
+#include <libxml/xmlmemory.h>
+#include <libxml/parser.h>
 #include "menu_subroutines.h"
 #include "network_subroutines.h"
 #include "sound_effects_player.h"
@@ -40,8 +42,36 @@ new_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
 {
 }
 
-/* Open a file and read its contents.  The file is assumed to be in GTK
- * key-value format. */
+/* Dig through the xml file looking for the network port.  When we find it,
+ * tell the network module about it. */
+static void
+parse_network_info (xmlDocPtr project_file, xmlNodePtr current_loc,
+                    GApplication * app)
+{
+  xmlChar *key;
+  const xmlChar *name;
+  gint port_number;
+
+  current_loc = current_loc->xmlChildrenNode;
+  while (current_loc != NULL)
+    {
+      name = current_loc->name;
+      if ((!xmlStrcmp (name, (const xmlChar *) "port")))
+        {
+          key =
+            xmlNodeListGetString (project_file, current_loc->xmlChildrenNode,
+                                  1);
+          port_number = atol ((char *) key);
+          network_set_port (port_number, app);
+          xmlFree (key);
+        }
+      current_loc = current_loc->next;
+    }
+  return;
+}
+
+/* Open a project file and read its contents.  The file is assumed to be in 
+ * XML format. */
 static void
 open_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
 {
@@ -50,11 +80,10 @@ open_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
   GtkFileChooserAction file_action = GTK_FILE_CHOOSER_ACTION_OPEN;
   GtkWindow *parent_window;
   gint res;
-  GKeyFileFlags flags;
-  char *filename;
-  GKeyFile *project_file;
-  GError *err = NULL;
-  gint network_port;
+  gchar *filename;
+  xmlDocPtr project_file;
+  xmlNodePtr current_loc;
+  const xmlChar *name;
 
   /* Get the top-level window to use as the transient parent for
    * the dialog.  This makes sure the dialog appears over the
@@ -72,46 +101,48 @@ open_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
       /* We have a file name. */
       chooser = GTK_FILE_CHOOSER (dialog);
       filename = gtk_file_chooser_get_filename (chooser);
+      gtk_widget_destroy (dialog);
 
-      /* Read the file as a key value file, with [] to name groups, and
-       * keyword=value within groups. */
-      project_file = g_key_file_new ();
-      /* Keep the comments and translations, since after we change a
-       * value we will want to write this file back out. */
-      flags = (G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS);
-      g_key_file_load_from_file (project_file, filename, flags, &err);
-      if (err != NULL)
+      /* Read the file as an XML file. */
+      project_file = xmlParseFile (filename);
+      if (project_file == NULL)
         {
-          g_printerr ("Load from file %s failed: %s\n", filename,
-                      err->message);
-          g_error_free (err);
+          g_printerr ("Load from project file %s failed.\n", filename);
           g_free (filename);
-          gtk_widget_destroy (dialog);
           return;
         }
 
       g_free (filename);
-      gtk_widget_destroy (dialog);
 
-      /* Remember the key value file, in case we want to write it out later. */
+      /* Remember the data from the XML file, in case we want to write it out 
+       * later. */
       sep_set_project_file (project_file, app);
 
       /* The only item currently in the project file is the
        * network port.  Fetch it. */
-      network_port =
-        g_key_file_get_integer (project_file, "network", "port", &err);
-      if (err != NULL)
+      current_loc = xmlDocGetRootElement (project_file);
+      if (current_loc == NULL)
         {
-          g_printerr ("Network port not in project file: %s\n",
-                      err->message);
-          g_error_free (err);
+          g_printerr ("Empty project file.\n");
           return;
         }
-      network_set_port (network_port, app);
+      name = current_loc->name;
+      if (xmlStrcmp (name, (const xmlChar *) "project"))
+        {
+          g_printerr ("Not a project file: %s.\n", current_loc->name);
+          return;
+        }
+      current_loc = current_loc->xmlChildrenNode;
+      while (current_loc != NULL)
+        {
+          name = current_loc->name;
+          if ((!xmlStrcmp (name, (const xmlChar *) "network")))
+            {
+              parse_network_info (project_file, current_loc, app);
+            }
+          current_loc = current_loc->next;
+        }
     }
-  else
-    gtk_widget_destroy (dialog);
-
   return;
 }
 

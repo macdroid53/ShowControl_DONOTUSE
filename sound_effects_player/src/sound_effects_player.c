@@ -16,13 +16,14 @@
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <glib/gi18n.h>
+#include <libxml/xmlmemory.h>
 #include "sound_effects_player.h"
 #include "gstreamer_subroutines.h"
 #include "menu_subroutines.h"
 #include "network_subroutines.h"
 #include "parse_subroutines.h"
 #include "button_subroutines.h"
-#include <glib/gi18n.h>
 
 /* For testing purposes use the local (not installed) ui file */
 #define UI_FILE PACKAGE_DATA_DIR"/ui/sound_effects_player.ui"
@@ -58,8 +59,8 @@ struct _Sound_Effects_PlayerPrivate
   /* The persistent parser information. */
   void *parser_info;
 
-  /* The key-value file that holds parameters for the program. */
-  GKeyFile *project_file;
+  /* The XML file that holds parameters for the program. */
+  xmlDocPtr project_file;
 
   /* ANJUTA: Widgets declaration for sound_effects_player.ui - DO NOT REMOVE */
 };
@@ -415,28 +416,28 @@ sep_get_top_window (GApplication * app)
   return (top_window);
 }
 
-/* Find the key-value project file which contains the parameters. */
-GKeyFile *
+/* Find the project file which contains the parameters. */
+xmlDocPtr
 sep_get_project_file (GApplication * app)
 {
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
-  GKeyFile *project_file;
+  xmlDocPtr project_file;
 
   project_file = priv->project_file;
   return (project_file);
 }
 
-/* Set the key-value project file which contains the parameters. */
+/* Remember the project file which contains the parameters. */
 void
-sep_set_project_file (GKeyFile * project_file, GApplication * app)
+sep_set_project_file (xmlDocPtr project_file, GApplication * app)
 {
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
 
   if (priv->project_file != NULL)
     {
-      g_key_file_free (priv->project_file);
+      xmlFreeDoc (priv->project_file);
       priv->project_file = NULL;
     }
   priv->project_file = project_file;

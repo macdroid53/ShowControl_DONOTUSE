@@ -22,6 +22,8 @@
 
 #include <gtk/gtk.h>
 #include <gst/gst.h>
+#include <libxml/xmlmemory.h>
+#include <libxml/parser.h>
 
 G_BEGIN_DECLS
 #define SOUND_EFFECTS_PLAYER_TYPE_APPLICATION (sound_effects_player_get_type ())
@@ -79,12 +81,11 @@ void *sep_get_parse_info (GApplication * app);
 /* Given the application, find the top-level window. */
 GtkWindow *sep_get_top_window (GApplication * app);
 
-/* Given the application, find the parameter file. */
-GKeyFile *sep_get_parameter_file (GApplication * app);
+/* Given the application, find the project file. */
+xmlDocPtr sep_get_project_file (GApplication * app);
 
-/* Given the application, store the project file. */
-void sep_set_project_file (GKeyFile * project_file,
-                                    GApplication * app);
+/* Given the application, remember the project file. */
+void sep_set_project_file (xmlDocPtr project_file, GApplication * app);
 
 /* Start playing the sound in a specified cluster. */
 void sep_start_cluster (int cluster_no, GApplication * app);

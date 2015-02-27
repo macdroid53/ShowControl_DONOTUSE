@@ -1,3 +1,6 @@
+Version 0.25, February 27, 2015
+  Convert the project file to XML, and use libxml2 to read it.
+  
 Version 0.24, February 24, 2015
   Create a better icon.
   
