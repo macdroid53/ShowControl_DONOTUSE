@@ -25,11 +25,8 @@
 #include "parse_subroutines.h"
 #include "button_subroutines.h"
 
-/* For testing purposes use the local (not installed) ui file */
-#define UI_FILE PACKAGE_DATA_DIR"/ui/sound_effects_player.ui"
-/* #define UI_FILE "src/sound_effects_player.ui" */
-
-G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player, GTK_TYPE_APPLICATION);
+G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player,
+               GTK_TYPE_APPLICATION);
 
 /* ANJUTA: Macro SOUND_EFFECTS_PLAYER_APPLICATION gets Sound_Effects_Player
  *  - DO NOT REMOVE */
@@ -37,7 +34,7 @@ G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player, GTK_TYPE_APPLICATION)
 /* The private data associated with the top-level window. */
 struct _Sound_Effects_PlayerPrivate
 {
-  /* The top-level Gstreamer pipeline. */
+  /* The Gstreamer pipeline. */
   GstPipeline *pipeline;
 
   /* The top-level gtk window. */
@@ -65,7 +62,10 @@ struct _Sound_Effects_PlayerPrivate
   /* The name of that file, for use in Save and as the default file
    * name for Save As. */
   gchar *project_filename;
-  
+
+  /* The path to the user interface files. */
+  gchar *ui_path;
+
   /* ANJUTA: Widgets declaration for sound_effects_player.ui - DO NOT REMOVE */
 };
 
@@ -85,29 +85,35 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   const gchar *widget_name;
   gchar *sound_name;
   gint i;
+  gchar *filename;
 
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
 
-  /* Load UI from file */
+  /* Remember the path to the user interface files. */
+  priv->ui_path = g_strdup (PACKAGE_DATA_DIR "/ui/");
+
+  /* Load the main user interface definition from its file. */
   builder = gtk_builder_new ();
-  if (!gtk_builder_add_from_file (builder, UI_FILE, &error))
+  filename = g_strconcat (priv->ui_path, "sound_effects_player.ui", NULL);
+  if (!gtk_builder_add_from_file (builder, filename, &error))
     {
-      g_critical ("Couldn't load builder file: %s", error->message);
+      g_critical ("Couldn't load builder file %s: %s", filename,
+                  error->message);
       g_error_free (error);
     }
 
   /* Auto-connect signal handlers. */
   gtk_builder_connect_signals (builder, app);
 
-  /* Get the top-level window object from the ui file. */
-  top_window = GTK_WINDOW (gtk_builder_get_object (builder,
-						   "top_level_window"));
+  /* Get the top-level window object from the user interface file. */
+  top_window =
+    GTK_WINDOW (gtk_builder_get_object (builder, "top_level_window"));
   priv->top_window = top_window;
-  if (!top_window)
+  if (top_window == NULL)
     {
       g_critical ("Widget \"top_level_window\" is missing in file %s.",
-                  UI_FILE);
+                  filename);
     }
 
   /* Also get the common area. */
@@ -115,8 +121,11 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   priv->common_area = GTK_WIDGET (common_area);
   if (!common_area)
     {
-      g_critical ("Widget \"common_area\" is missing in file %s.", UI_FILE);
+      g_critical ("Widget \"common_area\" is missing in file %s.", filename);
     }
+
+  /* We are done with the name of the user interface file. */
+  g_free (filename);
 
   /* Remember where the clusters are. Each cluster has a name identifying it. */
   priv->clusters = NULL;
@@ -145,7 +154,9 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
     }
 
   /* Set up the menu. */
-  menu_init (app, PACKAGE_DATA_DIR "/ui/app-menu.ui");
+  filename = g_strconcat (priv->ui_path, "app-menu.ui", NULL);
+  menu_init (app, filename);
+  g_free (filename);
 
   /* Set up Gstreamer for playing tones.  We pass the application so
    * setup_gstreamer can cause it to be passed to the message handler, 
@@ -210,7 +221,7 @@ sound_effects_player_activate (GApplication * application)
 
 static void
 sound_effects_player_open (GApplication * application, GFile ** files,
-			   gint n_files, const gchar * hint)
+                           gint n_files, const gchar * hint)
 {
   gint i;
 
@@ -222,7 +233,8 @@ static void
 sound_effects_player_init (Sound_Effects_Player * object)
 {
   object->priv =
-    G_TYPE_INSTANCE_GET_PRIVATE (object, SOUND_EFFECTS_PLAYER_TYPE_APPLICATION,
+    G_TYPE_INSTANCE_GET_PRIVATE (object,
+                                 SOUND_EFFECTS_PLAYER_TYPE_APPLICATION,
                                  Sound_Effects_PlayerPrivate);
 }
 
@@ -271,7 +283,7 @@ Sound_Effects_Player *
 sound_effects_player_new (void)
 {
   return g_object_new (sound_effects_player_get_type (), "application-id",
-                       "org.gnome.sound_effects_player", "flags",
+                       "org.gnome.show_control.sound_effects_player", "flags",
                        G_APPLICATION_HANDLES_OPEN, NULL);
 }
 
@@ -445,7 +457,7 @@ sep_set_project_file (xmlDocPtr project_file, GApplication * app)
       priv->project_file = NULL;
     }
   priv->project_file = project_file;
-  
+
   return;
 }
 
@@ -455,15 +467,27 @@ sep_get_project_filename (GApplication * app)
 {
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
-  gchar * project_filename;
-  
+  gchar *project_filename;
+
   project_filename = priv->project_filename;
   return (project_filename);
 }
 
+/* Find the path to the user interface files. */
+gchar *
+sep_get_ui_path (GApplication * app)
+{
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+  gchar *ui_path;
+
+  ui_path = priv->ui_path;
+  return (ui_path);
+}
+
 /* Set the name of the project file. */
 void
-sep_set_project_filename (gchar *filename, GApplication * app)
+sep_set_project_filename (gchar * filename, GApplication * app)
 {
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
@@ -476,7 +500,8 @@ sep_set_project_filename (gchar *filename, GApplication * app)
   priv->project_filename = filename;
 
   return;
-}  
+}
+
 /* Start playing the sound in a specified cluster. */
 void
 sep_start_cluster (int cluster_no, GApplication * app)

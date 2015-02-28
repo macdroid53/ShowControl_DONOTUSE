@@ -3,7 +3,7 @@
 
 
 uidir = $(pkgdatadir)/ui
-ui_DATA = sound_effects_player.ui app-menu.ui
+ui_DATA = sound_effects_player.ui app-menu.ui preferences.ui
 
 
 AM_CPPFLAGS = \

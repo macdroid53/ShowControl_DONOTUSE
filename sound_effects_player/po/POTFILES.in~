@@ -1,5 +1,0 @@
-# List of source files containing translatable strings.
-
-src/main.c
-src/app-menu.ui
-src/play_sound.ui

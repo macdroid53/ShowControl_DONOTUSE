@@ -88,10 +88,13 @@ xmlDocPtr sep_get_project_file (GApplication * app);
 void sep_set_project_file (xmlDocPtr project_file, GApplication * app);
 
 /* Given the application, find the name of the project file. */
-gchar * sep_get_project_filename (GApplication * app);
+gchar *sep_get_project_filename (GApplication * app);
 
 /* Given the application, remember the name of the project file. */
 void sep_set_project_filename (gchar * project_filename, GApplication * app);
+
+/* Given the application, find the path to the user interface files. */
+gchar *sep_get_ui_path (GApplication * app);
 
 /* Start playing the sound in a specified cluster. */
 void sep_start_cluster (int cluster_no, GApplication * app);

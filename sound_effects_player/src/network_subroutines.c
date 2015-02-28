@@ -131,10 +131,12 @@ network_init (GApplication * app)
                          app, NULL);
   g_source_attach (source_IPv6, NULL);
   network_data->source_IPv6 = source_IPv6;
+  network_data->socket_IPv6 = socket_IPv6;
 
   if (g_socket_speaks_ipv4 (socket_IPv6))
     {
       network_data->source_IPv4 = NULL;
+      network_data->socket_IPv4 = NULL;
       return network_data;
     }
 
@@ -164,6 +166,7 @@ network_init (GApplication * app)
                          app, NULL);
   g_source_attach (source_IPv4, NULL);
   network_data->source_IPv4 = source_IPv4;
+  network_data->socket_IPv4 = socket_IPv4;
 
   return network_data;
 }
@@ -184,19 +187,35 @@ network_set_port (int port_number, GApplication * app)
   /* Nothing to do if the port number hasn't changed. */
   if (port_number == network_data->port_number)
     return;
-  
+
   network_data->port_number = port_number;
   g_print ("Network port set to %i.\n", port_number);
 
   /* Stop network processing on the old port. */
   if (network_data->source_IPv4 != NULL)
     {
+      g_socket_close (network_data->socket_IPv4, &error);
+      if (error != NULL)
+        {
+          g_error (error->message);
+        }
+      g_object_unref (network_data->socket_IPv4);
+      network_data->socket_IPv4 = NULL;
+
       g_source_destroy (network_data->source_IPv4);
       g_source_unref (network_data->source_IPv4);
       network_data->source_IPv4 = NULL;
     }
   if (network_data->source_IPv6 != NULL)
     {
+      g_socket_close (network_data->socket_IPv6, &error);
+      if (error != NULL)
+        {
+          g_error (error->message);
+        }
+      g_object_unref (network_data->socket_IPv6);
+      network_data->socket_IPv6 = NULL;
+
       g_source_destroy (network_data->source_IPv6);
       g_source_unref (network_data->source_IPv6);
       network_data->source_IPv6 = NULL;
@@ -229,6 +248,7 @@ network_set_port (int port_number, GApplication * app)
                          app, NULL);
   g_source_attach (source_IPv6, NULL);
   network_data->source_IPv6 = source_IPv6;
+  network_data->socket_IPv6 = socket_IPv6;
 
   if (g_socket_speaks_ipv4 (socket_IPv6))
     {
@@ -262,6 +282,18 @@ network_set_port (int port_number, GApplication * app)
                          app, NULL);
   g_source_attach (source_IPv4, NULL);
   network_data->source_IPv4 = source_IPv4;
+  network_data->socket_IPv6 = socket_IPv6;
 
   return;
+}
+
+/* Find the network port number. */
+gint network_get_port (GApplication * app)
+{
+  struct network_info *network_data;
+  gint port_number;
+  
+  network_data = sep_get_network_data (app);
+  port_number = network_data->port_number;
+  return (port_number);
 }

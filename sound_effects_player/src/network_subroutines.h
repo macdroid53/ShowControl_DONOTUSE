@@ -27,5 +27,8 @@
 /* Initialize. */
 void *network_init (GApplication * app);
 
-/* set the port number. */
+/* Set the port number. */
 void network_set_port (int port_number, GApplication * app);
+
+/* Get the port number. */
+gint network_get_port (GApplication * app);
