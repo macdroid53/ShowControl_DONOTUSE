@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sounds>
+  <version>1.0</version>
+  <sound>
+    <!-- sequencer references sounds by name -->
+    <name>440Hz</name>
+    <!-- the WAV file contains the waveform for the sound -->
+    <wav_file_name>440Hz.wav</wav_file_name>
+    <!-- volume ramps up from 0 to attack level in attack time -->
+    <attack_time>0.000000000</attack_time>
+    <attack_level>1.00</attack_level>
+    <!-- after reaching attack level, volume ramps down to sustain level
+	 in decay time -->
+    <decay_time>0.000000000</decay_time>
+    <sustain_level>1.00</sustain_level>
+    <!-- release starts on external signal or when reaching the
+	 release start time -->
+    <release_start_time>0.000000000</release_start_time>
+    <!-- upon release, volume ramps down to 0 in release duration time -->
+    <release_duration_time>0.000000000</release_duration_time>
+    <!-- sound loops between loop times -->
+    <loop_from_time>0.000000000</loop_from_time>
+    <loop_to_time>0.000000000</loop_to_time>
+    <!-- automatically stop looping after loop_limit loops -->
+    <loop_limit>0</loop_limit>
+    <!-- start at start_time offset in the wave file -->
+    <start_time>0.000000000</start_time>
+    <!-- attenuate waves by designer_volume_level -->
+    <designer_volume_level>1.00</designer_volume_level>
+    <!-- pan mono waves or balance stereo waves by designer_pan -->
+    <designer_pan>0.00</designer_pan>
+    <!-- if no sequencer, MIDI program and note numbers to activate -->
+    <MIDI_program_number></MIDI_program_number>
+    <MIDI_note_number>1</MIDI_note_number>
+    <!-- if no sequencer, OSC name to activate -->
+    <OSC_name></OSC_name>
+    <!-- if no sequencer, function key to activate -->
+    <function_key></function_key>
+  </sound>
+
+  <sound>
+    <name>ring</name>
+    <wav_file_name>telephone_ring.wav</wav_file_name>
+    <attack_time>0.000000000</attack_time>
+    <attack_level>1.00</attack_level>
+    <decay_time>0.000000000</decay_time>
+    <sustain_level>1.00</sustain_level>
+    <release_start_time>1.995000000</release_start_time>
+    <release_duration_time>0.010000000</release_duration_time>
+    <loop_from_time>0.000000000</loop_from_time>
+    <loop_to_time>0.000000000</loop_to_time>
+    <loop_limit>0</loop_limit>
+    <start_time>0.000000000</start_time>
+    <designer_volume_level>1.00</designer_volume_level>
+    <designer_pan>0.00</designer_pan>
+    <MIDI_program_number></MIDI_program_number>
+    <MIDI_note_number></MIDI_note_number>
+    <OSC_name></OSC_name>
+    <function_key></function_key>
+  </sound>
+  
+  <sound>
+    <name>ringout</name>
+    <wav_file_name>telephone_ringout.wav</wav_file_name>
+    <attack_time>0.010000000</attack_time>
+    <attack_level>1.00</attack_level>
+    <decay_time>0.000000000</decay_time>
+    <sustain_level>1.00</sustain_level>
+    <release_start_time>0.000000000</release_start_time>
+    <release_duration_time>∞</release_duration_time>
+    <loop_from_time>0.000000000</loop_from_time>
+    <loop_to_time>0.000000000</loop_to_time>
+    <loop_limit>0</loop_limit>
+    <start_time>0.000000000</start_time>
+    <designer_volume_level>1.00</designer_volume_level>
+    <designer_pan>0.00</designer_pan>
+    <MIDI_program_number></MIDI_program_number>
+    <MIDI_note_number></MIDI_note_number>
+    <OSC_name></OSC_name>
+    <function_key></function_key>
+  </sound>
+
+  <routing></routing>
+</sounds>

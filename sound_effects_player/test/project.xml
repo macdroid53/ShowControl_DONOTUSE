@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The outer structure name is "sound_control" to identify
+     XML files belonging to the sound_control project.  If the user
+     tries to read an XML file intended for some other application,
+     we can give a meaningful error message.  -->
+<sound_control>
+  <!-- XML format lets us add more values without impacting old readers.
+       However, if we need to make an incompatible change to an old
+       value, having the version number lets us give a good error message
+       if an old program tries to read a newer, incompatible, file.
+       Every reader must check the version number and reject versions
+       it does not know how to read.  The first version of the software
+       will accept only version 1. Writers should write later versions
+       only if they must say something they cannot express in version 1.
+       -->
+  <version>1</version>
+  <!-- This is the project file.  Other XML files used by the
+       show_control application are script, cue, sound_effects and
+       sequence.  By putting the purpose of the file here, we can
+       give a meaningful error message if the user tries to read
+       the wrong file.  -->
+  <project>
+    <!-- Information needed by the script editor will go here. -->
+    <script_editor>
+      <show_name>The Perils of Pauline</show_name>
+    </script_editor>
+    <!-- Information needed by the sequencer will go here.  The sequencer
+	 will also read the IP address and port information for all the
+	 programs it controls. -->
+    <sequencer>
+    </sequencer>
+    <!-- Information needed by the lighting display module will go
+	 here.  -->
+    <lighting_displayer>
+      <board>
+	<name>Lightronics TL-5024</name>
+      </board>
+      <!-- The IP address and port are used by the sequencer to send us
+	   messages.  We listen for messages on the specified port. -->
+      <network>
+	<IP_address>localhost6</IP_address>
+	<port>1501</port>
+      </network>
+    </lighting_displayer>
+    <!-- Information needed by the microphone switching module will go here. -->
+    <microphone_switcher>
+      <board>
+	<name>Behringer X32</name>
+      </board>
+      <!-- The IP address and port are used by the sequencer to send us
+	   messages.  We listen for messages on the specified port. -->
+      <network>
+	<IP_address>localhost6</IP_address>
+	<port>1502</port>
+      </network>
+    </microphone_switcher>
+    <!-- Information needed by the sound effects player will go here. -->
+    <sound_effects_player>
+      <!-- The IP address and port are used by the sequencer to send us
+	   messages.  We listen for messages on the specified port. -->
+      <network>
+	<IP_address>localhost6</IP_address>
+	<port>1503</port>
+      </network>
+    </sound_effects_player>
+  </project>
+</sound_control>
