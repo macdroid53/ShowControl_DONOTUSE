@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<show_control>
+
+  <!-- This sound sequence is common to many shows.  -->
+  <sound_sequence>
+    <version>1.0</version>
+
+    <sequence_item>
+      <name>Welcome-1</name>
+      <type>operator_wait></type>
+      <next>Welcome-2</next>
+      <display></display>
+      <function_key></function_key>
+      <Q_number>1</Q_number>
+      <macro_number></macro_number>
+    </sequence_item>
+
+   <sequence_item>
+      <name>Welcome-2</name>
+      <type>start_sound</type>
+      <sound_name>Welcome_to_the_Amato_Center</sound_name>
+      <velocity>127</velocity>
+      <designer_pan>0.00</designer_pan>
+      <program>0</program>
+      <bank>0</bank>
+      <cluster>0</cluster>
+      <next_when_complete></next_when_complete>
+      <next_when_terminated></next_when_terminated>
+      <next_when_started></next_when_started>
+      <importance>1</importance>
+      <Q_number></Q_number>
+      <display>Welcome message</display>
+   </sequence_item>
+
+   <!-- Sequence items for close and thunder are similar.  Telephone
+	ringing is more complex.  -->
+   
+    <sequence_item>
+      <name>1.0</name>
+      <type>operator_wait</type>
+      <next>2.0></next>
+      <display>telephone rings</display>
+      <function_key></function_key>
+      <Q_number>997.0</Q_number>
+      <macro_number></macro_number>
+    </sequence_item>
+
+    <sequence_item>
+      <name>2.0</name>
+      <type>start_sound</type>
+      <sound_name>ring</sound_name>
+      <velocity>127</velocity>
+      <designer_pan>0.00</designer_pan>
+      <program>0</program>
+      <bank>0</bank>
+      <cluster>0</cluster>
+      <next_when_complete>5.0></next_when_complete>
+      <next_when_terminated>7.0</next_when_terminated>
+      <next_when_started>3.0</next_when_started>
+      <importance>1</importance>
+      <Q_number></Q_number>
+      <display>ring</display>
+    </sequence_item>
+
+    <sequence_item>
+      <name>3.0</name>
+      <type>operator_wait</type>
+      <next>4.0></next>
+      <display>stop telephone ring</display>
+      <function_key></function_key>
+      <Q_number></Q_number>
+      <macro_number></macro_number>
+    </sequence_item>
+
+    <sequence_item>
+      <name>4.0</name>
+      <type>stop</type>
+      <item_to_stop>2.0</item_to_stop>
+      <next>8.0</next>
+    </sequence_item>
+
+    <sequence_item>
+      <name>5.0</name>
+      <type>start_sound</type>
+      <sound_name>ringout</sound_name>
+      <velocity>127</velocity>
+      <designer_pan>0.00</designer_pan>
+      <program>0</program>
+      <bank>0</bank>
+      <cluster>0</cluster>
+      <next_when_complete>6.0></next_when_complete>
+      <next_when_terminated></next_when_terminated>
+      <next_when_started></next_when_started>
+      <importance>1</importance>
+      <Q_number></Q_number>
+      <display>ring</display>
+    </sequence_item>
+
+    <sequence_item>
+      <name>6.0</name>
+      <type>start_sound</type>
+      <sound_name>ring</sound_name>
+      <velocity>127</velocity>
+      <designer_pan>0.00</designer_pan>
+      <program>0</program>
+      <bank>0</bank>
+      <cluster>0</cluster>
+      <next_when_complete>5.0></next_when_complete>
+      <next_when_terminated>7.0</next_when_terminated>
+      <next_when_started></next_when_started>
+      <importance>1</importance>
+      <Q_number></Q_number>
+      <display>ring</display>
+    </sequence_item>
+
+    <sequence_item>
+      <name>7.0</name>
+      <type>start_sound</type>
+      <sound_name>ringout</sound_name>
+      <velocity>127</velocity>
+      <designer_pan>0.00</designer_pan>
+      <program>0</program>
+      <bank>0</bank>
+      <cluster>0</cluster>
+      <next_when_complete>></next_when_complete>
+      <next_when_terminated></next_when_terminated>
+      <next_when_started></next_when_started>
+      <importance>1</importance>
+      <Q_number></Q_number>
+      <display>ring</display>
+    </sequence_item>
+
+    <!-- These are examples of other types of sequence items.  -->
+
+    <sequence_item>
+      <name>8.0</name>
+      <type>wait</type>
+      <time>3.000000000</time>
+      <next>9.0</next>
+      <display>waiting 3 seconds</display>
+    </sequence_item>
+
+    <sequence_item>
+      <name>9.0</name>
+      <type>offer_sound</type>
+      <offered_name>10.0</offered_name>
+      <program>0</program>
+      <bank>0</bank>
+      <cluster>2</cluster>
+      <MIDI_program>0</MIDI_program>
+      <MIDI_note>69</MIDI_note>
+      <OSC_name></OSC_name>
+      <Q_number></Q_number>
+      <macro_number></macro_number>
+      <function_key>F8</function_key>
+      <display>440Hz tone></display>
+    </sequence_item>
+
+    <sequence_item>
+      <name>10.0</name>
+      <type>start_sound</type>
+      <sound_name>440Hz</sound_name>
+      <velocity>127</velocity>
+      <designer_pan>0.00</designer_pan>
+      <program>0</program>
+      <bank>0</bank>
+      <cluster>0</cluster>
+      <next_when_complete>11.0</next_when_complete>
+      <next_when_terminated></next_when_terminated>
+      <next_when_started></next_when_started>
+      <importance>1</importance>
+      <Q_number></Q_number>
+      <display>440Hz tone</display>
+    </sequence_item>
+
+    <sequence_item>
+      <name>11.0</name>
+      <type>cease_offering_sound</type>
+      <offorer>9.0</offorer>
+      <next></next>
+    </sequence_item>
+
+    <sequence_item>
+      <name>12.0</name>
+      <type>start_sequence</type>
+      <next>1.0</next>
+    </sequence_item>
+  
+  </sound_sequence>
+</show_control>

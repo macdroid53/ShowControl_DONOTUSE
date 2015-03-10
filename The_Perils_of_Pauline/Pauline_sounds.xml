@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<show_control>
+
+  <!-- These are the special sounds used by The Perils of Pauline.  -->
+  <sounds>
+    <version>1.0</version>
+    <sound>
+      <name>train</name>
+      <wav_file_name>train.wav</wav_file_name>
+      <attack_time>5.000000000</attack_time>
+      <attack_level>1.00</attack_level>
+      <decay_time>0.000000000</decay_time>
+      <sustain_level>1.00</sustain_level>
+      <release_start_time>0.000000000</release_start_time>
+      <release_duration_time>5.000000000</release_duration_time>
+      <loop_from_time>0.000000000</loop_from_time>
+      <loop_to_time>0.000000000</loop_to_time>
+      <loop_limit>0</loop_limit>
+      <start_time>0.000000000</start_time>
+      <designer_volume_level>0.50</designer_volume_level>
+      <designer_pan>0.00</designer_pan>
+      <MIDI_program_number></MIDI_program_number>
+      <MIDI_note_number></MIDI_note_number>
+      <OSC_name></OSC_name>
+      <function_key></function_key>
+    </sound>
+
+    <routing></routing>
+  </sounds>
+</show_control>

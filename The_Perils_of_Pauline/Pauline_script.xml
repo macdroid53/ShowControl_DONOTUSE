@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<show_control>
+  <!-- This is a script file.  -->
+  <script>
+  <version>1.0</version>
+    <act id="1">
+      <scene id="1">
+	<!-- various dialog and action items go here. -->
+      </scene>
+    </act>
+  </script>
+</show_control>

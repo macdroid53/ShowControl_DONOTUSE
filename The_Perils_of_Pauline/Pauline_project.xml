@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- The outer structure name is "show_control" to identify
+     XML files belonging to the show_control project.  If the user
+     tries to read an XML file intended for some other application,
+     we can give a meaningful error message.  -->
+<show_control>
+
+  <!-- This is the project file.  Other XML files used by the
+       show_control application are equipment, cues, characters, crew,
+       script, sounds and sound_sequence. By putting the purpose of the
+       file here, we can give a meaningful error message if the user
+       tries to read the wrong file.  -->
+  <project>
+
+    <!-- XML format lets us add more values without impacting old readers.
+	 However, if we need to make an incompatible change to an old
+	 value, having the version number lets us give a good error message
+	 if an old program tries to read a newer, incompatible, file.
+	 Every reader must check the version number and reject versions
+	 it does not know how to read.  The first part of the number is
+	 incremented on an incompatible change, the second part on a compatible
+	 change: one that adds a value that can be ignored by old readers,
+	 for example.  When reading, a program will check the first part of
+	 the number and adapt its reading to the indicated format.
+	 When writing, a program will use the oldest format capable of
+	 expressing the information correctly.  The first version of the
+	 show_control programs will reject version numbers in which the value
+	 before the decimal point is not equal to 1.  -->
+    <version>1.0</version>
+
+    <!-- a short description of the project -->
+    <title>The Perils of Pauline, Amato Theater, April 15-20, 2015</title>
+
+    <!-- The light board, sound mixer, etc, used at the Amato Theater.
+	 This information is independent of the production.  This file
+	 includes the IP address and port number used to communicate
+	 from the sequencer to the sound effects player, the light
+	 board controller and the microphone handler.  -->
+    <equipment href="Amato_equipment.xml"/>
+
+    <!-- Extra equipment brought in for this production.  The information
+	 in this file is used the same way as the standard equipment file,
+	 but is kept separate so the standard equipment file does not
+	 have to be edited for each production.  This file includes references
+	 to the sound effects and sequence used by the sound effects player.
+    -->
+    <equipment href="Pauline_equipment.xml"/>
+
+    <!-- The way a cue is executed is specific to the script and the
+	 capabilities of the theater.  Every cue has a name.  The script
+	 specifies when during the performance each named cue is to be
+	 performed.  These files describe, for each named cue, what command
+	 or commands to send to the light board, sound effects player and/or
+	 microphone handler when the script calls for the cue to be executed.
+	 Cues which will be used in many shows are in Amato_cues.xml, whereas
+	 cues that are specific to The Perils of Pauline are in
+	 Pauline_cues.xml.  -->
+    <cues href="Amato_cues.xml"/>
+    <cues href="Pauline_cues.xml"/>
+
+    <!-- These are the characters in this production, with the names of their
+	 actors. With a short list it is more convenient to place
+	 the information directly in the project file, though with
+	 larger productions it can be placed in its own file.  -->
+    <characters>
+      <character id="Pauline">Perl White</character>
+      <character id="Harry Marvin">Crane Wilbur</character>
+      <character id="Raymond Owen">Paul Panzer</character>
+    </characters>
+
+    <!-- The crew for this production, with their duties. -->
+    <crew href="Amato_crew_for_Pauline.xml"/>
+
+    <!-- The script, which is kept in a separate file because it is
+	 independent of production or even theater. -->
+    <script lang="cueml" href="The_Perils_of_Pauline.xml"/>
+
+  </project>
+</show_control>

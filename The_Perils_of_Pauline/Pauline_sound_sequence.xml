@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<show_control>
+
+  <!-- This sound sequence is unique to The Perils of Pauline.  These
+       sequence items are available to the sound_effect_player's internal
+       sequencer along with the sequence items in Amato_sound_sequence.xml.  -->
+  <sound_sequence>
+    <version>1.0</version>
+
+    <sequence_item>
+      <name>train</name>
+      <type>start_sound</type>
+      <sound_name>train</sound_name>
+      <velocity>127</velocity>
+      <designer_pan>0.00</designer_pan>
+      <program>0</program>
+      <bank>0</bank>
+      <cluster>0</cluster>
+      <next_when_complete></next_when_complete>
+      <next_when_terminated></next_when_terminated>
+      <next_when_started></next_when_started>
+      <importance>1</importance>
+      <Q_number>2.0</Q_number>
+      <display>train</display>
+    </sequence_item>
+  
+  </sound_sequence>
+</show_control>

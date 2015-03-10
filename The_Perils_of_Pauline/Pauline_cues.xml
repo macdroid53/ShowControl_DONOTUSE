@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<show_control>
+  <!-- This file contains the cues which are specific to The Perils of
+       Pauline.  File Amato-cues.xml contains standard cues.  -->
+  <cues>
+    <version>1.0</version>
+
+    <cue id="Pauline_enters">
+      <microphone id="1">on</microphone>
+
+    </cue>
+    <cue id="Pauline_exits">
+      <microphone id="1">off</microphone>
+    </cue>
+
+    <!-- other cues -->
+
+  </cues>
+</show_control>

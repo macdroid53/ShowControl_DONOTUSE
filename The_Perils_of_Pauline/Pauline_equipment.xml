@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<show_control>
+  <!-- This file contains additional information about the theater
+       infrastructure used by The Perils of Pauline.  Information is
+       merged with the standard equipment file based on the ID of the program.
+  -->
+  <equipment>
+    <version>1.0</version>
+
+    <program id="sound_effects">
+      <sounds href="Pauline_sounds.xml"/>
+      <sound_sequence href="Pauline_sound_sequence.xml"/>
+    </program>
+
+    <program id="lighting">
+    </program>
+
+    <program id="microphones">
+    </program>
+    
+  </equipment>
+</show_control>

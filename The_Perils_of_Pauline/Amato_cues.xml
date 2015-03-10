@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<show_control>
+  <!-- This file contains the standard cues.  Cues are the glue between the
+       script and the theater equipment.  Each cue provides commands to the
+       light board, the microphone board and/or the sound effects player.
+       In this example, the sound effects player is sent MIDI Show Control
+       commands.  -->
+  <cues>
+    <version>1.0</version>
+
+    <cue id="open_show">
+      <lights>house_to_half</lights>
+      <sound>
+	<MIDI_show_control>
+	  <command>Go</command>
+	  <Q_number>1</Q_number>
+	</MIDI_show_control>
+      </sound>
+    </cue>
+      
+    <cue id="close_show">
+      <lights>house_to_full</lights>
+      <sound>
+	<MIDI_show_control>
+	  <command>Go</command>
+	  <Q_number>999.0</Q_number>
+	</MIDI_show_control>
+      </sound>
+    </cue>
+
+    <cue id="telephone_rings">
+      <sound>
+	<MIDI_show_control>
+	  <command>Go</command>
+	  <Q_number>998.0</Q_number>
+	</MIDI_show_control>
+      </sound>
+    </cue>
+
+    <cue id="lightning_and_thunder">
+      <lights>lightning</lights>
+      <sound>
+	<MIDI_show_control>
+	  <command>Go</command>
+	  <Q_number>997.0</Q_number>
+	</MIDI_show_control>
+      </sound>
+    </cue>
+  </cues>
+</show_control>
