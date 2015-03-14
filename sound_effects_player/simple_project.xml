@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<show_control>
+  <project>
+    <version>1.0</version>
+    <equipment>
+      <program id="sound_effects">
+        <port>1500</port>
+      </program>
+    </equipment>
+  </project>
+</show_control>

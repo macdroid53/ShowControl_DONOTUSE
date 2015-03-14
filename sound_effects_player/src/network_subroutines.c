@@ -184,10 +184,6 @@ network_set_port (int port_number, GApplication * app)
 
   network_data = sep_get_network_data (app);
 
-  /* Nothing to do if the port number hasn't changed. */
-  if (port_number == network_data->port_number)
-    return;
-
   network_data->port_number = port_number;
   g_print ("Network port set to %i.\n", port_number);
 
@@ -288,11 +284,12 @@ network_set_port (int port_number, GApplication * app)
 }
 
 /* Find the network port number. */
-gint network_get_port (GApplication * app)
+gint
+network_get_port (GApplication * app)
 {
   struct network_info *network_data;
   gint port_number;
-  
+
   network_data = sep_get_network_data (app);
   port_number = network_data->port_number;
   return (port_number);
