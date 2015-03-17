@@ -75,8 +75,8 @@ GtkWidget *sep_get_common_area (GApplication * app);
 /* Given the application, find the network information. */
 void *sep_get_network_data (GApplication * app);
 
-/* Given the application, find the parser information. */
-void *sep_get_parse_info (GApplication * app);
+/* Given the application, find the network messages parser information. */
+void *sep_get_parse_net_data (GApplication * app);
 
 /* Given the application, find the top-level window. */
 GtkWindow *sep_get_top_window (GApplication * app);

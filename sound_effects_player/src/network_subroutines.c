@@ -20,7 +20,7 @@
 #include <gtk/gtk.h>
 #include <gio/gio.h>
 #include "sound_effects_player.h"
-#include "parse_subroutines.h"
+#include "parse_net_subroutines.h"
 #include "network_subroutines.h"
 
 /* The persistent data used by the network subroutines. */
@@ -68,7 +68,7 @@ receive_data_callback (GSocket * socket, GIOCondition condition,
           /* Data may be received in arbitrary-sized chunks.  
            * Processing a chunk might range from just adding it to a buffer to 
            * executing several commands that arrived all at once. */
-          parse_text (network_buffer, user_data);
+          parse_net_text (network_buffer, user_data);
         }
 
     }
@@ -82,7 +82,8 @@ receive_data_callback (GSocket * socket, GIOCondition condition,
 }
 
 /* Initialize the network subroutines.  We start to listen for messages.
- * The return value is the persistent data. */
+ * The return value is the persistent data.  Send text messages for testing
+ * using ncat: nc -u localhost 1500.  */
 void *
 network_init (GApplication * app)
 {

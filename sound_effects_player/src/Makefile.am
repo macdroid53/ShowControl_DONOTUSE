@@ -24,8 +24,10 @@ sound_effects_player_SOURCES = \
 	sound_effects_player.c \
 	network_subroutines.c \
 	network_subroutines.h \
-	parse_subroutines.c \
-	parse_subroutines.h \
+	parse_net_subroutines.c \
+	parse_net_subroutines.h \
+	parse_xml_subroutines.c \
+	parse_xml_subroutines.h \
 	button_subroutines.c \
 	button_subroutines.h \
 	gstreamer_subroutines.c \

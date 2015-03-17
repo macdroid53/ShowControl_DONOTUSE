@@ -1,5 +1,5 @@
 /*
- * parse_subroutines.h
+ * parse_net_subroutines.h
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -19,11 +19,11 @@
 
 #include <gtk/gtk.h>
 
-/* Subroutines defined in parse_subroutines.c */
+/* Subroutines defined in parse_net_subroutines.c */
 
 /* Initialize the parser. */
-void *parse_init (GApplication * app);
+void *parse_net_init (GApplication * app);
 
 /* Accept text, divide or accumulate it into commands, 
  * and execute those commands. */
-void parse_text (gchar * text, GApplication * app);
+void parse_net_text (gchar * text, GApplication * app);

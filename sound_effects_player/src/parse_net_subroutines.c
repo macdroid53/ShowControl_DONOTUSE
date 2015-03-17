@@ -1,5 +1,5 @@
 /*
- * parse_subroutines.c
+ * parse_net_subroutines.c
  *
  * Copyright © 2015 by John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -18,7 +18,7 @@
  */
 
 #include <stdlib.h>
-#include "parse_subroutines.h"
+#include "parse_net_subroutines.h"
 #include "sound_effects_player.h"
 
 /* These subroutines are used to process network messages.
@@ -32,7 +32,7 @@
  * It is accessible from the application.
  */
 
-struct parser_info
+struct parse_net_info
 {
   GHashTable *hash_table;
   gchar *message_buffer;
@@ -57,43 +57,43 @@ static struct keyword_value_pairs keywords_with_values[] = {
   {"quit", &keyword_values[2]}
 };
 
-/* Initialize the parser */
+/* Initialize the network messages parser */
 
 void *
-parse_init (GApplication * app)
+parse_net_init (GApplication * app)
 {
-  struct parser_info *parse_info;
+  struct parse_net_info *parse_net_data;
   int i;
 
   /* Allocate the persistent data used by the parser. */
-  parse_info = g_malloc (sizeof (struct parser_info));
+  parse_net_data = g_malloc (sizeof (struct parse_net_info));
 
   /* Allocate the hash table which holds the keywords. */
-  parse_info->hash_table = g_hash_table_new (g_str_hash, g_str_equal);
+  parse_net_data->hash_table = g_hash_table_new (g_str_hash, g_str_equal);
 
   /* Populate the hash table. */
   for (i = 0;
        i < sizeof (keywords_with_values) / sizeof (keywords_with_values[0]);
        i++)
     {
-      g_hash_table_insert (parse_info->hash_table,
+      g_hash_table_insert (parse_net_data->hash_table,
                            keywords_with_values[i].key,
                            keywords_with_values[i].val);
     }
 
   /* The message buffer starts out empty. */
-  parse_info->message_buffer = NULL;
+  parse_net_data->message_buffer = NULL;
 
-  return parse_info;
+  return parse_net_data;
 }
 
 /* Receive some text from the network.  If we have a complete command,
  * parse and execute it.
  */
 void
-parse_text (gchar * text, GApplication * app)
+parse_net_text (gchar * text, GApplication * app)
 {
-  struct parser_info *parse_info;
+  struct parse_net_info *parse_net_data;
   gchar *new_message;
   gchar *old_message;
   gchar *nl_pointer;
@@ -106,27 +106,27 @@ parse_text (gchar * text, GApplication * app)
   gchar *extra_text;
   long int cluster_no;
 
-  parse_info = sep_get_parse_info (app);
+  parse_net_data = sep_get_parse_net_data (app);
 
   /* Append the text we have just received onto any leftover unprocessed text.
    */
-  old_message = parse_info->message_buffer;
+  old_message = parse_net_data->message_buffer;
   if (old_message == NULL)
     {
       new_message = g_strdup (text);
-      parse_info->message_buffer = new_message;
+      parse_net_data->message_buffer = new_message;
     }
   else
     {
       new_message = g_strconcat (old_message, text, NULL);
-      parse_info->message_buffer = new_message;
+      parse_net_data->message_buffer = new_message;
       g_free (old_message);
     }
 
   /* Process any and all complete commands in the message buffer. */
   while (1)
     {
-      new_message = parse_info->message_buffer;
+      new_message = parse_net_data->message_buffer;
       nl_pointer = g_strstr_len (new_message, -1, "\n");
       if (nl_pointer == NULL)
         /* There are no new line characters in the buffer; wait for
@@ -137,7 +137,7 @@ parse_text (gchar * text, GApplication * app)
        * the remainder to the message buffer. */
       command_length = nl_pointer - new_message + 1;
       command_string = g_strndup (new_message, command_length);
-      parse_info->message_buffer = g_strdup (nl_pointer + 1);
+      parse_net_data->message_buffer = g_strdup (nl_pointer + 1);
       g_free (new_message);
 
       /* Isolate the keyword that starts the command. The keyword will be
@@ -152,7 +152,7 @@ parse_text (gchar * text, GApplication * app)
       extra_text = g_strdup (command_string + kl);
 
       /* Find the keyword in the hash table. */
-      p = g_hash_table_lookup (parse_info->hash_table, keyword_string);
+      p = g_hash_table_lookup (parse_net_data->hash_table, keyword_string);
       if (p == NULL)
         {
           g_print ("Unknown command\n");
@@ -163,14 +163,17 @@ parse_text (gchar * text, GApplication * app)
           switch (keyword_value)
             {
             case keyword_start:
+              /* For the Start command, the operand is the cluster number. */
               cluster_no = strtol (extra_text, NULL, 0);
               sep_start_cluster (cluster_no, app);
               break;
             case keyword_stop:
+              /* Likewise for the Stop command. */
               cluster_no = strtol (extra_text, NULL, 0);
               sep_stop_cluster (cluster_no, app);
               break;
             case keyword_quit:
+              /* The Quit command takes no arguments. */
               g_application_quit (app);
               break;
             default:

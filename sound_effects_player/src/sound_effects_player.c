@@ -22,7 +22,7 @@
 #include "gstreamer_subroutines.h"
 #include "menu_subroutines.h"
 #include "network_subroutines.h"
-#include "parse_subroutines.h"
+#include "parse_net_subroutines.h"
 #include "button_subroutines.h"
 
 G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player,
@@ -53,8 +53,8 @@ struct _Sound_Effects_PlayerPrivate
   /* The persistent network information. */
   void *network_data;
 
-  /* The persistent parser information. */
-  void *parser_info;
+  /* The persistent information for the network commands parser. */
+  void *parse_net_data;
 
   /* The XML file that holds parameters for the program. */
   xmlDocPtr project_file;
@@ -202,8 +202,8 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
         g_list_prepend (priv->sound_effects, sound_effect);
     }
 
-  /* Initialize the message parser. */
-  priv->parser_info = parse_init (app);
+  /* Initialize the network message parser. */
+  priv->parse_net_data = parse_net_init (app);
 
   /* Listen for network messages. */
   priv->network_data = network_init (app);
@@ -406,17 +406,17 @@ sep_get_network_data (GApplication * app)
   return (network_data);
 }
 
-/* Find the parser information.  The parameter passed is the application.
- */
+/* Find the network commands parser information.  
+ * The parameter passed is the application.  */
 void *
-sep_get_parse_info (GApplication * app)
+sep_get_parse_net_data (GApplication * app)
 {
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
-  void *parser_info;
+  void *parse_net_data;
 
-  parser_info = priv->parser_info;
-  return (parser_info);
+  parse_net_data = priv->parse_net_data;
+  return (parse_net_data);
 }
 
 /* Find the top-level window, to use as the transient parent for

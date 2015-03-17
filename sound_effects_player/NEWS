@@ -1,3 +1,6 @@
+Version 0.29, March 17, 2015
+  Move xml file parsing to its own module.
+  
 Version 0.28, March 14, 2015
   Read show_control XML files.
   
