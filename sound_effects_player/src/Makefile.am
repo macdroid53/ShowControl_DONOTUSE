@@ -22,6 +22,9 @@ sound_effects_player_SOURCES = \
 	main.c \
 	sound_effects_player.h \
 	sound_effects_player.c \
+	sound_structure.h \
+	sound_subroutines.c \
+	sound_subroutines.h \
 	network_subroutines.c \
 	network_subroutines.h \
 	parse_net_subroutines.c \

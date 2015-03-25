@@ -43,12 +43,13 @@ main (int argc, char *argv[])
   const gchar *nano_str;
   const gchar *check_version_str;
   guint major, minor, micro, nano;
-
   extern const guint glib_major_version;
   extern const guint glib_minor_version;
   extern const guint glib_micro_version;
   extern const guint glib_binary_age;
   extern const guint glib_interface_age;
+  int fake_argc;
+  char *fake_argv[2];
 
 #ifdef ENABLE_NLS
   bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
@@ -58,11 +59,11 @@ main (int argc, char *argv[])
 
   /* Initialize gtk and Gstreamer. */
   gtk_init (&argc, &argv);
-
-  ctx = g_option_context_new ("[FILE1] [FILE2] ...");
+  ctx = g_option_context_new ("[project_file]");
+  g_option_context_add_group (ctx, gtk_get_option_group (TRUE));
   g_option_context_add_group (ctx, gst_init_get_option_group ());
   g_option_context_add_main_entries (ctx, entries, NULL);
-  g_option_context_set_summary (ctx, "Create buttons to play the files.");
+  g_option_context_set_summary (ctx, "Play sound effects for show_control.");
 
   if (!g_option_context_parse (ctx, &argc, &argv, &err))
     {
@@ -108,9 +109,14 @@ main (int argc, char *argv[])
   /* Initialize gstreamer */
   gst_init (&argc, &argv);
 
-  /* Run the program. */
+  /* Run the program.  The values from argc and argv have already been
+   * parsed, so create a fake version of argc and argv with the filename
+   * argument.  */
+  fake_argc = 2;
+  fake_argv[0] = argv[0];
+  fake_argv[1] = filenames[0];
   app = sound_effects_player_new ();
-  status = g_application_run (G_APPLICATION (app), argc, argv);
+  status = g_application_run (G_APPLICATION (app), fake_argc, fake_argv);
 
   /* We are done. */
   g_object_unref (app);

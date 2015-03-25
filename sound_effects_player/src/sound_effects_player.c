@@ -19,11 +19,12 @@
 #include <glib/gi18n.h>
 #include <libxml/xmlmemory.h>
 #include "sound_effects_player.h"
+#include "sound_structure.h"
 #include "gstreamer_subroutines.h"
 #include "menu_subroutines.h"
 #include "network_subroutines.h"
+#include "parse_xml_subroutines.h"
 #include "parse_net_subroutines.h"
-#include "button_subroutines.h"
 
 G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player,
                GTK_TYPE_APPLICATION);
@@ -44,8 +45,8 @@ struct _Sound_Effects_PlayerPrivate
   GtkWidget *common_area;
 
   /* The list of sounds we can make.  Each item of the GList points
-   * to a sound_effect structure. */
-  GList *sound_effects;
+   * to a sound_info structure. */
+  GList *sound_list;
 
   /* The list of clusters that might contain sound effects. */
   GList *clusters;
@@ -77,7 +78,7 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   GtkWidget *common_area;
   GtkBuilder *builder;
   GError *error = NULL;
-  struct sound_effect_str *sound_effect;
+  struct sound_info *sound_effect;
   gint cluster_number;
   gchar *cluster_name;
   GtkWidget *cluster_widget;
@@ -86,6 +87,7 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   gchar *sound_name;
   gint i;
   gchar *filename;
+  gchar *local_filename;
 
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
@@ -150,8 +152,10 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
 
   if (file != NULL)
     {
-      /* TODO: Add code here to open the file in the new window */
+      priv->project_filename = g_file_get_parse_name (file);
     }
+  else
+    priv->project_filename = NULL;
 
   /* Set up the menu. */
   filename = g_strconcat (priv->ui_path, "app-menu.ui", NULL);
@@ -164,49 +168,61 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   priv->pipeline = gstreamer_init (app);
 
   /* Set up the remainder of the private data. */
-  priv->sound_effects = NULL;
-
-  /* setup_gstreamer created four test tones.  Place them in the first
-   * four clusters. */
-  for (i = 0; i < 4; i++)
-    {
-      sound_effect = g_malloc (sizeof (struct sound_effect_str));
-
-      /* Find the cluster that will hold this sound effect. */
-      sound_effect->cluster = NULL;
-      for (cluster_list = priv->clusters; cluster_list != NULL;
-           cluster_list = cluster_list->next)
-        {
-          cluster_widget = cluster_list->data;
-          widget_name = gtk_widget_get_name (cluster_widget);
-          cluster_name = g_strdup_printf ("cluster_%2.2d", i);
-          if (g_ascii_strcasecmp (widget_name, cluster_name) == 0)
-            {
-              sound_effect->cluster = cluster_widget;
-              break;
-            }
-          g_free (cluster_name);
-        }
-      g_free (cluster_name);
-      /* Set the name of the sound effect. */
-      sound_name = g_strdup_printf ("tone %d", i);
-      sound_effect->file_name = sound_name;
-      /* Set the pointer to the gstreamer bin that plays the sound. */
-      sound_effect->sound_control =
-        gstreamer_get_bin (priv->pipeline, sound_name);
-      /* Put the cluster number at the top level, so we can search
-       * for it quickly. */
-      sound_effect->cluster_number = i;
-      /* Add this sound effect to the list of sound effects. */
-      priv->sound_effects =
-        g_list_prepend (priv->sound_effects, sound_effect);
-    }
+  priv->sound_list = NULL;
 
   /* Initialize the network message parser. */
   priv->parse_net_data = parse_net_init (app);
 
   /* Listen for network messages. */
   priv->network_data = network_init (app);
+
+  /* If we have a parameter, it is the XML file to read for our sounds.
+   * If we don't, create some fake sounds for testing. */
+  if (priv->project_filename != NULL)
+    {
+      local_filename = g_strdup (priv->project_filename);
+      parse_xml_read_project_file (local_filename, app);
+    }
+  else
+    {
+      /* setup_gstreamer created four test tones.  Place them in the first
+       * four clusters. */
+      for (i = 0; i < 4; i++)
+        {
+          sound_effect = g_malloc (sizeof (struct sound_info));
+
+          /* Find the cluster that will hold this sound effect. */
+          sound_effect->cluster = NULL;
+          for (cluster_list = priv->clusters; cluster_list != NULL;
+               cluster_list = cluster_list->next)
+            {
+              cluster_widget = cluster_list->data;
+              widget_name = gtk_widget_get_name (cluster_widget);
+              cluster_name = g_strdup_printf ("cluster_%2.2d", i);
+              if (g_ascii_strcasecmp (widget_name, cluster_name) == 0)
+                {
+                  sound_effect->cluster = cluster_widget;
+                  break;
+                }
+              g_free (cluster_name);
+            }
+          g_free (cluster_name);
+          /* Set the name of the sound effect. */
+          sound_name = g_strdup_printf ("tone %d", i);
+          sound_effect->name = sound_name;
+          sound_effect->wav_file = NULL;
+          sound_effect->OSC_name = NULL;
+          sound_effect->function_key = NULL;
+          /* Set the pointer to the gstreamer bin that plays the sound. */
+          sound_effect->sound_control =
+            gstreamer_get_bin (priv->pipeline, sound_name);
+          /* Put the cluster number at the top level, so we can search
+           * for it quickly. */
+          sound_effect->cluster_number = i;
+          /* Add this sound effect to the list of sound effects. */
+          priv->sound_list = g_list_prepend (priv->sound_list, sound_effect);
+        }
+    }
 
   /* The display is initialized; time to show it. */
   gtk_widget_show_all (GTK_WIDGET (top_window));
@@ -244,7 +260,7 @@ sound_effects_player_finalize (GObject * object)
   GstPipeline *pipeline_element;
   GList *sound_effect_list;
   GList *next_sound_effect;
-  struct sound_effect_str *sound_effect;
+  struct sound_info *sound_effect;
   Sound_Effects_Player *self = (Sound_Effects_Player *) object;
 
   /* Shut down gstreamer and deallocate all of its storage. */
@@ -252,16 +268,19 @@ sound_effects_player_finalize (GObject * object)
   gstreamer_shutdown (pipeline_element);
 
   /* Deallocate the list of sound effects. */
-  sound_effect_list = self->priv->sound_effects;
+  sound_effect_list = self->priv->sound_list;
 
   while (sound_effect_list != NULL)
     {
       sound_effect = sound_effect_list->data;
       next_sound_effect = sound_effect_list->next;
-      g_free (sound_effect->file_name);
+      g_free (sound_effect->name);
+      g_free (sound_effect->wav_file);
+      g_free (sound_effect->OSC_name);
+      g_free (sound_effect->function_key);
       g_free (sound_effect);
-      self->priv->sound_effects =
-        g_list_delete_link (self->priv->sound_effects, sound_effect_list);
+      self->priv->sound_list =
+        g_list_delete_link (self->priv->sound_list, sound_effect_list);
       sound_effect_list = next_sound_effect;
     }
 
@@ -316,7 +335,7 @@ sep_get_pipeline (GtkWidget * object)
 /* Find the sound effect information corresponding to a cluster, 
  * given a widget inside that cluster. Return NULL if
  * the cluster is not running a sound effect. */
-struct sound_effect_str *
+struct sound_info *
 sep_get_sound_effect (GtkWidget * object)
 {
   GtkWidget *this_object;
@@ -328,7 +347,7 @@ sep_get_sound_effect (GtkWidget * object)
   Sound_Effects_Player *self;
   Sound_Effects_PlayerPrivate *priv;
   GList *sound_effect_list;
-  struct sound_effect_str *sound_effect = NULL;
+  struct sound_info *sound_effect = NULL;
   gboolean sound_effect_found;
 
   /* Work up from the given widget until we find one whose name starts
@@ -359,7 +378,7 @@ sep_get_sound_effect (GtkWidget * object)
 
   /* Then we search through the sound effects for the one attached
    * to this cluster. */
-  sound_effect_list = priv->sound_effects;
+  sound_effect_list = priv->sound_list;
   sound_effect_found = FALSE;
   while (sound_effect_list != NULL)
     {
@@ -502,112 +521,26 @@ sep_set_project_filename (gchar * filename, GApplication * app)
   return;
 }
 
-/* Start playing the sound in a specified cluster. */
-void
-sep_start_cluster (int cluster_no, GApplication * app)
+/* Find the list of sound effects.  */
+GList *
+sep_get_sound_list (GApplication * app)
 {
-  GList *sound_effect_list;
+  GList *sound_list;
+
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
-  GtkWidget *cluster_widget = NULL;
-  struct sound_effect_str *sound_effect = NULL;
-  gboolean sound_effect_found;
-  GList *children_list;
-  GtkButton *start_button = NULL;
-  const gchar *child_name;
 
-  /* Search through the sound effects for the one attached
-   * to this cluster. */
-  sound_effect_list = priv->sound_effects;
-  sound_effect_found = FALSE;
-  while (sound_effect_list != NULL)
-    {
-      sound_effect = sound_effect_list->data;
-      if ((sound_effect->cluster != NULL)
-          && (sound_effect->cluster_number == cluster_no))
-        {
-          sound_effect_found = TRUE;
-          break;
-        }
-      sound_effect_list = sound_effect_list->next;
-    }
-  if (sound_effect_found)
-    {
-      cluster_widget = sound_effect->cluster;
-      /* Find the start button in the cluster. */
-      children_list =
-        gtk_container_get_children (GTK_CONTAINER (cluster_widget));
-      while (children_list != NULL)
-        {
-          child_name = gtk_widget_get_name (children_list->data);
-          if (g_ascii_strcasecmp (child_name, "start_button") == 0)
-            {
-              start_button = children_list->data;
-              break;
-            }
-          children_list = children_list->next;
-        }
-      g_list_free (children_list);
-
-      /* Invoke the start button, so the sound starts to play and
-       * and button appearance is updated. */
-      button_start_clicked (start_button, cluster_widget);
-    }
-
-  return;
+  sound_list = priv->sound_list;
+  return (sound_list);
 }
 
-/* Stop playing the sound in a specified cluster. */
+/* Update the list of sound effects.  */
 void
-sep_stop_cluster (int cluster_no, GApplication * app)
+sep_set_sound_list (GList * sound_list, GApplication * app)
 {
-  GList *sound_effect_list;
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
-  GtkWidget *cluster_widget = NULL;
-  struct sound_effect_str *sound_effect = NULL;
-  gboolean sound_effect_found;
-  GList *children_list;
-  GtkButton *stop_button = NULL;
-  const gchar *child_name;
 
-  /* Search through the sound effects for the one attached
-   * to this cluster. */
-  sound_effect_list = priv->sound_effects;
-  sound_effect_found = FALSE;
-  while (sound_effect_list != NULL)
-    {
-      sound_effect = sound_effect_list->data;
-      if ((sound_effect->cluster != NULL)
-          && (sound_effect->cluster_number == cluster_no))
-        {
-          sound_effect_found = TRUE;
-          break;
-        }
-      sound_effect_list = sound_effect_list->next;
-    }
-  if (sound_effect_found)
-    {
-      cluster_widget = sound_effect->cluster;
-      /* Find the stop button in the cluster. */
-      children_list =
-        gtk_container_get_children (GTK_CONTAINER (cluster_widget));
-      while (children_list != NULL)
-        {
-          child_name = gtk_widget_get_name (children_list->data);
-          if (g_ascii_strcasecmp (child_name, "stop_button") == 0)
-            {
-              stop_button = children_list->data;
-              break;
-            }
-          children_list = children_list->next;
-        }
-      g_list_free (children_list);
-
-      /* Invoke the stop button, so the sound stops playing and
-       * and the appearance of the start button is updated. */
-      button_stop_clicked (stop_button, cluster_widget);
-    }
-
+  priv->sound_list = sound_list;
   return;
 }

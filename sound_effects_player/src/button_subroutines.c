@@ -19,12 +19,13 @@
 #include "button_subroutines.h"
 #include "gstreamer_subroutines.h"
 #include "sound_effects_player.h"
+#include "sound_structure.h"
 
 /* The Start button has been pushed.  Turn the sound effect on. */
 void
 button_start_clicked (GtkButton * button, gpointer user_data)
 {
-  struct sound_effect_str *sound_effect;
+  struct sound_info *sound_effect;
   GstBin *bin_element;
   GstElement *volume_element;
   GstPipeline *pipeline_element;
@@ -53,7 +54,7 @@ button_start_clicked (GtkButton * button, gpointer user_data)
 void
 button_stop_clicked (GtkButton * button, gpointer user_data)
 {
-  struct sound_effect_str *sound_effect;
+  struct sound_info *sound_effect;
   GstBin *bin_element;
   GstElement *volume_element;
   GstPipeline *pipeline_element;
@@ -107,7 +108,7 @@ button_volume_changed (GtkButton * button, gpointer user_data)
   GtkWidget *parent_container;
   GList *children_list = NULL;
   const gchar *child_name = NULL;
-  struct sound_effect_str *sound_effect;
+  struct sound_info *sound_effect;
   GstBin *bin_element;
   GstElement *volume_element;
   gdouble new_value;
@@ -168,7 +169,7 @@ button_pan_changed (GtkButton * button, gpointer user_data)
   GtkWidget *parent_container;
   GList *children_list = NULL;
   const gchar *child_name = NULL;
-  struct sound_effect_str *sound_effect;
+  struct sound_info *sound_effect;
   GstBin *bin_element;
   GstElement *pan_element;
   gdouble new_value;

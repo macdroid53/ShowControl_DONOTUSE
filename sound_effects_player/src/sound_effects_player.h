@@ -52,55 +52,46 @@ struct _Sound_Effects_Player
 GType
 sound_effects_player_get_type (void) G_GNUC_CONST; Sound_Effects_Player *sound_effects_player_new (void);
 
-/* Information about a sound effect we might play */
-struct sound_effect_str
-{
-  GtkWidget *cluster;      /* The cluster the sound is in, if any */
-  gchar *file_name;        /* The name of the file holding the sound */
-  GstBin *sound_control;   /* The Gstreamer bin for this sound effect */
-  gint cluster_number;     /* The number of the cluster the sound is in */
-};
-
 /* Callbacks */
 
 /* Given a widget, get its pipeline. */
 GstPipeline *sep_get_pipeline (GtkWidget * object);
 
 /* Given a widget in a cluster, get its sound_effect structure. */
-struct sound_effect_str *sep_get_sound_effect (GtkWidget * object);
+struct sound_info *sep_get_sound_effect (GtkWidget * object);
 
-/* Given the application, find the common area above the clusters. */
+/* Find the common area above the clusters. */
 GtkWidget *sep_get_common_area (GApplication * app);
 
-/* Given the application, find the network information. */
+/* Find the network information. */
 void *sep_get_network_data (GApplication * app);
 
-/* Given the application, find the network messages parser information. */
+/* Find the network messages parser information. */
 void *sep_get_parse_net_data (GApplication * app);
 
-/* Given the application, find the top-level window. */
+/* Find the top-level window. */
 GtkWindow *sep_get_top_window (GApplication * app);
 
-/* Given the application, find the project file. */
+/* Find the project file. */
 xmlDocPtr sep_get_project_file (GApplication * app);
 
-/* Given the application, remember the project file. */
+/* Remember the project file. */
 void sep_set_project_file (xmlDocPtr project_file, GApplication * app);
 
-/* Given the application, find the name of the project file. */
+/* Find the name of the project file. */
 gchar *sep_get_project_filename (GApplication * app);
 
-/* Given the application, remember the name of the project file. */
+/* Remember the name of the project file. */
 void sep_set_project_filename (gchar * project_filename, GApplication * app);
 
-/* Given the application, find the path to the user interface files. */
+/* Find the path to the user interface files. */
 gchar *sep_get_ui_path (GApplication * app);
 
-/* Start playing the sound in a specified cluster. */
-void sep_start_cluster (int cluster_no, GApplication * app);
+/* Find the list of sound effects.  */
+GList *sep_get_sound_list (GApplication *app);
 
-/* Stop playing the sound in a specified cluster. */
-void sep_stop_cluster (int cluster_no, GApplication * app);
+/* Set the list of sound effects.  */
+void sep_set_sound_list (GList *sound_list, GApplication *app);
 
 G_END_DECLS
 #endif /* _SOUND_EFFECTS_PLAYER_H_ */

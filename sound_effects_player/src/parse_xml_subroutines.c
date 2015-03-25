@@ -24,22 +24,427 @@
 #include "parse_xml_subroutines.h"
 #include "network_subroutines.h"
 #include "sound_effects_player.h"
+#include "sound_structure.h"
+#include "sound_subroutines.h"
 
-/* Dig through the equipment xml file looking for the sound effect player's
- * network port.  When we find it, tell the network module about it. */
+/* Dig through a sounds xml file, or the sounds content of an equipment
+ * or project xml file, looking for the individual sounds.  Construct the
+ * sound effect player's internal data structure for each sound.  */
+static void
+parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
+                   xmlNodePtr sounds_loc, GApplication * app)
+{
+  const xmlChar *name;
+  xmlChar *name_data;
+  gdouble double_data;
+  gint64 long_data;
+  xmlNodePtr sound_loc;
+  struct sound_info *sound_data;
+
+  name_data = NULL;
+  /* We start at the children of a "sounds" section.  Each child should
+   * be a "version" or "sound" section. */
+  while (sounds_loc != NULL)
+    {
+      name = sounds_loc->name;
+      if (xmlStrEqual (name, (const xmlChar *) "version"))
+        {
+          name_data =
+            xmlNodeListGetString (sounds_file, sounds_loc->xmlChildrenNode,
+                                  1);
+          if ((!g_str_has_prefix ((gchar *) name_data, (gchar *) "1.")))
+            {
+              g_printerr ("Version number of sounds is %s, "
+                          "should start with 1.\n", name_data);
+              return;
+            }
+        }
+      if (xmlStrEqual (name, (const xmlChar *) "sound"))
+        {
+          /* This is a sound.  Copy its information.  */
+          sound_loc = sounds_loc->xmlChildrenNode;
+          /* Allocate a structure to hold sound information. */
+          sound_data = g_malloc (sizeof (struct sound_info));
+          /* Set the fields to their default values.  If a field does not
+           * appear in the XML file, it will retain its default value.
+           * This lets us add new fields without invalidating old XML files.
+           */
+          sound_data->name = NULL;
+          sound_data->wav_file = NULL;
+          sound_data->attack_time = 0;
+          sound_data->attack_level = 1.0;
+          sound_data->decay_time = 0;
+          sound_data->sustain_level = 1.0;
+          sound_data->release_start_time = 0;
+          sound_data->release_duration_time = 0;
+          sound_data->release_duration_time_infinite = FALSE;
+          sound_data->loop_from_time = 0;
+          sound_data->loop_to_time = 0;
+          sound_data->loop_limit = 0;
+          sound_data->start_time = 0;
+          sound_data->designer_volume_level = 1.0;
+          sound_data->designer_pan = 0.0;
+          sound_data->MIDI_program_number = 0;
+          sound_data->MIDI_program_number_specified = FALSE;
+          sound_data->MIDI_note_number = 0;
+          sound_data->MIDI_note_number_specified = FALSE;
+          sound_data->OSC_name = NULL;
+          sound_data->OSC_name_specified = FALSE;
+          sound_data->function_key = NULL;
+          sound_data->function_key_specified = FALSE;
+
+          /* These fields will be filled by the gstreamer subroutines.  */
+          sound_data->cluster = NULL;
+          sound_data->sound_control = NULL;
+          sound_data->cluster_number = 0;
+
+          /* Collect information from the XML file.  */
+          while (sound_loc != NULL)
+            {
+              name = sound_loc->name;
+              if (xmlStrEqual (name, (const xmlChar *) "name"))
+                {
+                  /* This is the name of the sound.  It is mandatory.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  sound_data->name = g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "wav_file_name"))
+                {
+                  /* The name of the WAV file from which we take the
+                   * waveform.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      sound_data->wav_file = g_strdup ((gchar *) name_data);
+                      xmlFree (name_data);
+                      name_data = NULL;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "attack_time"))
+                {
+                  /* The time required to ramp up the sound when it starts.  */
+                  if (name_data != NULL)
+                    {
+                      name_data =
+                        xmlNodeListGetString (sounds_file,
+                                              sound_loc->xmlChildrenNode, 1);
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      name_data = NULL;
+                      sound_data->attack_time = double_data * 1E9;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "attack_level"))
+                {
+                  /* The level we ramp up to.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      name_data = NULL;
+                      sound_data->attack_level = double_data;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "decay_time"))
+                {
+                  /* Following the attack, the time to decrease the volume
+                   * to the sustain level.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      name_data = NULL;
+                      sound_data->decay_time = double_data * 1E9;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "sustain_level"))
+                {
+                  /* The volume to reach at the end of the decay.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      name_data = NULL;
+                      sound_data->sustain_level = double_data;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "release_start_time"))
+                {
+                  /* When to start the release process.  If this value is
+                   * zero, we start the release process only upon receipt
+                   * of an external signal, such as MIDI Note Off.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      name_data = NULL;
+                      sound_data->release_start_time = double_data * 1E9;
+                    }
+                }
+              if (xmlStrEqual
+                  (name, (const xmlChar *) "release_duration_time"))
+                {
+                  /* Once release has started, the time to ramp the volume
+                   * down to zero.  Note this value may be infinity, which
+                   * means that the volume does not decrease.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      if (xmlStrEqual (name_data, (const xmlChar *) "∞"))
+                        {
+                          sound_data->release_duration_time_infinite = TRUE;
+                          xmlFree (name_data);
+                          name_data = NULL;
+                        }
+                      else
+                        {
+                          double_data =
+                            g_ascii_strtod ((gchar *) name_data, NULL);
+                          xmlFree (name_data);
+                          sound_data->release_duration_time =
+                            double_data * 1E9;
+                          name_data = NULL;
+                        }
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "loop_from_time"))
+                {
+                  /* If we are looping, the end time of the loop.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      sound_data->loop_from_time = double_data * 1E9;
+                      name_data = NULL;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "loop_to_time"))
+                {
+                  /* If we are looping, the start time of the loop.  
+                   * Each time through the loop we play from start time
+                   * to end time.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      sound_data->loop_to_time = double_data * 1E9;
+                      name_data = NULL;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "loop_limit"))
+                {
+                  /* The number of times to pass through the loop.  Zero
+                   * means do not loop.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sound_data->loop_limit = long_data;
+                      name_data = NULL;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "start_time"))
+                {
+                  /* The time within the WAV file to start this sound effect.
+                   */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      sound_data->start_time = double_data * 1E9;
+                      name_data = NULL;
+                    }
+                }
+              if (xmlStrEqual
+                  (name, (const xmlChar *) "designer_volume_level"))
+                {
+                  /* For this sound effect, decrease the volume from the WAV
+                   * file by this amount.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      sound_data->designer_volume_level = double_data;
+                      name_data = NULL;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "designer_pan"))
+                {
+                  /* For monaural WAV files, the amount to send to the left and
+                   * right channels, expressed as -1 for left channel only,
+                   * 0 for both channels equally, and +1 for right channel
+                   * only.  Other values between +1 and -1 also place the sound
+                   * in the stereo field.  For stereo WAV files this operates
+                   * as a balance control.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      sound_data->designer_pan = double_data;
+                      name_data = NULL;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "MIDI_program_number"))
+                {
+                  /* If we aren't using the internal sequencer, the MIDI 
+                   * program number within which a MIDI Note On will activate 
+                   * this sound effect.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sound_data->MIDI_program_number = long_data;
+                      sound_data->MIDI_program_number_specified = TRUE;
+                    }
+                  name_data = NULL;
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "MIDI_note_number"))
+                {
+                  /* If we aren't using the internal sequencer, the MIDI Note
+                   * number that will activate this sound effect.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sound_data->MIDI_note_number = long_data;
+                      sound_data->MIDI_note_number_specified = TRUE;
+                      name_data = NULL;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "OSC_name"))
+                {
+                  /* If we are not using the internal sequencer, this is the
+                   * name by which this sound effect is activated using
+                   * Open Sound Control.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      sound_data->OSC_name = g_strdup ((gchar *) name_data);
+                      sound_data->OSC_name_specified = TRUE;
+                      xmlFree (name_data);
+                      name_data = NULL;
+                    }
+                }
+              if (xmlStrEqual (name, (const xmlChar *) "function_key"))
+                {
+                  /* If we are not using the internal sequencer, this is the
+                   * function key the operator presses to activate this
+                   * sound effect.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      sound_data->function_key =
+                        g_strdup ((gchar *) name_data);
+                      sound_data->function_key_specified = TRUE;
+                      xmlFree (name_data);
+                      name_data = NULL;
+                    }
+                }
+
+              /* Ignore fields we don't recognize, so we can read future
+               * XML files. */
+
+              sound_loc = sound_loc->next;
+            }
+          /* Append this sound to the list of sounds.  */
+          sound_append_sound (sound_data, app);
+        }
+      sounds_loc = sounds_loc->next;
+    }
+
+  return;
+}
+
+/* Dig through an equipment xml file, or the equipment section of a project
+ * xml file, looking for the sound effect player's sounds and network port.  
+ * When we find the network port, tell the network module about it. 
+ * When we find sounds, parse the description.  */
 static void
 parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                       xmlNodePtr equipment_loc, GApplication * app)
 {
   xmlChar *key;
   const xmlChar *name;
+  xmlChar *prop_name;
+  gchar *file_name;
+  gchar *file_dirname;
+  gchar *absolute_file_name;
   gint64 port_number;
   xmlNodePtr program_loc;
   xmlChar *program_id;
+  xmlNodePtr sounds_loc;
+  xmlDocPtr sounds_file;
+  const xmlChar *root_name;
+  const xmlChar *sounds_name;
 
-  /* We start at the "equipment" node. */
+  /* We start at the children of an "equipment" section. */
   /* We are looking for version and program sections. */
-  equipment_loc = equipment_loc->xmlChildrenNode;
+
+  file_name = NULL;
+  absolute_file_name = NULL;
+  prop_name = NULL;
+
   while (equipment_loc != NULL)
     {
       name = equipment_loc->name;
@@ -51,8 +456,8 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                                   equipment_loc->xmlChildrenNode, 1);
           if ((!g_str_has_prefix ((gchar *) key, (gchar *) "1.")))
             {
-              g_printerr ("Version number is %s, should start with 1.\n",
-                          key);
+              g_printerr ("Version number of equipment is %s, "
+                          "should start with 1.\n", key);
               return;
             }
           xmlFree (key);
@@ -65,8 +470,7 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
           if (xmlStrEqual (program_id, (const xmlChar *) "sound_effects"))
             {
               /* This is the section of the XML file that contains information
-               * about the sound effects program.  For now, just extract the
-               * network port.  */
+               * about the sound effects program.  */
               program_loc = equipment_loc->xmlChildrenNode;
               while (program_loc != NULL)
                 {
@@ -83,6 +487,102 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                       network_set_port (port_number, app);
                       xmlFree (key);
                     }
+                  if (xmlStrEqual (name, (const xmlChar *) "sounds"))
+                    {
+                      /* This is the "sounds" section within "program".  
+                       * It will have a reference to a sounds XML file,
+                       * content or both.  First process the referenced file. */
+                      xmlFree (prop_name);
+                      prop_name =
+                        xmlGetProp (program_loc, (const xmlChar *) "href");
+                      if (prop_name != NULL)
+                        {
+                          /* We have a file reference.  */
+                          g_free (file_name);
+                          file_name = g_strdup ((gchar *) prop_name);
+                          xmlFree (prop_name);
+                          /* If the file name does not have an absolute path,
+                           * prepend the path of the equipment or project file.
+                           * This allows equipment and project files to be 
+                           * copied along with the files they reference. */
+                          if (g_path_is_absolute (file_name))
+                            {
+                              absolute_file_name = g_strdup (file_name);
+                            }
+                          else
+                            {
+                              file_dirname =
+                                g_path_get_dirname (equipment_file_name);
+                              absolute_file_name =
+                                g_build_filename (file_dirname, file_name,
+                                                  NULL);
+                              g_free (file_dirname);
+                            }
+                          g_free (file_name);
+
+                          /* Read the specified file as an XML file. */
+                          xmlLineNumbersDefault (1);
+                          xmlThrDefIndentTreeOutput (1);
+                          xmlKeepBlanksDefault (0);
+                          xmlThrDefTreeIndentString ("    ");
+                          sounds_file = xmlParseFile (absolute_file_name);
+                          if (sounds_file == NULL)
+                            {
+                              g_printerr ("Load of sound file %s failed.\n",
+                                          absolute_file_name);
+                              g_free (absolute_file_name);
+                              return;
+                            }
+
+                          /* Make sure the sounds file is valid, then extract
+                           * data from it. */
+                          sounds_loc = xmlDocGetRootElement (sounds_file);
+                          if (sounds_loc == NULL)
+                            {
+                              g_printerr ("Empty sound file: %s.\n",
+                                          absolute_file_name);
+                              g_free (absolute_file_name);
+                              return;
+                            }
+                          root_name = sounds_loc->name;
+                          if (!xmlStrEqual
+                              (root_name, (const xmlChar *) "show_control"))
+                            {
+                              g_printerr
+                                ("Not a show_control file: %s; is %s.\n",
+                                 absolute_file_name, root_name);
+                              xmlFree (sounds_file);
+                              g_free (absolute_file_name);
+                              return;
+                            }
+                          /* Within the top-level show_control structure
+                           * should be a sounds structure.  If there isn't,
+                           * this isn't a sound file and must be rejected.  */
+                          sounds_loc = sounds_loc->xmlChildrenNode;
+                          sounds_name = NULL;
+                          while (sounds_loc != NULL)
+                            {
+                              sounds_name = sounds_loc->name;
+                              if (xmlStrEqual
+                                  (sounds_name, (const xmlChar *) "sounds"))
+                                {
+                                  parse_sounds_info (sounds_file,
+                                                     absolute_file_name,
+                                                     sounds_loc->xmlChildrenNode,
+                                                     app);
+                                  xmlFree (sounds_file);
+                                  return;
+                                }
+                              sounds_loc = sounds_loc->next;
+                            }
+                          g_printerr ("Not a sounds file: %s; is %s.\n",
+                                      absolute_file_name, sounds_name);
+                          xmlFree (sounds_file);
+                        }
+                      /* Now process the content of the sounds section. */
+                      parse_sounds_info (equipment_file, equipment_file_name,
+                                         equipment_loc->xmlChildrenNode, app);
+                    }
                   program_loc = program_loc->next;
                 }
             }
@@ -90,6 +590,8 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
         }
       equipment_loc = equipment_loc->next;
     }
+  g_free (absolute_file_name);
+
   return;
 }
 
@@ -107,16 +609,14 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
   gchar *file_dirname;
   gchar *absolute_file_name;
   xmlNodePtr equipment_loc;
-  xmlNodePtr program_loc;
   xmlDocPtr equipment_file;
   gboolean found_equipment_section;
   const xmlChar *root_name;
   const xmlChar *equipment_name;
-  int port_number;
 
-  /* We start at the "project" section.  Important child sections for our 
-   * purposes are version and equipment.  */
-  current_loc = current_loc->xmlChildrenNode;
+  /* We start at the children of the "project" section.  
+   * Important child sections for our purposes are "version" and "equipment".  
+   */
   found_equipment_section = FALSE;
   file_name = NULL;
   absolute_file_name = NULL;
@@ -136,8 +636,8 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
                                   1);
           if ((!g_str_has_prefix ((gchar *) key, (gchar *) "1.")))
             {
-              g_printerr ("Version number is %s, should start with 1.\n",
-                          key);
+              g_printerr ("Version number of project is %s, "
+                          "should start with 1.\n", key);
               return;
             }
           xmlFree (key);
@@ -145,8 +645,8 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
       if (xmlStrEqual (name, (const xmlChar *) "equipment"))
         {
           /* This is an "equipment" section within "project". 
-             It will have either a reference to the equipment XML file
-             or content.  First process the referenced file.  */
+             It will have a reference to an equipment XML file,
+             content, or both.  First process the referenced file.  */
           found_equipment_section = TRUE;
           xmlFree (prop_name);
           prop_name = xmlGetProp (current_loc, (const xmlChar *) "href");
@@ -198,10 +698,10 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
                   return;
                 }
               root_name = equipment_loc->name;
-              if (xmlStrcmp (root_name, (const xmlChar *) "show_control"))
+              if (!xmlStrEqual (root_name, (const xmlChar *) "show_control"))
                 {
                   g_printerr ("Not a show_control file: %s; is %s.\n",
-                              absolute_file_name, equipment_loc->name);
+                              absolute_file_name, root_name);
                   xmlFree (equipment_file);
                   g_free (absolute_file_name);
                   return;
@@ -219,7 +719,8 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
                       (equipment_name, (const xmlChar *) "equipment"))
                     {
                       parse_equipment_info (equipment_file,
-                                            absolute_file_name, equipment_loc,
+                                            absolute_file_name,
+                                            equipment_loc->xmlChildrenNode,
                                             app);
                       xmlFree (equipment_file);
                       return;
@@ -232,42 +733,8 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
             }
 
           /* Now process the content of the equipment section. */
-          equipment_loc = current_loc->xmlChildrenNode;
-          /* We are looking for the program section with id sound_effects.  */
-          while (equipment_loc != NULL)
-            {
-              name = equipment_loc->name;
-              if (xmlStrEqual (name, (const xmlChar *) "program"))
-                {
-                  prop_name =
-                    xmlGetProp (equipment_loc, (const xmlChar *) "id");
-                  if (xmlStrEqual
-                      (prop_name, (const xmlChar *) "sound_effects"))
-                    {
-                      program_loc = equipment_loc->xmlChildrenNode;
-                      while (program_loc != NULL)
-                        {
-                          name = program_loc->name;
-                          if (xmlStrEqual (name, (const xmlChar *) "port"))
-                            {
-                              /* This is the "port" section within 
-                               * "program".  */
-                              key =
-                                xmlNodeListGetString (project_file,
-                                                      program_loc->xmlChildrenNode,
-                                                      1);
-                              port_number =
-                                g_ascii_strtoll ((gchar *) key, NULL, 10);
-                              /* Tell the network module the new port number. */
-                              network_set_port (port_number, app);
-                              xmlFree (key);
-                            }
-                          program_loc = program_loc->next;
-                        }
-                    }
-                }
-              equipment_loc = equipment_loc->next;
-            }
+          parse_equipment_info (project_file, project_file_name,
+                                current_loc->xmlChildrenNode, app);
         }
       current_loc = current_loc->next;
     }
@@ -334,8 +801,8 @@ parse_xml_read_project_file (gchar * project_file_name, GApplication * app)
       name = current_loc->name;
       if (xmlStrEqual (name, (const xmlChar *) "project"))
         {
-          parse_project_info (project_file, project_file_name, current_loc,
-                              app);
+          parse_project_info (project_file, project_file_name,
+                              current_loc->xmlChildrenNode, app);
           return;
         }
       current_loc = current_loc->next;

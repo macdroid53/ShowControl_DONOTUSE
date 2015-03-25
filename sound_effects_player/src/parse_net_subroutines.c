@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include "parse_net_subroutines.h"
 #include "sound_effects_player.h"
+#include "sound_subroutines.h"
 
 /* These subroutines are used to process network messages.
  * Each message is terminated by a new line character ("\n")
@@ -165,12 +166,12 @@ parse_net_text (gchar * text, GApplication * app)
             case keyword_start:
               /* For the Start command, the operand is the cluster number. */
               cluster_no = strtol (extra_text, NULL, 0);
-              sep_start_cluster (cluster_no, app);
+              sound_cluster_start (cluster_no, app);
               break;
             case keyword_stop:
               /* Likewise for the Stop command. */
               cluster_no = strtol (extra_text, NULL, 0);
-              sep_stop_cluster (cluster_no, app);
+              sound_cluster_stop (cluster_no, app);
               break;
             case keyword_quit:
               /* The Quit command takes no arguments. */

@@ -97,8 +97,8 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_sound_effects_player_OBJECTS = main.$(OBJEXT) \
-	sound_effects_player.$(OBJEXT) network_subroutines.$(OBJEXT) \
-	parse_net_subroutines.$(OBJEXT) \
+	sound_effects_player.$(OBJEXT) sound_subroutines.$(OBJEXT) \
+	network_subroutines.$(OBJEXT) parse_net_subroutines.$(OBJEXT) \
 	parse_xml_subroutines.$(OBJEXT) button_subroutines.$(OBJEXT) \
 	gstreamer_subroutines.$(OBJEXT) menu_subroutines.$(OBJEXT) \
 	message_subroutines.$(OBJEXT) display_subroutines.$(OBJEXT)
@@ -367,6 +367,9 @@ sound_effects_player_SOURCES = \
 	main.c \
 	sound_effects_player.h \
 	sound_effects_player.c \
+	sound_structure.h \
+	sound_subroutines.c \
+	sound_subroutines.h \
 	network_subroutines.c \
 	network_subroutines.h \
 	parse_net_subroutines.c \
@@ -493,6 +496,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse_net_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse_xml_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sound_effects_player.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sound_subroutines.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

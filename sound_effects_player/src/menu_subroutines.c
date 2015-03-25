@@ -24,6 +24,7 @@
 #include "menu_subroutines.h"
 #include "parse_xml_subroutines.h"
 #include "network_subroutines.h"
+#include "sound_subroutines.h"
 #include "sound_effects_player.h"
 
 /* Subroutines used by the menus. */
@@ -171,7 +172,11 @@ open_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
       /* We have a file name. */
       project_file_name = gtk_file_chooser_get_filename (chooser);
       gtk_widget_destroy (dialog);
+      /* Parse the file as an XML file.  */
       parse_xml_read_project_file (project_file_name, app);
+      /* On the assumption that we have extracted some sounds from the XML
+       * file, initialize the sound system.  */
+      sound_init (app);
     }
 
   return;
