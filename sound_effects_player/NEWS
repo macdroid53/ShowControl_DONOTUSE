@@ -1,3 +1,6 @@
+Version 0.31, March 26, 2015
+  Make the file parameter optional.
+  
 Version 0.30, March 25, 2015
   Read sound information from an XML file.  We don't do anything with it yet.
   

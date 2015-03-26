@@ -111,10 +111,14 @@ main (int argc, char *argv[])
 
   /* Run the program.  The values from argc and argv have already been
    * parsed, so create a fake version of argc and argv with the filename
-   * argument.  */
-  fake_argc = 2;
+   * argument, if present.  */
+  fake_argc = argc;
   fake_argv[0] = argv[0];
-  fake_argv[1] = filenames[0];
+  if ((filenames != NULL) && (filenames[0] != NULL))
+    {
+      fake_argc = 2;
+      fake_argv[1] = filenames[0];
+    }
   app = sound_effects_player_new ();
   status = g_application_run (G_APPLICATION (app), fake_argc, fake_argv);
 

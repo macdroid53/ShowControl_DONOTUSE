@@ -25,6 +25,7 @@
 #include "network_subroutines.h"
 #include "parse_xml_subroutines.h"
 #include "parse_net_subroutines.h"
+#include "sound_subroutines.h"
 
 G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player,
                GTK_TYPE_APPLICATION);
@@ -182,6 +183,7 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
     {
       local_filename = g_strdup (priv->project_filename);
       parse_xml_read_project_file (local_filename, app);
+      sound_init (app);
     }
   else
     {
