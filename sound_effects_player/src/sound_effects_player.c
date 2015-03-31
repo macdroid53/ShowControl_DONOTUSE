@@ -37,7 +37,7 @@ G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player,
 struct _Sound_Effects_PlayerPrivate
 {
   /* The Gstreamer pipeline. */
-  GstPipeline *pipeline;
+  GstPipeline *gstreamer_pipeline;
 
   /* The top-level gtk window. */
   GtkWindow *top_window;
@@ -79,14 +79,9 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   GtkWidget *common_area;
   GtkBuilder *builder;
   GError *error = NULL;
-  struct sound_info *sound_effect;
   gint cluster_number;
   gchar *cluster_name;
   GtkWidget *cluster_widget;
-  GList *cluster_list;
-  const gchar *widget_name;
-  gchar *sound_name;
-  gint i;
   gchar *filename;
   gchar *local_filename;
 
@@ -151,6 +146,9 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
 
   gtk_window_set_application (top_window, GTK_APPLICATION (app));
 
+  /* If the invocation of sound_effects_player included a parameter,
+   * that parameter is the name of the project file to load before
+   * starting the user interface.  */
   if (file != NULL)
     {
       priv->project_filename = g_file_get_parse_name (file);
@@ -163,12 +161,8 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   menu_init (app, filename);
   g_free (filename);
 
-  /* Set up Gstreamer for playing tones.  We pass the application so
-   * setup_gstreamer can cause it to be passed to the message handler, 
-   * which will use it to find the display.  */
-  priv->pipeline = gstreamer_init (app);
-
   /* Set up the remainder of the private data. */
+  priv->gstreamer_pipeline = NULL;
   priv->sound_list = NULL;
 
   /* Initialize the network message parser. */
@@ -177,53 +171,13 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   /* Listen for network messages. */
   priv->network_data = network_init (app);
 
-  /* If we have a parameter, it is the XML file to read for our sounds.
-   * If we don't, create some fake sounds for testing. */
+  /* If we have a parameter, it is the project XML file to read for our sounds.
+   * If we don't, the user will read a project XML file using the menu.  */
   if (priv->project_filename != NULL)
     {
       local_filename = g_strdup (priv->project_filename);
       parse_xml_read_project_file (local_filename, app);
-      sound_init (app);
-    }
-  else
-    {
-      /* setup_gstreamer created four test tones.  Place them in the first
-       * four clusters. */
-      for (i = 0; i < 4; i++)
-        {
-          sound_effect = g_malloc (sizeof (struct sound_info));
-
-          /* Find the cluster that will hold this sound effect. */
-          sound_effect->cluster = NULL;
-          for (cluster_list = priv->clusters; cluster_list != NULL;
-               cluster_list = cluster_list->next)
-            {
-              cluster_widget = cluster_list->data;
-              widget_name = gtk_widget_get_name (cluster_widget);
-              cluster_name = g_strdup_printf ("cluster_%2.2d", i);
-              if (g_ascii_strcasecmp (widget_name, cluster_name) == 0)
-                {
-                  sound_effect->cluster = cluster_widget;
-                  break;
-                }
-              g_free (cluster_name);
-            }
-          g_free (cluster_name);
-          /* Set the name of the sound effect. */
-          sound_name = g_strdup_printf ("tone %d", i);
-          sound_effect->name = sound_name;
-          sound_effect->wav_file = NULL;
-          sound_effect->OSC_name = NULL;
-          sound_effect->function_key = NULL;
-          /* Set the pointer to the gstreamer bin that plays the sound. */
-          sound_effect->sound_control =
-            gstreamer_get_bin (priv->pipeline, sound_name);
-          /* Put the cluster number at the top level, so we can search
-           * for it quickly. */
-          sound_effect->cluster_number = i;
-          /* Add this sound effect to the list of sound effects. */
-          priv->sound_list = g_list_prepend (priv->sound_list, sound_effect);
-        }
+      priv->gstreamer_pipeline = sound_init (app);
     }
 
   /* The display is initialized; time to show it. */
@@ -266,7 +220,7 @@ sound_effects_player_finalize (GObject * object)
   Sound_Effects_Player *self = (Sound_Effects_Player *) object;
 
   /* Shut down gstreamer and deallocate all of its storage. */
-  pipeline_element = self->priv->pipeline;
+  pipeline_element = self->priv->gstreamer_pipeline;
   gstreamer_shutdown (pipeline_element);
 
   /* Deallocate the list of sound effects. */
@@ -277,7 +231,8 @@ sound_effects_player_finalize (GObject * object)
       sound_effect = sound_effect_list->data;
       next_sound_effect = sound_effect_list->next;
       g_free (sound_effect->name);
-      g_free (sound_effect->wav_file);
+      g_free (sound_effect->wav_file_name);
+      g_free (sound_effect->wav_file_name_full);
       g_free (sound_effect->OSC_name);
       g_free (sound_effect->function_key);
       g_free (sound_effect);
@@ -330,7 +285,7 @@ sep_get_pipeline (GtkWidget * object)
   app = gtk_window_get_application (toplevel_window);
   self = SOUND_EFFECTS_PLAYER_APPLICATION (app);
   priv = self->priv;
-  pipeline_element = priv->pipeline;
+  pipeline_element = priv->gstreamer_pipeline;
   return (pipeline_element);
 }
 
@@ -394,6 +349,36 @@ sep_get_sound_effect (GtkWidget * object)
     }
   if (sound_effect_found)
     return (sound_effect);
+
+  return NULL;
+}
+
+/* Find a cluster, given its number.  */
+GtkWidget *
+sep_get_cluster (int cluster_number, GApplication * app)
+{
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+  GtkWidget *cluster_widget;
+  GList *cluster_list;
+  const gchar *widget_name;
+  gchar *cluster_name;
+
+  /* Go through the list of clusters looking for one with the name
+   * "cluster_" followed by the cluster number.  */
+  for (cluster_list = priv->clusters; cluster_list != NULL;
+       cluster_list = cluster_list->next)
+    {
+      cluster_widget = cluster_list->data;
+      widget_name = gtk_widget_get_name (cluster_widget);
+      cluster_name = g_strdup_printf ("cluster_%2.2d", cluster_number);
+      if (g_ascii_strcasecmp (widget_name, cluster_name) == 0)
+        {
+          g_free (cluster_name);
+          return (cluster_widget);
+        }
+      g_free (cluster_name);
+    }
 
   return NULL;
 }

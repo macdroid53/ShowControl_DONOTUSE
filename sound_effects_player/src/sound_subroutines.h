@@ -18,16 +18,18 @@
  */
 
 #include <gtk/gtk.h>
+#include <gst/gst.h>
 #include "sound_structure.h"
 
 /* Subroutines defined in sound_subroutines.c */
 
 /* Initialize the sounds. */
-void
-sound_init (GApplication * app);
+GstPipeline
+*sound_init (GApplication * app);
 
 /* Append a sound to the list of sounds.  */
-void sound_append_sound (struct sound_info *sound_effect, GApplication *app);
+void
+sound_append_sound (struct sound_info *sound_effect, GApplication *app);
 
 /* Start playing a sound in a specified cluster.  */
 void

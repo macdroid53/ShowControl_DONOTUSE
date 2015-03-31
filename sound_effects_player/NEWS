@@ -1,3 +1,9 @@
+Version 0.32, March 31, 2015
+  Play the sounds specified in the project XML file.  This is clumsy because
+  we don't have our customer gstreamer plugin, which will allow the pipeline
+  to run continuously.  As a result, if the pipeline is allowed to reach
+  End of Stream, sounds stop working.
+  
 Version 0.31, March 26, 2015
   Make the file parameter optional.
   

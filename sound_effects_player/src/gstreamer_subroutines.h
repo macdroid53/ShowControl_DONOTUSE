@@ -16,11 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <gtk/gtk.h>
 #include <gst/gst.h>
+#include "sound_structure.h"
 
 /* Subroutines defined in gstreamer_subroutines.c */
-GstPipeline *gstreamer_init (void *app);
+GstPipeline *gstreamer_init (int sound_count, GApplication * app);
+GstBin *gstreamer_create_bin (struct sound_info *sound_data, int sound_number,
+                              GstPipeline * pipeline_element,
+                              GApplication * app);
+void gstreamer_complete_pipeline (GstPipeline * pipeline_element,
+                                  GApplication * app);
 void gstreamer_shutdown (GstPipeline * pipeline_element);
-GstBin *gstreamer_get_bin (GstPipeline * pipeline_element, gchar * bin_name);
+void gstreamer_set_proper_state (GApplication * app);
 GstElement *gstreamer_get_volume (GstBin * bin_element);
+GstElement *gstreamer_get_pan (GstBin * bin_element);
 void gstreamer_dump_pipeline (GstPipeline * pipeline_element);

@@ -60,6 +60,9 @@ GstPipeline *sep_get_pipeline (GtkWidget * object);
 /* Given a widget in a cluster, get its sound_effect structure. */
 struct sound_info *sep_get_sound_effect (GtkWidget * object);
 
+/* Given a cluster number, get the cluster.  */
+GtkWidget *sep_get_cluster (int cluster_number, GApplication * app);
+
 /* Find the common area above the clusters. */
 GtkWidget *sep_get_common_area (GApplication * app);
 

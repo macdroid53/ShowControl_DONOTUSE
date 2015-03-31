@@ -186,7 +186,6 @@ network_set_port (int port_number, GApplication * app)
   network_data = sep_get_network_data (app);
 
   network_data->port_number = port_number;
-  g_print ("Network port set to %i.\n", port_number);
 
   /* Stop network processing on the old port. */
   if (network_data->source_IPv4 != NULL)

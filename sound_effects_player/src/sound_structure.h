@@ -31,7 +31,9 @@
 struct sound_info
 {
   gchar *name;                  /* name of the sound */
-  gchar *wav_file;              /* name of the file holding the waveform */
+  gboolean disabled;            /* disabled because file is missing */
+  gchar *wav_file_name;         /* name of the file holding the waveform */
+  gchar *wav_file_name_full;    /* absolute path to the file */
   gint attack_time;             /* attack time, in nanoseconds */
   gfloat attack_level;          /* 1.0 means 100% of volume */
   gint decay_time;              /* decay time, in nanoseconds */

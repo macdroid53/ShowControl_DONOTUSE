@@ -27,6 +27,11 @@
 #include <math.h>
 #include <gst/gst.h>
 #include "display_subroutines.h"
+#include "gstreamer_subroutines.h"
+
+/* When debugging, it is sometimes useful to have printouts of the
+ * messages as they happen. */
+#define TRACE_MESSAGES 0
 
 /* Process a message from the pipeline. User_data is the 
  * application, so we can reach the display.  */
@@ -34,61 +39,225 @@ gboolean
 message_handler (GstBus * bus_element, GstMessage * message,
                  gpointer user_data)
 {
-  /* We care only about messages from the level element, which show
-   * the sound level on each channel. */
-  if (message->type == GST_MESSAGE_ELEMENT)
+
+  switch (GST_MESSAGE_TYPE (message))
     {
-      const GstStructure *s = gst_message_get_structure (message);
-      const gchar *name = gst_structure_get_name (s);
+    case GST_MESSAGE_ELEMENT:
+      {
+        const GstStructure *s = gst_message_get_structure (message);
+        const gchar *name = gst_structure_get_name (s);
 
-      if (g_ascii_strcasecmp (name, "level") == 0)
-        {
-          gint channels;
-          GstClockTime endtime;
-          gdouble rms_dB, peak_dB, decay_dB;
-          gdouble rms;
-          const GValue *array_val;
-          const GValue *value;
-          GValueArray *rms_arr, *peak_arr, *decay_arr;
-          gint i;
+        if (g_ascii_strcasecmp (name, "level") == 0)
+          {
+            /* Messages from the level element show the sound level 
+             * on each channel. */
+            gint channels;
+            GstClockTime endtime;
+            gdouble rms_dB, peak_dB, decay_dB;
+            gdouble rms;
+            const GValue *array_val;
+            const GValue *value;
+            GValueArray *rms_arr, *peak_arr, *decay_arr;
+            gint i;
 
-          if (!gst_structure_get_clock_time (s, "endtime", &endtime))
-            g_warning ("Could not parse endtime.");
+            if (!gst_structure_get_clock_time (s, "endtime", &endtime))
+              g_warning ("Could not parse endtime.");
 
-          /* The values are packed into GValueArrays 
-           * with the value per channel. */
-          array_val = gst_structure_get_value (s, "rms");
-          rms_arr = (GValueArray *) g_value_get_boxed (array_val);
+            /* The values are packed into GValueArrays 
+             * with the value per channel. */
+            array_val = gst_structure_get_value (s, "rms");
+            rms_arr = (GValueArray *) g_value_get_boxed (array_val);
 
-          array_val = gst_structure_get_value (s, "peak");
-          peak_arr = (GValueArray *) g_value_get_boxed (array_val);
+            array_val = gst_structure_get_value (s, "peak");
+            peak_arr = (GValueArray *) g_value_get_boxed (array_val);
 
-          array_val = gst_structure_get_value (s, "decay");
-          decay_arr = (GValueArray *) g_value_get_boxed (array_val);
+            array_val = gst_structure_get_value (s, "decay");
+            decay_arr = (GValueArray *) g_value_get_boxed (array_val);
 
-          /* We can get the number of channels as the length of any of the 
-           * value arrays. */
-          channels = rms_arr->n_values;
+            /* We can get the number of channels as the length of any of the 
+             * value arrays. */
+            channels = rms_arr->n_values;
 
-          for (i = 0; i < channels; ++i)
-            {
-              value = g_value_array_get_nth (rms_arr, i);
-              rms_dB = g_value_get_double (value);
+            for (i = 0; i < channels; ++i)
+              {
+                value = g_value_array_get_nth (rms_arr, i);
+                rms_dB = g_value_get_double (value);
 
-              value = g_value_array_get_nth (peak_arr, i);
-              peak_dB = g_value_get_double (value);
+                value = g_value_array_get_nth (peak_arr, i);
+                peak_dB = g_value_get_double (value);
 
-              value = g_value_array_get_nth (decay_arr, i);
-              decay_dB = g_value_get_double (value);
+                value = g_value_array_get_nth (decay_arr, i);
+                decay_dB = g_value_get_double (value);
 
-              /* Converting from dB to normal gives us a value between 
-               * 0.0 and 1.0. */
-              rms = pow (10, rms_dB / 20);
-              display_update_vu_meter (user_data, i, rms, peak_dB, decay_dB);
-            }
-        }
+                /* Converting from dB to normal gives us a value between 
+                 * 0.0 and 1.0. */
+                rms = pow (10, rms_dB / 20);
+                display_update_vu_meter (user_data, i, rms, peak_dB,
+                                         decay_dB);
+              }
+            break;
+          }
+
+        /* Check for a forwarded message from a bin.  */
+        if (gst_structure_has_name (s, "GstBinForwarded"))
+          {
+            GstMessage *forward_msg = NULL;
+
+            gst_structure_get (s, "message", GST_TYPE_MESSAGE, &forward_msg,
+                               NULL);
+            if (GST_MESSAGE_TYPE (forward_msg) == GST_MESSAGE_EOS)
+              {
+                if (TRACE_MESSAGES != 0)
+                  {
+                    g_print ("Forwarded EOS from element %s.\n",
+                             GST_OBJECT_NAME (GST_MESSAGE_SRC (forward_msg)));
+                  }
+                break;
+              }
+          }
+
+        /* Catchall for unrecognized messages */
+        if (TRACE_MESSAGES != 0)
+          {
+            g_print (" Message element: %s from %s.\n",
+                     gst_message_type_get_name (GST_MESSAGE_TYPE (message)),
+                     GST_OBJECT_NAME (message->src));
+          }
+        break;
+      }
+
+    case GST_MESSAGE_EOS:
+      {
+        if (TRACE_MESSAGES != 0)
+          {
+            g_print ("EOS from %s.\n", GST_OBJECT_NAME (message->src));
+          }
+        break;
+      }
+
+    case GST_MESSAGE_ERROR:
+      {
+        gchar *debug = NULL;
+        GError *err = NULL;
+
+        gst_message_parse_error (message, &err, &debug);
+        g_print ("Error: %s.\n", err->message);
+        g_error_free (err);
+
+        if (debug)
+          {
+            g_print ("  Debug details: %s.\n", debug);
+            g_free (debug);
+          }
+        g_application_quit (user_data);
+        break;
+      }
+
+    case GST_MESSAGE_STATE_CHANGED:
+      {
+        GstState old_state, new_state, pending_state;
+
+        gst_message_parse_state_changed (message, &old_state, &new_state,
+                                         &pending_state);
+        if (TRACE_MESSAGES != 0)
+          {
+            g_print ("Element %s has changed state from %s to %s, "
+                     "pending %s.\n", GST_OBJECT_NAME (message->src),
+                     gst_element_state_get_name (old_state),
+                     gst_element_state_get_name (new_state),
+                     gst_element_state_get_name (pending_state));
+          }
+        break;
+      }
+
+    case GST_MESSAGE_RESET_TIME:
+      {
+        guint64 running_time;
+        const gchar *source;
+
+        gst_message_parse_reset_time (message, &running_time);
+        source = GST_OBJECT_NAME (message->src);
+        if (TRACE_MESSAGES != 0)
+          {
+            g_print ("Reset time to %ld by %s.\n", running_time, source);
+          }
+        break;
+      }
+
+    case GST_MESSAGE_STREAM_STATUS:
+      {
+        GstStreamStatusType status_type;
+        GstElement *owner;
+        gchar *status_text;
+
+        gst_message_parse_stream_status (message, &status_type, &owner);
+        switch (status_type)
+          {
+          case GST_STREAM_STATUS_TYPE_CREATE:
+            status_text = (gchar *) "create";
+            break;
+          case GST_STREAM_STATUS_TYPE_ENTER:
+            status_text = (gchar *) "enter";
+            break;
+          case GST_STREAM_STATUS_TYPE_LEAVE:
+            status_text = (gchar *) "leave";
+            break;
+          case GST_STREAM_STATUS_TYPE_DESTROY:
+            status_text = (gchar *) "destroy";
+            break;
+          case GST_STREAM_STATUS_TYPE_START:
+            status_text = (gchar *) "start";
+            break;
+          case GST_STREAM_STATUS_TYPE_PAUSE:
+            status_text = (gchar *) "pause";
+            break;
+          case GST_STREAM_STATUS_TYPE_STOP:
+            status_text = (gchar *) "stop";
+            break;
+          default:
+            status_text = (gchar *) "unknown";
+            break;
+          }
+        if (TRACE_MESSAGES != 0)
+          {
+            g_print ("Stream status of %s from %s.\n", status_text,
+                     GST_OBJECT_NAME (owner));
+          }
+        break;
+      }
+
+    case GST_MESSAGE_ASYNC_DONE:
+      {
+        const gchar *name;
+        const gchar *source;
+
+        name = gst_message_type_get_name (GST_MESSAGE_TYPE (message));
+        source = GST_OBJECT_NAME (message->src);
+        if (TRACE_MESSAGES != 0)
+          {
+            g_print (" Message: %s from %s.\n", name, source);
+          }
+
+        /* The pipeline has completed an asynchronous operation.
+         * Place the sound effects bins in their proper state.  */
+        gstreamer_set_proper_state (user_data);
+        break;
+      }
+
+    default:
+      {
+        if (TRACE_MESSAGES != 0)
+          {
+            g_print ("Message: %s from %s.\n",
+                     gst_message_type_get_name (GST_MESSAGE_TYPE (message)),
+                     GST_OBJECT_NAME (message->src));
+          }
+        break;
+      }
+
     }
-  /* We handled the message we wanted, and ignored the ones we didn't want,
+
+  /* We handled the messages we wanted, and ignored the ones we didn't want,
    * so the core can unref the message for us. */
   return TRUE;
 }

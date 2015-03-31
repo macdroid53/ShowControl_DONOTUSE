@@ -36,6 +36,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
 {
   const xmlChar *name;
   xmlChar *name_data;
+  gchar *file_dirname, *absolute_file_name;
   gdouble double_data;
   gint64 long_data;
   xmlNodePtr sound_loc;
@@ -70,7 +71,9 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
            * This lets us add new fields without invalidating old XML files.
            */
           sound_data->name = NULL;
-          sound_data->wav_file = NULL;
+          sound_data->disabled = FALSE;
+          sound_data->wav_file_name = NULL;
+          sound_data->wav_file_name_full = NULL;
           sound_data->attack_time = 0;
           sound_data->attack_level = 1.0;
           sound_data->decay_time = 0;
@@ -121,9 +124,40 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                                           sound_loc->xmlChildrenNode, 1);
                   if (name_data != NULL)
                     {
-                      sound_data->wav_file = g_strdup ((gchar *) name_data);
+                      sound_data->wav_file_name =
+                        g_strdup ((gchar *) name_data);
                       xmlFree (name_data);
                       name_data = NULL;
+
+                      /* If the file name does not have an absolute path,
+                       * prepend the path of the sounds, equipment or project 
+                       * file.  This allows wave files to be copied along with 
+                       * the files that refer to them.  */
+                      if (g_path_is_absolute (sound_data->wav_file_name))
+                        {
+                          absolute_file_name =
+                            g_strdup (sound_data->wav_file_name);
+                        }
+                      else
+                        {
+                          file_dirname =
+                            g_path_get_dirname (sounds_file_name);
+                          absolute_file_name =
+                            g_build_filename (file_dirname,
+                                              sound_data->wav_file_name,
+                                              NULL);
+                          g_free (file_dirname);
+                          file_dirname = NULL;
+                        }
+                      sound_data->wav_file_name_full = absolute_file_name;
+                      if (!g_file_test
+                          (absolute_file_name, G_FILE_TEST_EXISTS))
+                        {
+                          g_printerr ("File %s does not exist.\n",
+                                      absolute_file_name);
+                          sound_data->disabled = TRUE;
+                        }
+                      absolute_file_name = NULL;
                     }
                 }
               if (xmlStrEqual (name, (const xmlChar *) "attack_time"))
@@ -437,6 +471,7 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
   xmlDocPtr sounds_file;
   const xmlChar *root_name;
   const xmlChar *sounds_name;
+  gboolean sounds_section_parsed;
 
   /* We start at the children of an "equipment" section. */
   /* We are looking for version and program sections. */
@@ -542,6 +577,7 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                               g_printerr ("Empty sound file: %s.\n",
                                           absolute_file_name);
                               g_free (absolute_file_name);
+                              xmlFree (sounds_file);
                               return;
                             }
                           root_name = sounds_loc->name;
@@ -560,6 +596,7 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                            * this isn't a sound file and must be rejected.  */
                           sounds_loc = sounds_loc->xmlChildrenNode;
                           sounds_name = NULL;
+                          sounds_section_parsed = FALSE;
                           while (sounds_loc != NULL)
                             {
                               sounds_name = sounds_loc->name;
@@ -570,18 +607,20 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                                                      absolute_file_name,
                                                      sounds_loc->xmlChildrenNode,
                                                      app);
-                                  xmlFree (sounds_file);
-                                  return;
+                                  sounds_section_parsed = TRUE;
                                 }
                               sounds_loc = sounds_loc->next;
                             }
-                          g_printerr ("Not a sounds file: %s; is %s.\n",
-                                      absolute_file_name, sounds_name);
+                          if (!sounds_section_parsed)
+                            {
+                              g_printerr ("Not a sounds file: %s; is %s.\n",
+                                          absolute_file_name, sounds_name);
+                            }
                           xmlFree (sounds_file);
                         }
                       /* Now process the content of the sounds section. */
                       parse_sounds_info (equipment_file, equipment_file_name,
-                                         equipment_loc->xmlChildrenNode, app);
+                                         program_loc->xmlChildrenNode, app);
                     }
                   program_loc = program_loc->next;
                 }
@@ -613,6 +652,7 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
   gboolean found_equipment_section;
   const xmlChar *root_name;
   const xmlChar *equipment_name;
+  gboolean equipment_section_parsed;
 
   /* We start at the children of the "project" section.  
    * Important child sections for our purposes are "version" and "equipment".  
@@ -712,6 +752,7 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
                * file and must be rejected. */
               equipment_loc = equipment_loc->xmlChildrenNode;
               equipment_name = NULL;
+              equipment_section_parsed = FALSE;
               while (equipment_loc != NULL)
                 {
                   equipment_name = equipment_loc->name;
@@ -722,13 +763,15 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
                                             absolute_file_name,
                                             equipment_loc->xmlChildrenNode,
                                             app);
-                      xmlFree (equipment_file);
-                      return;
+                      equipment_section_parsed = TRUE;
                     }
                   equipment_loc = equipment_loc->next;
                 }
-              g_printerr ("Not an equipment file: %s; is %s.\n",
-                          absolute_file_name, equipment_name);
+              if (!equipment_section_parsed)
+                {
+                  g_printerr ("Not an equipment file: %s; is %s.\n",
+                              absolute_file_name, equipment_name);
+                }
               xmlFree (equipment_file);
             }
 
@@ -756,6 +799,7 @@ parse_xml_read_project_file (gchar * project_file_name, GApplication * app)
   xmlDocPtr project_file;
   xmlNodePtr current_loc;
   const xmlChar *name;
+  gboolean project_section_parsed;
 
   /* Read the file as an XML file. */
   xmlLineNumbersDefault (1);
@@ -796,6 +840,7 @@ parse_xml_read_project_file (gchar * project_file_name, GApplication * app)
    * be rejected.  If there is, process it.  */
   current_loc = current_loc->xmlChildrenNode;
   name = NULL;
+  project_section_parsed = FALSE;
   while (current_loc != NULL)
     {
       name = current_loc->name;
@@ -803,11 +848,14 @@ parse_xml_read_project_file (gchar * project_file_name, GApplication * app)
         {
           parse_project_info (project_file, project_file_name,
                               current_loc->xmlChildrenNode, app);
-          return;
+          project_section_parsed = TRUE;
         }
       current_loc = current_loc->next;
     }
-  g_printerr ("Not a project file: %s.\n", name);
+  if (!project_section_parsed)
+    {
+      g_printerr ("Not a project file: %s.\n", name);
+    }
 
   return;
 }

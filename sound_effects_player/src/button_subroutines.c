@@ -25,17 +25,26 @@
 void
 button_start_clicked (GtkButton * button, gpointer user_data)
 {
-  struct sound_info *sound_effect;
+  struct sound_info *sound_data;
   GstBin *bin_element;
-  GstElement *volume_element;
   GstPipeline *pipeline_element;
+  GstElement *volume_element;
 
-  sound_effect = sep_get_sound_effect (user_data);
-  if (sound_effect == NULL)
+  sound_data = sep_get_sound_effect (user_data);
+
+  /* If there is no sound connected to this button, do nothing.  */
+  if (sound_data == NULL)
     return;
-  bin_element = sound_effect->sound_control;
+
+  bin_element = sound_data->sound_control;
+
+  /* Rewind the bin and start playing it.  */
   volume_element = gstreamer_get_volume (bin_element);
-  /* Unmute the bin to hear its sound. */
+  if (volume_element == NULL)
+    return;
+  /* Repostion the bin to its starting point.  */
+  gst_element_seek_simple (GST_ELEMENT (bin_element), GST_FORMAT_TIME,
+                           GST_SEEK_FLAG_ACCURATE, sound_data->start_time);
   g_object_set (volume_element, "mute", FALSE, NULL);
 
   /* Change the text on the button from "Start" to "Playing". */
@@ -54,21 +63,30 @@ button_start_clicked (GtkButton * button, gpointer user_data)
 void
 button_stop_clicked (GtkButton * button, gpointer user_data)
 {
-  struct sound_info *sound_effect;
+  struct sound_info *sound_data;
   GstBin *bin_element;
-  GstElement *volume_element;
   GstPipeline *pipeline_element;
   GtkButton *start_button = NULL;
   GtkWidget *parent_container;
   GList *children_list = NULL;
   const gchar *child_name = NULL;
+  GstElement *volume_element;
 
-  sound_effect = sep_get_sound_effect (user_data);
-  if (sound_effect == NULL)
+  sound_data = sep_get_sound_effect (user_data);
+
+  /* If there is no sound attached to this cluster, do nothing.  */
+  if (sound_data == NULL)
     return;
-  bin_element = sound_effect->sound_control;
+
+  bin_element = sound_data->sound_control;
+  if (bin_element == NULL)
+    return;
+
   volume_element = gstreamer_get_volume (bin_element);
-  /* Mute the volume, so we no longer hear it. */
+  if (volume_element == NULL)
+    return;
+
+  /* Mute the bin.  */
   g_object_set (volume_element, "mute", TRUE, NULL);
 
   /* Find the start button and set its text back to "Start". 
@@ -108,7 +126,7 @@ button_volume_changed (GtkButton * button, gpointer user_data)
   GtkWidget *parent_container;
   GList *children_list = NULL;
   const gchar *child_name = NULL;
-  struct sound_info *sound_effect;
+  struct sound_info *sound_data;
   GstBin *bin_element;
   GstElement *volume_element;
   gdouble new_value;
@@ -135,15 +153,15 @@ button_volume_changed (GtkButton * button, gpointer user_data)
     {
       /* There should be a sound effect associated with this cluster.
        * If there isn't, do nothing. */
-      sound_effect = sep_get_sound_effect (user_data);
-      if (sound_effect == NULL)
+      sound_data = sep_get_sound_effect (user_data);
+      if (sound_data == NULL)
         return;
 
       /* The sound_effect structure records where the Gstreamer bin is
        * for this sound effect.  That bin contains the volume control.
        */
-      bin_element = sound_effect->sound_control;
-      volume_element = gst_bin_get_by_name (GST_BIN (bin_element), "volume");
+      bin_element = sound_data->sound_control;
+      volume_element = gstreamer_get_volume (bin_element);
       if (volume_element == NULL)
         return;
 
@@ -169,7 +187,7 @@ button_pan_changed (GtkButton * button, gpointer user_data)
   GtkWidget *parent_container;
   GList *children_list = NULL;
   const gchar *child_name = NULL;
-  struct sound_info *sound_effect;
+  struct sound_info *sound_data;
   GstBin *bin_element;
   GstElement *pan_element;
   gdouble new_value;
@@ -196,15 +214,15 @@ button_pan_changed (GtkButton * button, gpointer user_data)
     {
       /* There should be a sound effect associated with this cluster.
        * If there isn't, do nothing. */
-      sound_effect = sep_get_sound_effect (user_data);
-      if (sound_effect == NULL)
+      sound_data = sep_get_sound_effect (user_data);
+      if (sound_data == NULL)
         return;
 
       /* The sound_effect structure records where the Gstreamer bin is
        * for this sound effect.  That bin contains the pan control.
        */
-      bin_element = sound_effect->sound_control;
-      pan_element = gst_bin_get_by_name (GST_BIN (bin_element), "pan");
+      bin_element = sound_data->sound_control;
+      pan_element = gstreamer_get_pan (bin_element);
       if (pan_element == NULL)
         return;
 

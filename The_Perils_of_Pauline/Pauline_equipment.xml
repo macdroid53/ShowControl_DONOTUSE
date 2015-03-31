@@ -8,7 +8,12 @@
     <version>1.0</version>
 
     <program id="sound_effects">
-      <sounds href="Pauline_sounds.xml"/>
+      <sounds href="Pauline_sounds.xml">
+	<sound>
+	  <name>invalid</name>
+	  <wav_file_name>invalid</wav_file_name>
+	</sound>
+      </sounds>
       <sound_sequence href="Pauline_sound_sequence.xml"/>
     </program>
 

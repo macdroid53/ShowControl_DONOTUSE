@@ -18,32 +18,89 @@
  */
 
 #include <stdlib.h>
+#include <gst/gst.h>
 #include "sound_subroutines.h"
 #include "sound_structure.h"
 #include "sound_effects_player.h"
+#include "gstreamer_subroutines.h"
 #include "button_subroutines.h"
 
 /* Subroutines for processing sounds.  */
 
-/* Initialize the sound system.  We have read and processed an XML file
- * containing sound definitions.  */
-void
+/* Initialize the sound system.  We have already read an XML file
+ * containing sound definitions and put the results in the sound list.  */
+GstPipeline *
 sound_init (GApplication * app)
 {
+  GstPipeline *pipeline_element;
   GList *sound_list;
+  gint i, sound_count;
   GList *l;
-  struct sound_info *sound_effect;
+  struct sound_info *sound_data;
+  GList *children_list;
+  const char *child_name;
+  GtkLabel *title_label;
 
   sound_list = sep_get_sound_list (app);
 
+  /* Count the non-disabled sounds.  */
+  sound_count = 0;
   for (l = sound_list; l != NULL; l = l->next)
     {
-      sound_effect = l->data;
-      g_print (sound_effect->name);
-      g_print ("\n");
+      sound_data = l->data;
+      if (!sound_data->disabled)
+        sound_count = sound_count + 1;
     }
 
-  return;
+  /* Create the gstreamer pipeline and place the standard items
+   * in it.  */
+  pipeline_element = gstreamer_init (sound_count, app);
+
+  /* Create a gstreamer bin for each enabled sound effect and place it in
+   * the gstreamer pipeline.  */
+  i = 0;
+  for (l = sound_list; l != NULL; l = l->next)
+    {
+      sound_data = l->data;
+      if (!sound_data->disabled)
+        {
+          sound_data->sound_control =
+            gstreamer_create_bin (sound_data, i, pipeline_element, app);
+
+          /* Since we do not have an internal sequencer, place the sound
+           * in a cluster.  */
+          sound_data->cluster = sep_get_cluster (i, app);
+          sound_data->cluster_number = i;
+
+          /* Set the name of the sound in the cluster.  */
+          title_label = NULL;
+          children_list =
+            gtk_container_get_children (GTK_CONTAINER (sound_data->cluster));
+          while (children_list != NULL)
+            {
+              child_name = gtk_widget_get_name (children_list->data);
+              if (g_ascii_strcasecmp (child_name, "title") == 0)
+                {
+                  title_label = children_list->data;
+                  break;
+                }
+              children_list = children_list->next;
+            }
+          g_list_free (children_list);
+
+          if (title_label != NULL)
+            {
+              gtk_label_set_label (title_label, sound_data->name);
+            }
+          i = i + 1;
+        }
+    }
+
+  /* Now that all of the sound effects are processed, complete the
+   * gstreamer pipeline.  */
+  gstreamer_complete_pipeline (pipeline_element, app);
+
+  return pipeline_element;
 }
 
 /* Append a sound to the list of sounds. */
