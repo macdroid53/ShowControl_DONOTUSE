@@ -161,7 +161,7 @@ sound_cluster_start (int cluster_no, GApplication * app)
       g_list_free (children_list);
 
       /* Invoke the start button, so the sound starts to play and
-       * and button appearance is updated. */
+       * and the button appearance is updated. */
       button_start_clicked (start_button, cluster_widget);
     }
 
@@ -217,6 +217,91 @@ sound_cluster_stop (int cluster_no, GApplication * app)
        * and the appearance of the start button is updated. */
       button_stop_clicked (stop_button, cluster_widget);
     }
+
+  return;
+}
+
+/* Start playing a sound effect.  */
+void
+sound_start_playing (struct sound_info *sound_data, GApplication * app)
+{
+  GstBin *bin_element;
+  GstPipeline *pipeline_element;
+  GstElement *volume_element;
+  GstStateChangeReturn set_state_val;
+
+  bin_element = sound_data->sound_control;
+  if (bin_element == NULL)
+    return;
+
+  volume_element = gstreamer_get_volume (bin_element);
+  if (volume_element == NULL)
+    return;
+
+  /* Repostion the bin to its starting point.  */
+  gst_element_seek_simple (GST_ELEMENT (bin_element), GST_FORMAT_TIME,
+                           GST_SEEK_FLAG_ACCURATE, sound_data->start_time);
+  /* Unmute it.  */
+  g_object_set (volume_element, "mute", FALSE, NULL);
+
+  /* Start it running.  */
+  set_state_val =
+    gst_element_set_state (GST_ELEMENT (bin_element), GST_STATE_PLAYING);
+  if (set_state_val == GST_STATE_CHANGE_FAILURE)
+    {
+      g_print ("Unable to start the gstreamer bin for %s.\n",
+               sound_data->name);
+    }
+
+  /* Start the pipeline, in case this is the only sound playing.  
+   * It doesn't hurt if the other sound bins also start, since all non-playing
+   * bins are muted.  */
+  pipeline_element = sep_get_pipeline_from_app (app);
+  set_state_val =
+    gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_PLAYING);
+  if (set_state_val == GST_STATE_CHANGE_FAILURE)
+    {
+      g_print ("Unable to start the gstreamer pipeline for %s.\n",
+               sound_data->name);
+    }
+
+  gstreamer_dump_pipeline (pipeline_element);
+
+  return;
+}
+
+/* Stop playing a sound effect.  */
+void
+sound_stop_playing (struct sound_info *sound_data, GApplication * app)
+{
+  GstBin *bin_element;
+  GstElement *volume_element;
+  GstStateChangeReturn set_state_val;
+  GstPipeline *pipeline_element;
+
+  bin_element = sound_data->sound_control;
+
+  /* Mute the bin to silence it.  */
+  volume_element = gstreamer_get_volume (bin_element);
+  if (volume_element == NULL)
+    return;
+  g_object_set (volume_element, "mute", TRUE, NULL);
+
+  /* Pause and rewind the bin in anticipation of using the sound effect
+   *  again.  */
+  set_state_val =
+    gst_element_set_state (GST_ELEMENT (bin_element), GST_STATE_PAUSED);
+  if (set_state_val == GST_STATE_CHANGE_FAILURE)
+    {
+      g_print ("Unable to pause the gstreamer bin for %s.\n",
+               sound_data->name);
+    }
+
+  gst_element_seek_simple (GST_ELEMENT (bin_element), GST_FORMAT_TIME,
+                           GST_SEEK_FLAG_ACCURATE, sound_data->start_time);
+
+  pipeline_element = sep_get_pipeline_from_app (app);
+  gstreamer_dump_pipeline (pipeline_element);
 
   return;
 }

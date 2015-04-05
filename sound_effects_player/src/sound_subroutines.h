@@ -29,7 +29,7 @@ GstPipeline
 
 /* Append a sound to the list of sounds.  */
 void
-sound_append_sound (struct sound_info *sound_effect, GApplication *app);
+sound_append_sound (struct sound_info *sound_data, GApplication *app);
 
 /* Start playing a sound in a specified cluster.  */
 void
@@ -38,5 +38,13 @@ sound_cluster_start (int cluster_number, GApplication * app);
 /* Stop playing a sound in a specified cluster.  */
 void
 sound_cluster_stop (int cluster_number, GApplication * app);
+
+/* Start playing a sound.  */
+void
+sound_start_playing (struct sound_info *sound_data, GApplication *app);
+
+/* Stop playing a sound.  */
+void
+sound_stop_playing (struct sound_info *sound_data, GApplication *app);
 
 /* End of file sound_subroutines.h */

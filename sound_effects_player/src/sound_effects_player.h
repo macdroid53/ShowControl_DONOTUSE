@@ -54,8 +54,11 @@ sound_effects_player_get_type (void) G_GNUC_CONST; Sound_Effects_Player *sound_e
 
 /* Callbacks */
 
-/* Given a widget, get its pipeline. */
-GstPipeline *sep_get_pipeline (GtkWidget * object);
+/* Find the gstreamer pipeline.  */
+GstPipeline *sep_get_pipeline_from_app (GApplication * app);
+
+/* Given a widget, get the app.  */
+GApplication *sep_get_application_from_widget (GtkWidget * object);
 
 /* Given a widget in a cluster, get its sound_effect structure. */
 struct sound_info *sep_get_sound_effect (GtkWidget * object);

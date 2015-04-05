@@ -20,6 +20,8 @@
 #include "message_subroutines.h"
 #include "sound_structure.h"
 #include "sound_effects_player.h"
+#include "sound_subroutines.h"
+#include "button_subroutines.h"
 #include <math.h>
 
 /* Set up the Gstreamer pipeline. */
@@ -70,18 +72,11 @@ gstreamer_init (int sound_count, GApplication * app)
   /* Make sure we will get level messages. */
   g_object_set (level_element, "post-messages", TRUE, NULL);
 
-  /* Forward messages from the contained bins directly.  We need to see
-   * the individual EOS messages, not wait for all the bins to reach EOS.  */
-  g_object_set (pipeline_element, "message-forward", TRUE, NULL);
-
-  /* Also forward messages from the final bin.  */
-  g_object_set (final_bin_element, "message-forward", TRUE, NULL);
-
   /* Watch for messages from the pipeline.  */
   bus = gst_element_get_bus (GST_ELEMENT (pipeline_element));
   gst_bus_add_watch (bus, message_handler, app);
 
-  /* The input to the final bin is the inputs to the adder.  Create enough
+  /* The inputs to the final bin are the inputs to the adder.  Create enough
    * sinks for each sound effect.  */
   for (i = 0; i < sound_count; i++)
     {
@@ -175,9 +170,6 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
                  sound_data->name);
     }
 
-  /* Forward messages directly to the pipeline.  */
-  g_object_set (bin_element, "message-forward", TRUE, NULL);
-
   /* Link the output of the sound effect bin to the final bin. */
   final_bin_element =
     gst_bin_get_by_name (GST_BIN (pipeline_element), (gchar *) "final");
@@ -205,14 +197,13 @@ gstreamer_complete_pipeline (GstPipeline * pipeline_element,
   GstMessage *msg;
   GError *err = NULL;
 
-  /* Now that the pipeline is constructed, start it running.
-   * Note that all of the bins providing input to the adder are muted,
-   * so there will be no sound initially.  */
+  /* Now that the pipeline is constructed, set it to the ready state
+   * until we have a sound to play.  */
   set_state_val =
-    gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_PLAYING);
+    gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_READY);
   if (set_state_val == GST_STATE_CHANGE_FAILURE)
     {
-      g_print ("Unable to start the gstreamer pipeline.\n");
+      g_print ("Unable to initial ready the gstreamer pipeline.\n");
 
       /* Check for an error message with details on the bus.  */
       bus = gst_pipeline_get_bus (pipeline_element);
@@ -245,14 +236,68 @@ gstreamer_shutdown (GstPipeline * pipeline_element)
   return;
 }
 
-/* Set all sound effects into their proper state.
- * The current implementation has all sounds in the playing state, but
- * muted when they are not to be heard.  Therefore, there is nothing
- * to do here.  */
-
+/* Handle the async-done event from the gstreamer pipeline.  */
 void
-gstreamer_set_proper_state (GApplication * app)
+gstreamer_async_done (GApplication * app)
 {
+  GstPipeline *pipeline_element;
+
+  pipeline_element = sep_get_pipeline_from_app (app);
+  gstreamer_dump_pipeline (pipeline_element);
+  return;
+}
+
+/* The pipeline has reached end of stream.  This means none of the
+ * sound effects are playing.  Ready the pipeline and rewind all of
+ * the sound effects, in preparation for playing one of them.
+ */
+void
+gstreamer_process_eos (GApplication * app)
+{
+  GstPipeline *pipeline_element;
+  GstStateChangeReturn set_state_val;
+  GstBus *bus;
+  GstMessage *msg;
+  GError *err = NULL;
+  GList *sound_list;
+  struct sound_info *sound_data;
+  GList *l;
+
+  pipeline_element = sep_get_pipeline_from_app (app);
+
+  /* Rewind and mute all the sound effects bins, and reset the clusters.  */
+  sound_list = sep_get_sound_list (app);
+  for (l = sound_list; l != NULL; l = l->next)
+    {
+      sound_data = l->data;
+      if (!sound_data->disabled)
+        {
+          sound_stop_playing (sound_data, app);
+          button_reset_cluster (sound_data, app);
+        }
+    }
+
+  /* Place the pipeline, and all its contents, in the Ready state.  */
+  set_state_val =
+    gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_READY);
+  if (set_state_val == GST_STATE_CHANGE_FAILURE)
+    {
+      g_print ("Unable to ready the gstreamer pipeline.\n");
+
+      /* Check for an error message with details on the bus.  */
+      bus = gst_pipeline_get_bus (pipeline_element);
+      msg = gst_bus_poll (bus, GST_MESSAGE_ERROR, 0);
+      if (msg != NULL)
+        {
+          gst_message_parse_error (msg, &err, NULL);
+          g_print ("Error: %s.\n", err->message);
+          g_error_free (err);
+          gst_message_unref (msg);
+        }
+    }
+
+  gstreamer_dump_pipeline (pipeline_element);
+
   return;
 }
 

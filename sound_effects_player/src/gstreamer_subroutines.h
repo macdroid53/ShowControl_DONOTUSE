@@ -28,7 +28,8 @@ GstBin *gstreamer_create_bin (struct sound_info *sound_data, int sound_number,
 void gstreamer_complete_pipeline (GstPipeline * pipeline_element,
                                   GApplication * app);
 void gstreamer_shutdown (GstPipeline * pipeline_element);
-void gstreamer_set_proper_state (GApplication * app);
+void gstreamer_async_done (GApplication * app);
+void gstreamer_process_eos (GApplication * app);
 GstElement *gstreamer_get_volume (GstBin * bin_element);
 GstElement *gstreamer_get_pan (GstBin * bin_element);
 void gstreamer_dump_pipeline (GstPipeline * pipeline_element);

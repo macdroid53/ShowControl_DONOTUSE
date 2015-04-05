@@ -19,6 +19,7 @@
 #include "button_subroutines.h"
 #include "gstreamer_subroutines.h"
 #include "sound_effects_player.h"
+#include "sound_subroutines.h"
 #include "sound_structure.h"
 
 /* The Start button has been pushed.  Turn the sound effect on. */
@@ -26,35 +27,21 @@ void
 button_start_clicked (GtkButton * button, gpointer user_data)
 {
   struct sound_info *sound_data;
-  GstBin *bin_element;
-  GstPipeline *pipeline_element;
-  GstElement *volume_element;
+  GApplication *app;
 
   sound_data = sep_get_sound_effect (user_data);
+  app = sep_get_application_from_widget (user_data);
 
   /* If there is no sound connected to this button, do nothing.  */
   if (sound_data == NULL)
     return;
 
-  bin_element = sound_data->sound_control;
+  /* Tell gstreamer to start playing the sound.  */
+  sound_start_playing (sound_data, app);
 
-  /* Rewind the bin and start playing it.  */
-  volume_element = gstreamer_get_volume (bin_element);
-  if (volume_element == NULL)
-    return;
-  /* Repostion the bin to its starting point.  */
-  gst_element_seek_simple (GST_ELEMENT (bin_element), GST_FORMAT_TIME,
-                           GST_SEEK_FLAG_ACCURATE, sound_data->start_time);
-  g_object_set (volume_element, "mute", FALSE, NULL);
 
   /* Change the text on the button from "Start" to "Playing". */
   gtk_button_set_label (button, "Playing");
-
-  /* For debugging, output an annotated, graphical representation
-   * of the pipeline.
-   */
-  pipeline_element = sep_get_pipeline (user_data);
-  gstreamer_dump_pipeline (pipeline_element);
 
   return;
 }
@@ -64,35 +51,38 @@ void
 button_stop_clicked (GtkButton * button, gpointer user_data)
 {
   struct sound_info *sound_data;
-  GstBin *bin_element;
-  GstPipeline *pipeline_element;
-  GtkButton *start_button = NULL;
-  GtkWidget *parent_container;
-  GList *children_list = NULL;
-  const gchar *child_name = NULL;
-  GstElement *volume_element;
+  GApplication *app;
 
   sound_data = sep_get_sound_effect (user_data);
+  app = sep_get_application_from_widget (user_data);
 
   /* If there is no sound attached to this cluster, do nothing.  */
   if (sound_data == NULL)
     return;
 
-  bin_element = sound_data->sound_control;
-  if (bin_element == NULL)
-    return;
+  /* stop playing this sound.  */
+  sound_stop_playing (sound_data, app);
 
-  volume_element = gstreamer_get_volume (bin_element);
-  if (volume_element == NULL)
-    return;
+  /* Reset the cluster appearance.  */
+  button_reset_cluster (sound_data, app);
 
-  /* Mute the bin.  */
-  g_object_set (volume_element, "mute", TRUE, NULL);
+  return;
+}
+
+/* Reset the appearance of a cluster after its stop button has been
+ * pushed or it has finished playing. */
+void
+button_reset_cluster (struct sound_info *sound_data, GApplication * app)
+{
+  GtkButton *start_button = NULL;
+  GtkWidget *parent_container;
+  GList *children_list = NULL;
+  const gchar *child_name = NULL;
 
   /* Find the start button and set its text back to "Start". 
-   * The start button will be in the stop button's parent container,
-   * and will be named "start_button". */
-  parent_container = gtk_widget_get_parent (GTK_WIDGET (button));
+   * The start button will be a child of the cluster, and will be named
+   * "start_button".  */
+  parent_container = sound_data->cluster;
   children_list =
     gtk_container_get_children (GTK_CONTAINER (parent_container));
   while (children_list != NULL)
@@ -107,12 +97,6 @@ button_stop_clicked (GtkButton * button, gpointer user_data)
     }
   g_list_free (children_list);
   gtk_button_set_label (start_button, "Start");
-
-  /* For debugging, output an annotated, graphical representation
-   * of the pipeline.
-   */
-  pipeline_element = sep_get_pipeline (user_data);
-  gstreamer_dump_pipeline (pipeline_element);
 
   return;
 }

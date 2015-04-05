@@ -18,9 +18,11 @@
  */
 #include <gtk/gtk.h>
 #include <gst/gst.h>
+#include "sound_structure.h"
 
 /* Subroutines defined in button_subroutines.c */
 void button_start_clicked (GtkButton * button, gpointer user_data);
 void button_stop_clicked (GtkButton * button, gpointer user_data);
+void button_reset_cluster (struct sound_info *sound_data, GApplication *app);
 void button_volume_changed (GtkButton * button, gpointer user_data);
 void button_pan_changed (GtkButton * button, gpointer user_data);

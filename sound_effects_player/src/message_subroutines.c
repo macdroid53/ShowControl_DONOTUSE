@@ -132,6 +132,9 @@ message_handler (GstBus * bus_element, GstMessage * message,
           {
             g_print ("EOS from %s.\n", GST_OBJECT_NAME (message->src));
           }
+
+	gstreamer_process_eos (user_data);
+	
         break;
       }
 
@@ -228,19 +231,13 @@ message_handler (GstBus * bus_element, GstMessage * message,
 
     case GST_MESSAGE_ASYNC_DONE:
       {
-        const gchar *name;
-        const gchar *source;
-
-        name = gst_message_type_get_name (GST_MESSAGE_TYPE (message));
-        source = GST_OBJECT_NAME (message->src);
         if (TRACE_MESSAGES != 0)
           {
-            g_print (" Message: %s from %s.\n", name, source);
+            g_print ("Async-done from %s.\n", GST_OBJECT_NAME (message->src));
           }
 
-        /* The pipeline has completed an asynchronous operation.
-         * Place the sound effects bins in their proper state.  */
-        gstreamer_set_proper_state (user_data);
+        /* The pipeline has completed an asynchronous operation.  */
+        gstreamer_async_done (user_data);
         break;
       }
 

@@ -266,27 +266,35 @@ sound_effects_player_new (void)
 /* Callbacks from other modules.  The names of the callbacks are prefixed
  * with sep_ rather than sound_effects_player_ for readability. */
 
-/* Find the pipeline, given any widget in the application. */
+/* Find the gstreamer pipeline.  */
 GstPipeline *
-sep_get_pipeline (GtkWidget * object)
+sep_get_pipeline_from_app (GApplication * app)
+{
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+  GstPipeline *pipeline_element;
+
+  pipeline_element = priv->gstreamer_pipeline;
+
+  return (pipeline_element);
+}
+
+/* Find the application, given any widget in the application.  */
+GApplication *
+sep_get_application_from_widget (GtkWidget * object)
 {
   GtkWidget *toplevel_widget;
   GtkWindow *toplevel_window;
-  GtkApplication *app;
-  Sound_Effects_Player *self;
-  Sound_Effects_PlayerPrivate *priv;
-  GstPipeline *pipeline_element;
+  GtkApplication *gtk_app;
+  GApplication *app;
 
-  /* Find the top-level window, which has the private data. */
+  /* Find the top-level window.  */
   toplevel_widget = gtk_widget_get_toplevel (object);
   toplevel_window = GTK_WINDOW (toplevel_widget);
-  /* Work through the pointer structure to the private data,
-   * which includes a pointer to the pipeline. */
-  app = gtk_window_get_application (toplevel_window);
-  self = SOUND_EFFECTS_PLAYER_APPLICATION (app);
-  priv = self->priv;
-  pipeline_element = priv->gstreamer_pipeline;
-  return (pipeline_element);
+  /* The top level window's knows where to find the application.  */
+  gtk_app = gtk_window_get_application (toplevel_window);
+  app = (GApplication *) gtk_app;
+  return (app);
 }
 
 /* Find the sound effect information corresponding to a cluster, 

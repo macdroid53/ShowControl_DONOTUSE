@@ -1,3 +1,8 @@
+Version 0.33, April 5, 2015
+  Stop the pipeline when no sounds are playing, and avoid running
+  each sound effect's pipeline when it is not playing.  This will reduce the
+  normal CPU load, though not the maximum.  Use this to handle EOS.
+  
 Version 0.32, March 31, 2015
   Play the sounds specified in the project XML file.  This is clumsy because
   we don't have our customer gstreamer plugin, which will allow the pipeline

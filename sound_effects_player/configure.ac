@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl Created originally by the Anjuta application wizard.
 
-AC_INIT(sound_effects_player, 0.32, [John_Sauter@systemeyescomputerstore.com], sound_effects_player)
+AC_INIT(sound_effects_player, 0.33, [John_Sauter@systemeyescomputerstore.com], sound_effects_player)
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([1.11])
 AM_SILENT_RULES([yes])
