@@ -34,14 +34,14 @@ struct sound_info
   gboolean disabled;            /* disabled because file is missing */
   gchar *wav_file_name;         /* name of the file holding the waveform */
   gchar *wav_file_name_full;    /* absolute path to the file */
-  gint attack_time;             /* attack time, in nanoseconds */
-  gfloat attack_level;          /* 1.0 means 100% of volume */
-  gint decay_time;              /* decay time, in nanoseconds */
-  gint sustain_level;           /* 1.0 means 100% of volume */
-  gint release_start_time;      /* release start time, in nanoseconds */
-  gint release_duration_time;   /* release duration time, in nanoseconds */
-  gboolean release_duration_time_infinite;      /* TRUE if duration is 
-                                                   infinite */
+  guint64 attack_duration_time; /* attack time, in nanoseconds */
+  gdouble attack_level;         /* 1.0 means 100% of volume */
+  gdouble decay_duration_time;  /* decay time, in nanoseconds */
+  gdouble sustain_level;        /* 1.0 means 100% of volume */
+  guint64 release_start_time;   /* release start time, in nanoseconds */
+  guint64 release_duration_time;/* release duration time, in nanoseconds */
+  gboolean release_duration_infinite; /* TRUE if duration is 
+					 infinite */
   gint64 loop_from_time;        /* loop from time, in nanoseconds */
   gint64 loop_to_time;          /* loop to time, in nanoseconds */
   gint loop_limit;              /* loop limit, a count */

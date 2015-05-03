@@ -104,12 +104,14 @@ GstBin *
 gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
                       GstPipeline * pipeline_element, GApplication * app)
 {
-  GstElement *source_element, *parse_element, *pan_element, *volume_element;
+  GstElement *source_element, *parse_element, *envelope_element, *pan_element,
+    *volume_element;
   GstElement *bin_element, *final_bin_element;
   gchar *sound_name, *pad_name, *element_name;
   GstPad *last_source_pad, *sink_pad;
   GstPadLinkReturn link_status;
   gboolean success;
+  gchar string_buffer[G_ASCII_DTOSTR_BUF_SIZE];
 
   /* Create the bin, source and various filter elements for this sound effect. 
    */
@@ -121,6 +123,9 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
   element_name = g_strconcat (sound_name, (gchar *) "/parse", NULL);
   parse_element = gst_element_factory_make ("wavparse", element_name);
   g_free (element_name);
+  element_name = g_strconcat (sound_name, (gchar *) "/envelope", NULL);
+  envelope_element = gst_element_factory_make ("envelope", element_name);
+  g_free (element_name);
   element_name = g_strconcat (sound_name, (gchar *) "/pan", NULL);
   pan_element = gst_element_factory_make ("audiopanorama", element_name);
   g_free (element_name);
@@ -131,16 +136,40 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
   element_name = NULL;
   sound_name = NULL;
   if ((bin_element == NULL) || (source_element == NULL)
-      || (parse_element == NULL) || (pan_element == NULL)
-      || (volume_element == NULL))
+      || (parse_element == NULL) || (envelope_element == NULL)
+      || (pan_element == NULL) || (volume_element == NULL))
     {
-      GST_ERROR ("Unable to create the gstreamer sound effect elements.\n");
+      GST_ERROR
+        ("Unable to create all the gstreamer sound effect elements.\n");
       return NULL;
     }
 
   /* Set initial values of the elements.  */
   g_object_set (source_element, "location", sound_data->wav_file_name_full,
                 NULL);
+  g_object_set (envelope_element, "attack-duration-time",
+                sound_data->attack_duration_time, NULL);
+  g_object_set (envelope_element, "attack_level", sound_data->attack_level,
+                NULL);
+  g_object_set (envelope_element, "decay-duration-time",
+                sound_data->decay_duration_time, NULL);
+  g_object_set (envelope_element, "sustain-level", sound_data->sustain_level,
+                NULL);
+  g_object_set (envelope_element, "release-start-time",
+                sound_data->release_start_time, NULL);
+  if (sound_data->release_duration_infinite)
+    {
+      g_object_set (envelope_element, "release-duration-time",
+                    (gchar *) "∞", NULL);
+    }
+  else
+    {
+      g_ascii_dtostr (string_buffer, G_ASCII_DTOSTR_BUF_SIZE,
+                      (gdouble) sound_data->release_duration_time);
+      g_object_set (envelope_element, "release-duration-time", string_buffer,
+                    NULL);
+    }
+
   g_object_set (pan_element, "panorama", sound_data->designer_pan, NULL);
   g_object_set (volume_element, "volume", sound_data->designer_volume_level,
                 NULL);
@@ -150,11 +179,12 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
 
   /* Place the various elements in the bin. */
   gst_bin_add_many (GST_BIN (bin_element), source_element, parse_element,
-                    pan_element, volume_element, NULL);
+                    envelope_element, pan_element, volume_element, NULL);
 
-  /* Link them together in this order: source->parse->pan->volume. */
+  /* Link them together in this order: source->parse->envelope->pan->volume. */
   gst_element_link (source_element, parse_element);
-  gst_element_link (parse_element, pan_element);
+  gst_element_link (parse_element, envelope_element);
+  gst_element_link (envelope_element, pan_element);
   gst_element_link (pan_element, volume_element);
 
   /* The output of the bin is the output of the last element. */

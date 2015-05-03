@@ -74,13 +74,13 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
           sound_data->disabled = FALSE;
           sound_data->wav_file_name = NULL;
           sound_data->wav_file_name_full = NULL;
-          sound_data->attack_time = 0;
+          sound_data->attack_duration_time = 0;
           sound_data->attack_level = 1.0;
-          sound_data->decay_time = 0;
+          sound_data->decay_duration_time = 0;
           sound_data->sustain_level = 1.0;
           sound_data->release_start_time = 0;
           sound_data->release_duration_time = 0;
-          sound_data->release_duration_time_infinite = FALSE;
+          sound_data->release_duration_infinite = FALSE;
           sound_data->loop_from_time = 0;
           sound_data->loop_to_time = 0;
           sound_data->loop_limit = 0;
@@ -160,7 +160,8 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                       absolute_file_name = NULL;
                     }
                 }
-              if (xmlStrEqual (name, (const xmlChar *) "attack_time"))
+              if (xmlStrEqual
+                  (name, (const xmlChar *) "attack_duration_time"))
                 {
                   /* The time required to ramp up the sound when it starts.  */
                   if (name_data != NULL)
@@ -172,7 +173,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                         g_ascii_strtod ((gchar *) name_data, NULL);
                       xmlFree (name_data);
                       name_data = NULL;
-                      sound_data->attack_time = double_data * 1E9;
+                      sound_data->attack_duration_time = double_data * 1E9;
                     }
                 }
               if (xmlStrEqual (name, (const xmlChar *) "attack_level"))
@@ -190,7 +191,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                       sound_data->attack_level = double_data;
                     }
                 }
-              if (xmlStrEqual (name, (const xmlChar *) "decay_time"))
+              if (xmlStrEqual (name, (const xmlChar *) "decay_duration_time"))
                 {
                   /* Following the attack, the time to decrease the volume
                    * to the sustain level.  */
@@ -203,7 +204,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                         g_ascii_strtod ((gchar *) name_data, NULL);
                       xmlFree (name_data);
                       name_data = NULL;
-                      sound_data->decay_time = double_data * 1E9;
+                      sound_data->decay_duration_time = double_data * 1E9;
                     }
                 }
               if (xmlStrEqual (name, (const xmlChar *) "sustain_level"))
@@ -251,7 +252,8 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                     {
                       if (xmlStrEqual (name_data, (const xmlChar *) "∞"))
                         {
-                          sound_data->release_duration_time_infinite = TRUE;
+                          sound_data->release_duration_infinite = TRUE;
+                          sound_data->release_duration_time = 0;
                           xmlFree (name_data);
                           name_data = NULL;
                         }
@@ -262,6 +264,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                           xmlFree (name_data);
                           sound_data->release_duration_time =
                             double_data * 1E9;
+                          sound_data->release_duration_infinite = FALSE;
                           name_data = NULL;
                         }
                     }

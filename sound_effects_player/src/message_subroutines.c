@@ -133,8 +133,8 @@ message_handler (GstBus * bus_element, GstMessage * message,
             g_print ("EOS from %s.\n", GST_OBJECT_NAME (message->src));
           }
 
-	gstreamer_process_eos (user_data);
-	
+        gstreamer_process_eos (user_data);
+
         break;
       }
 

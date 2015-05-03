@@ -49,6 +49,22 @@ sound_effects_player_LDADD = $(SOUND_EFFECTS_PLAYER_LIBS)
 
 EXTRA_DIST = $(ui_DATA)
 
+# Note: plugindir is set in configure
+
+plugin_LTLIBRARIES = libgstenvelope.la
+
+# sources used to compile this plug-in
+libgstenvelope_la_SOURCES = gstenvelope.c gstenvelope.h
+
+# compiler and linker flags used to compile this plugin, set in configure.ac
+libgstenvelope_la_CFLAGS = $(GST_CFLAGS)
+libgstenvelope_la_LIBADD = $(GST_LIBS)
+libgstenvelope_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
+libgstenvelope_la_LIBTOOLFLAGS = --tag=disable-static
+
+# headers we need but don't want installed
+noinst_HEADERS = gstenvelope.h
+
 # Remove ui directory on uninstall
 uninstall-local:
 	-rm -r $(uidir)
