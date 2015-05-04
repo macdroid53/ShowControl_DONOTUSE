@@ -10,12 +10,12 @@
       <name>440Hz</name>
       <!-- the WAV file contains the waveform for the sound -->
       <wav_file_name>440Hz.wav</wav_file_name>
-      <!-- volume ramps up from 0 to attack level in attack time -->
-      <attack_time>0.000000000</attack_time>
+      <!-- volume ramps up from 0 to attack level in attack duration time -->
+      <attack_duration_time>0.000000000</attack_duration_time>
       <attack_level>1.00</attack_level>
       <!-- after reaching attack level, volume ramps down to sustain level
 	   in decay time -->
-      <decay_time>0.000000000</decay_time>
+      <decay_duration_time>0.000000000</decay_duration_time>
       <sustain_level>1.00</sustain_level>
       <!-- release starts on external signal or when reaching the
 	   release start time -->
@@ -52,12 +52,12 @@
       <name>880Hz</name>
       <!-- the WAV file contains the waveform for the sound -->
       <wav_file_name>880Hz.wav</wav_file_name>
-      <!-- volume ramps up from 0 to attack level in attack time -->
-      <attack_time>0.000000000</attack_time>
+      <!-- volume ramps up from 0 to attack level in attack duration time -->
+      <attack_duration_time>0.000000000</attack_duration_time>
       <attack_level>1.00</attack_level>
       <!-- after reaching attack level, volume ramps down to sustain level
 	   in decay time -->
-      <decay_time>0.000000000</decay_time>
+      <decay_duration_time>0.000000000</decay_duration_time>
       <sustain_level>1.00</sustain_level>
       <!-- release starts on external signal or when reaching the
 	   release start time -->
@@ -92,9 +92,9 @@
     <sound>
       <name>welcome</name>
       <wav_file_name>welcome_announcement.wav</wav_file_name>
-      <attack_time>0.000000000</attack_time>
+      <attack_duration_time>0.000000000</attack_duration_time>
       <attack_level>1.00</attack_level>
-      <decay_time>0.000000000</decay_time>
+      <decay_duration_time>0.000000000</decay_duration_time>
       <sustain_level>1.00</sustain_level>
       <release_start_time>0.000000000</release_start_time>
       <release_duration_time>0.000000000</release_duration_time>
@@ -114,9 +114,9 @@
     <sound>
       <name>ring</name>
       <wav_file_name>telephone_ring.wav</wav_file_name>
-      <attack_time>0.000000000</attack_time>
+      <attack_duration_time>0.000000000</attack_duration_time>
       <attack_level>1.00</attack_level>
-      <decay_time>0.000000000</decay_time>
+      <decay_duration_time>0.000000000</decay_duration_time>
       <sustain_level>1.00</sustain_level>
       <release_start_time>1.995000000</release_start_time>
       <release_duration_time>0.010000000</release_duration_time>
@@ -135,9 +135,9 @@
     <sound>
       <name>ringout</name>
       <wav_file_name>telephone_ringout.wav</wav_file_name>
-      <attack_time>0.010000000</attack_time>
+      <attack_duration_time>0.010000000</attack_duration_time>
       <attack_level>1.00</attack_level>
-      <decay_time>0.000000000</decay_time>
+      <decay_duration_time>0.000000000</decay_duration_time>
       <sustain_level>1.00</sustain_level>
       <release_start_time>0.000000000</release_start_time>
       <release_duration_time>∞</release_duration_time>

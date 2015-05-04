@@ -7,9 +7,9 @@
     <sound>
       <name>train</name>
       <wav_file_name>train.wav</wav_file_name>
-      <attack_time>5.000000000</attack_time>
+      <attack_duration_time>5.000000000</attack_duration_time>
       <attack_level>1.00</attack_level>
-      <decay_time>0.000000000</decay_time>
+      <decay_duration_time>0.000000000</decay_duration_time>
       <sustain_level>1.00</sustain_level>
       <release_start_time>0.000000000</release_start_time>
       <release_duration_time>5.000000000</release_duration_time>

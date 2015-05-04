@@ -144,7 +144,7 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
       return NULL;
     }
 
-  /* Set initial values of the elements.  */
+  /* Set parameter values of the elements.  */
   g_object_set (source_element, "location", sound_data->wav_file_name_full,
                 NULL);
   g_object_set (envelope_element, "attack-duration-time",
@@ -169,10 +169,10 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
       g_object_set (envelope_element, "release-duration-time", string_buffer,
                     NULL);
     }
+  g_object_set (envelope_element, "volume", sound_data->designer_volume_level,
+                NULL);
 
   g_object_set (pan_element, "panorama", sound_data->designer_pan, NULL);
-  g_object_set (volume_element, "volume", sound_data->designer_volume_level,
-                NULL);
 
   /* The bin is initially muted. */
   g_object_set (volume_element, "mute", TRUE, NULL);

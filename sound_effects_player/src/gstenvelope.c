@@ -43,7 +43,7 @@
  *
  * #GstEnvelope:release-start-time is the time when the release part of the
  * envelope starts, in nanoseconds.  This value can be changed to the current
- * time using an external signal or by the receipt of EOS from upstream.  
+ * time using a custom Release event, or by the receipt of EOS from upstream.  
  * The default is 0, which, if left unchanged, disables release.
  *
  * #GstEnvelope:release-duration-time is the length of time for the
@@ -52,13 +52,17 @@
  * the value to the UTF-8 string for the Unicode character for infinity,
  * U+221E, which is ∞.  Default is 0.
  *
+ * #GstEnvelope:volume is the normal volume of the sound; the envelope
+ * is scaled by this amount.  It might be used to implement the note-on
+ * velocity from a musical instrument.  Default is 1.0.
+ *
  * If all the properties are defaulted, and release is never signaled,
  * this audio filter does not change the sound passing through it.
  *
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch-1.0 -v -m audiotestsrc ! envelope attack-time=1000000000 ! fakesink silent=TRUE
+ * gst-launch-1.0 -v -m audiotestsrc ! envelope attack-duration-time=1000000000 ! fakesink silent=TRUE
  * ]| Instead of starting the test tone at full volume, fade it in over one
  * second.
  * </refsect2>
@@ -99,7 +103,8 @@ enum
   PROP_DECAY_DURATION_TIME,
   PROP_SUSTAIN_LEVEL,
   PROP_RELEASE_START_TIME,
-  PROP_RELEASE_DURATION_TIME
+  PROP_RELEASE_DURATION_TIME,
+  PROP_VOLUME
 };
 
 /* For simplicity, we handle only floating point samples.
@@ -233,14 +238,14 @@ envelope_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
           switch (width)
             {
             case 64:
-              GST_LOG_OBJECT (self, "sample with value %f becomes %f.",
+              GST_LOG_OBJECT (self, "sample with value %g becomes %g.",
                               *src64, volume_val * *src64);
               *src64 = volume_val * *src64;
               src64++;
               break;
 
             case 32:
-              GST_LOG_OBJECT (self, "sample with value %f becomes %f.",
+              GST_LOG_OBJECT (self, "sample with value %g becomes %g.",
                               *src32, volume_val * *src32);
               *src32 = volume_val * *src32;
               src32++;
@@ -360,7 +365,7 @@ envelope_transform (GstBaseTransform * base, GstBuffer * inbuf,
           switch (width)
             {
             case 64:
-              GST_LOG_OBJECT (self, "sample with value %f becomes %f.",
+              GST_LOG_OBJECT (self, "sample with value %g becomes %g.",
                               *src64, volume_val * *src64);
               *dst64 = volume_val * *src64;
               src64++;
@@ -368,7 +373,7 @@ envelope_transform (GstBaseTransform * base, GstBuffer * inbuf,
               break;
 
             case 32:
-              GST_LOG_OBJECT (self, "sample with value %f becomes %f.",
+              GST_LOG_OBJECT (self, "sample with value %g becomes %g.",
                               *src32, volume_val * *src32);
               *dst32 = volume_val * *src32;
               src32++;
@@ -406,12 +411,14 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
    * attack to sustain, so sustain level should equal attack level.  */
   if (ts < self->attack_duration_time)
     {
+      /* The attack is not yet complete.  */
       envelope_position = attack;
     }
   else
     {
       if (ts < self->attack_duration_time + self->decay_duration_time)
         {
+          /* The decay is not yet complete.  */
           envelope_position = decay;
         }
       else
@@ -419,6 +426,7 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
           if ((ts < self->release_start_time)
               || (self->release_start_time == 0))
             {
+              /* The decay is complete but we have not yet started release.  */
               envelope_position = sustain;
             }
           else
@@ -427,20 +435,23 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
                   || ts <
                   (self->release_start_time + self->release_duration_time))
                 {
+                  /* The release section of the envelope is running.  */
                   envelope_position = release;
                   if (!self->release_triggered)
                     {
+                      /* This is the beginning of the release.  */
                       self->release_triggered = TRUE;
                       self->release_start_volume = self->last_volume;
-                      GST_DEBUG_OBJECT (self,
-                                        "Release triggered at %"
-                                        GST_TIME_FORMAT " with volume %f.",
-                                        GST_TIME_ARGS (ts),
-                                        self->release_start_volume);
+                      GST_INFO_OBJECT (self,
+                                       "Release triggered at %"
+                                       GST_TIME_FORMAT " with volume %f.",
+                                       GST_TIME_ARGS (ts),
+                                       self->release_start_volume);
                     }
                 }
               else
                 {
+                  /* The release is complete.  */
                   envelope_position = completed;
                 }
             }
@@ -470,7 +481,7 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
       decay_fraction =
         (gdouble) 1.0 - (gdouble) (decay_end_time -
                                    ts) / (gdouble) self->decay_duration_time;
-      GST_LOG_OBJECT (self, "decay, fraction %f.", decay_fraction);
+      GST_LOG_OBJECT (self, "decay, fraction %g.", decay_fraction);
       volume_val =
         (decay_fraction * self->sustain_level) +
         ((1.0 - decay_fraction) * self->attack_level);
@@ -501,7 +512,7 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
         (gdouble) (ts -
                    self->release_start_time) /
         (gdouble) self->release_duration_time;
-      GST_LOG_OBJECT (self, "release, fraction is %f.", release_fraction);
+      GST_LOG_OBJECT (self, "release, fraction is %g.", release_fraction);
       volume_val = self->release_start_volume * (1.0 - release_fraction);
       break;
 
@@ -516,9 +527,12 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
    * release starts at an unusual time in the envelope.  */
   self->last_volume = volume_val;
 
-  GST_DEBUG_OBJECT (self,
-                    "at time %" GST_TIME_FORMAT ", envelope volume is %f.",
-                    GST_TIME_ARGS (ts), volume_val);
+  /* Allow for scaling the envelope, perhaps from a Note On velocity.  */
+  volume_val = volume_val * self->volume;
+
+  GST_LOG_OBJECT (self,
+                  "at time %" GST_TIME_FORMAT ", envelope volume is %g.",
+                  GST_TIME_ARGS (ts), volume_val);
 
   return volume_val;
 }
@@ -587,8 +601,8 @@ gst_envelope_class_init (GstEnvelopeClass * klass)
 
   param_spec =
     g_param_spec_double ("attack-level", "Attack_level",
-                         "Volume level to reach at end of attack", 0, 10.0, 0,
-                         G_PARAM_READWRITE);
+                         "Volume level to reach at end of attack", 0, 10.0,
+                         1.0, G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_ATTACK_LEVEL,
                                    param_spec);
 
@@ -601,8 +615,8 @@ gst_envelope_class_init (GstEnvelopeClass * klass)
 
   param_spec =
     g_param_spec_double ("sustain-level", "Sustain_level",
-                         "Volume level to reach at end of decay", 0, 10.0, 0,
-                         G_PARAM_READWRITE);
+                         "Volume level to reach at end of decay", 0, 10.0,
+                         1.0, G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_SUSTAIN_LEVEL,
                                    param_spec);
   param_spec =
@@ -621,6 +635,11 @@ gst_envelope_class_init (GstEnvelopeClass * klass)
                                    param_spec);
   g_free (release_duration_default);
   release_duration_default = NULL;
+
+  param_spec =
+    g_param_spec_double ("volume", "Volume_level", "Volume to scale envelope",
+                         0, 10.0, 1.0, G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class, PROP_VOLUME, param_spec);
 
   gst_element_class_set_static_metadata (gstelement_class, "Envelope",
                                          "Filter/Effect/Audio",
@@ -661,6 +680,7 @@ gst_envelope_init (GstEnvelope * self)
   self->release_duration_infinite = FALSE;
   self->release_start_volume = 0.0;
   self->release_triggered = FALSE;
+  self->volume = 1.0;
 }
 
 /* Set a property.  */
@@ -675,36 +695,48 @@ gst_envelope_set_property (GObject * object, guint prop_id,
     case PROP_SILENT:
       GST_OBJECT_LOCK (self);
       self->silent = g_value_get_boolean (value);
+      GST_INFO_OBJECT (self, "silent set to %d.", self->silent);
       GST_OBJECT_UNLOCK (self);
       break;
 
     case PROP_ATTACK_DURATION_TIME:
       GST_OBJECT_LOCK (self);
       self->attack_duration_time = g_value_get_uint64 (value);
+      GST_INFO_OBJECT (self,
+                       "attack-duration-time set to %" G_GUINT64_FORMAT ".",
+                       self->attack_duration_time);
       GST_OBJECT_UNLOCK (self);
       break;
 
     case PROP_ATTACK_LEVEL:
       GST_OBJECT_LOCK (self);
       self->attack_level = g_value_get_double (value);
+      GST_INFO_OBJECT (self, "attack-level set to %g.", self->attack_level);
       GST_OBJECT_UNLOCK (self);
       break;
 
     case PROP_DECAY_DURATION_TIME:
       GST_OBJECT_LOCK (self);
       self->decay_duration_time = g_value_get_uint64 (value);
+      GST_INFO_OBJECT (self,
+                       "decay-duration-time set to %" G_GUINT64_FORMAT ".",
+                       self->decay_duration_time);
       GST_OBJECT_UNLOCK (self);
       break;
 
     case PROP_SUSTAIN_LEVEL:
       GST_OBJECT_LOCK (self);
       self->sustain_level = g_value_get_double (value);
+      GST_INFO_OBJECT (self, "sustain-level set to %g.", self->sustain_level);
       GST_OBJECT_UNLOCK (self);
       break;
 
     case PROP_RELEASE_START_TIME:
       GST_OBJECT_LOCK (self);
       self->release_start_time = g_value_get_uint64 (value);
+      GST_INFO_OBJECT (self,
+                       "release-start-time set to %" G_GUINT64_FORMAT ".",
+                       self->release_start_time);
       GST_OBJECT_UNLOCK (self);
       break;
 
@@ -725,6 +757,15 @@ gst_envelope_set_property (GObject * object, guint prop_id,
           self->release_duration_time =
             g_ascii_strtoull (self->release_duration_string, NULL, 10);
         }
+      GST_INFO_OBJECT (self, "release-duration-time set to %s.",
+                       self->release_duration_string);
+      GST_OBJECT_UNLOCK (self);
+      break;
+
+    case PROP_VOLUME:
+      GST_OBJECT_LOCK (self);
+      self->volume = g_value_get_double (value);
+      GST_INFO_OBJECT (self, "volume set to %g.", self->volume);
       GST_OBJECT_UNLOCK (self);
       break;
 
@@ -756,7 +797,7 @@ gst_envelope_get_property (GObject * object, guint prop_id, GValue * value,
 
     case PROP_ATTACK_LEVEL:
       GST_OBJECT_LOCK (self);
-      g_value_set_float (value, self->attack_level);
+      g_value_set_double (value, self->attack_level);
       GST_OBJECT_UNLOCK (self);
       break;
 
@@ -768,7 +809,7 @@ gst_envelope_get_property (GObject * object, guint prop_id, GValue * value,
 
     case PROP_SUSTAIN_LEVEL:
       GST_OBJECT_LOCK (self);
-      g_value_set_float (value, self->sustain_level);
+      g_value_set_double (value, self->sustain_level);
       GST_OBJECT_UNLOCK (self);
       break;
 
@@ -781,6 +822,12 @@ gst_envelope_get_property (GObject * object, guint prop_id, GValue * value,
     case PROP_RELEASE_DURATION_TIME:
       GST_OBJECT_LOCK (self);
       g_value_set_string (value, self->release_duration_string);
+      GST_OBJECT_UNLOCK (self);
+      break;
+
+    case PROP_VOLUME:
+      GST_OBJECT_LOCK (self);
+      g_value_set_double (value, self->volume);
       GST_OBJECT_UNLOCK (self);
       break;
 

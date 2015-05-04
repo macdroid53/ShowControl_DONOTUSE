@@ -164,17 +164,13 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                   (name, (const xmlChar *) "attack_duration_time"))
                 {
                   /* The time required to ramp up the sound when it starts.  */
-                  if (name_data != NULL)
-                    {
-                      name_data =
-                        xmlNodeListGetString (sounds_file,
-                                              sound_loc->xmlChildrenNode, 1);
-                      double_data =
-                        g_ascii_strtod ((gchar *) name_data, NULL);
-                      xmlFree (name_data);
-                      name_data = NULL;
-                      sound_data->attack_duration_time = double_data * 1E9;
-                    }
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  double_data = g_ascii_strtod ((gchar *) name_data, NULL);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                  sound_data->attack_duration_time = double_data * 1E9;
                 }
               if (xmlStrEqual (name, (const xmlChar *) "attack_level"))
                 {

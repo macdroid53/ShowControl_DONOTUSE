@@ -56,6 +56,7 @@ struct _GstEnvelope
   gdouble sustain_level;
   guint64 release_start_time;
   gchar *release_duration_string;
+  gdouble volume;
 
   /* Locals */
   guint64 release_duration_time;
