@@ -1,3 +1,6 @@
+Version 0.36, May 5, 2015
+  Add support for the release message to the envelope plugin.
+  
 Version 0.35, May 4, 2015
   Add a volume parameter to the envelope gstreamer plugin.
   

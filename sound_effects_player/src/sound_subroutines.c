@@ -234,6 +234,10 @@ sound_start_playing (struct sound_info *sound_data, GApplication * app)
   if (bin_element == NULL)
     return;
 
+  /* Get the volume element so we can unmute the bin.  This is temporary:
+   * when we have the looper element the pipeline will run continuously
+   * and the looper will start and stop sounds, based on events.
+   */
   volume_element = gstreamer_get_volume (bin_element);
   if (volume_element == NULL)
     return;
@@ -278,17 +282,22 @@ sound_stop_playing (struct sound_info *sound_data, GApplication * app)
   GstElement *volume_element;
   GstStateChangeReturn set_state_val;
   GstPipeline *pipeline_element;
+  GstEvent *event;
+  GstStructure *structure;
 
   bin_element = sound_data->sound_control;
-
-  /* Mute the bin to silence it.  */
   volume_element = gstreamer_get_volume (bin_element);
   if (volume_element == NULL)
     return;
-  g_object_set (volume_element, "mute", TRUE, NULL);
 
-  /* Pause and rewind the bin in anticipation of using the sound effect
-   *  again.  */
+  /* Send a release message to the bin.  */
+  structure = gst_structure_new_empty ((gchar *) "release");
+  event = gst_event_new_custom (GST_EVENT_CUSTOM_BOTH_OOB, structure);
+  gst_element_send_event (GST_ELEMENT (bin_element), event);
+
+  /* Pause, mute and rewind the bin in anticipation of using the sound effect
+   * again.  This is temporary until we have the looper element, which
+   * will handle start, release, pause and continue events itself.  */
   set_state_val =
     gst_element_set_state (GST_ELEMENT (bin_element), GST_STATE_PAUSED);
   if (set_state_val == GST_STATE_CHANGE_FAILURE)
@@ -296,6 +305,9 @@ sound_stop_playing (struct sound_info *sound_data, GApplication * app)
       g_print ("Unable to pause the gstreamer bin for %s.\n",
                sound_data->name);
     }
+
+  /* Mute it.  */
+  g_object_set (volume_element, "mute", TRUE, NULL);
 
   gst_element_seek_simple (GST_ELEMENT (bin_element), GST_FORMAT_TIME,
                            GST_SEEK_FLAG_ACCURATE, sound_data->start_time);

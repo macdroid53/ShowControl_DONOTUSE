@@ -154,6 +154,9 @@ static GstFlowReturn envelope_transform (GstBaseTransform * base,
                                          GstBuffer * inbuf,
                                          GstBuffer * outbuf);
 
+static gboolean envelope_event_handler (GstBaseTransform * trans,
+                                        GstEvent * event);
+
 static gdouble compute_volume (GstEnvelope * self, GstClockTime timestamp);
 
 /* Before each transform of input to output, do this.  */
@@ -406,53 +409,90 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
   gdouble decay_fraction, release_fraction;
 
   /* Decide where we are in the amplitude envelope.  The normal progression
-   * is attack, decay, sustain, release, completed.  However, a release can 
-   * arrive at at any time.  If the decay duration time is 0 we go straight from
-   * attack to sustain, so sustain level should equal attack level.  */
-  if (ts < self->attack_duration_time)
+   * is attack, decay, sustain, release, completed.  However, a release event
+   * can arrive at at any time.  If the decay duration time is 0 we go straight
+   * from attack to sustain, so sustain level should equal attack level.  */
+
+  if (self->external_release_seen)
     {
-      /* The attack is not yet complete.  */
-      envelope_position = attack;
-    }
-  else
-    {
-      if (ts < self->attack_duration_time + self->decay_duration_time)
+      /* We have seen an external signal initiating the release process.  */
+      if (!self->release_triggered)
         {
-          /* The decay is not yet complete.  */
-          envelope_position = decay;
+          /* This is the beginning of the release process.  */
+          self->release_triggered = TRUE;
+          self->release_started_volume = self->last_volume;
+          self->release_started_time = ts;
+          GST_INFO_OBJECT (self,
+                           "Release triggered by a release event at %"
+                           GST_TIME_FORMAT " with volume %f.",
+                           GST_TIME_ARGS (self->release_started_time),
+                           self->release_started_volume);
+        }
+      /* If we are within the release duration, we are in the release
+       * part of the envelope.  If not, the envelope has completed.
+       */
+      if ((ts < (self->release_started_time + self->release_duration_time))
+          || self->release_duration_infinite)
+        {
+          envelope_position = release;
         }
       else
         {
-          if ((ts < self->release_start_time)
-              || (self->release_start_time == 0))
+          envelope_position = completed;
+        }
+    }
+  else
+    {
+      /* We have not seen a release event, so the envelope proceeds
+       * along its normal path.  */
+      if (ts < self->attack_duration_time)
+        {
+          /* The attack is not yet complete.  */
+          envelope_position = attack;
+        }
+      else
+        {
+          if (ts < self->attack_duration_time + self->decay_duration_time)
             {
-              /* The decay is complete but we have not yet started release.  */
-              envelope_position = sustain;
+              /* The decay is not yet complete.  */
+              envelope_position = decay;
             }
           else
             {
-              if (self->release_duration_infinite
-                  || ts <
-                  (self->release_start_time + self->release_duration_time))
+              if ((ts < self->release_start_time)
+                  || (self->release_start_time == 0))
                 {
-                  /* The release section of the envelope is running.  */
-                  envelope_position = release;
-                  if (!self->release_triggered)
-                    {
-                      /* This is the beginning of the release.  */
-                      self->release_triggered = TRUE;
-                      self->release_start_volume = self->last_volume;
-                      GST_INFO_OBJECT (self,
-                                       "Release triggered at %"
-                                       GST_TIME_FORMAT " with volume %f.",
-                                       GST_TIME_ARGS (ts),
-                                       self->release_start_volume);
-                    }
+                  /* The decay is complete but we have not yet started release.  */
+                  envelope_position = sustain;
                 }
               else
                 {
-                  /* The release is complete.  */
-                  envelope_position = completed;
+                  if (self->release_duration_infinite
+                      || ts <
+                      (self->release_start_time +
+                       self->release_duration_time))
+                    {
+                      /* The release section of the envelope is running.  */
+                      envelope_position = release;
+                      if (!self->release_triggered)
+                        {
+                          /* This is the beginning of the release.  */
+                          self->release_triggered = TRUE;
+                          self->release_started_volume = self->last_volume;
+                          self->release_started_time = ts;
+                          GST_INFO_OBJECT (self,
+                                           "Release triggered at %"
+                                           GST_TIME_FORMAT " with volume %f.",
+                                           GST_TIME_ARGS
+                                           (self->release_started_time),
+                                           self->release_started_volume);
+                        }
+                    }
+                  else
+                    {
+                      /* The release is complete.  */
+                      envelope_position = completed;
+                    }
                 }
             }
         }
@@ -503,17 +543,17 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
        * the release portion of the envelope but go directly to completed.  */
       if (self->release_duration_infinite)
         {
-          volume_val = self->release_start_volume;
+          volume_val = self->release_started_volume;
           GST_LOG_OBJECT (self, "release, infinite.");
           break;
         }
 
       release_fraction =
         (gdouble) (ts -
-                   self->release_start_time) /
+                   self->release_started_time) /
         (gdouble) self->release_duration_time;
       GST_LOG_OBJECT (self, "release, fraction is %g.", release_fraction);
-      volume_val = self->release_start_volume * (1.0 - release_fraction);
+      volume_val = self->release_started_volume * (1.0 - release_fraction);
       break;
 
     case completed:
@@ -527,7 +567,8 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
    * release starts at an unusual time in the envelope.  */
   self->last_volume = volume_val;
 
-  /* Allow for scaling the envelope, perhaps from a Note On velocity.  */
+  /* Allow for scaling the envelope, perhaps to implement a Note On velocity.  
+   */
   volume_val = volume_val * self->volume;
 
   GST_LOG_OBJECT (self,
@@ -561,6 +602,8 @@ gst_envelope_dispose (GObject * object)
   GstEnvelope *self = GST_ENVELOPE (object);
   g_free (self->release_duration_string);
   self->release_duration_string = NULL;
+  g_free (self->last_message);
+  self->last_message = NULL;
   G_OBJECT_CLASS (parent_class)->dispose (object);
 };
 
@@ -571,7 +614,7 @@ static void
 gst_envelope_class_init (GstEnvelopeClass * klass)
 {
   GObjectClass *gobject_class;
-  GstElementClass *gstelement_class;
+  GstElementClass *element_class;
   GstBaseTransformClass *trans_class;
   GstAudioFilterClass *filter_class;
   GstCaps *caps;
@@ -579,7 +622,7 @@ gst_envelope_class_init (GstEnvelopeClass * klass)
   gchar *release_duration_default;
 
   gobject_class = (GObjectClass *) klass;
-  gstelement_class = (GstElementClass *) klass;
+  element_class = (GstElementClass *) klass;
   trans_class = (GstBaseTransformClass *) klass;
   filter_class = (GstAudioFilterClass *) (klass);
 
@@ -641,7 +684,7 @@ gst_envelope_class_init (GstEnvelopeClass * klass)
                          0, 10.0, 1.0, G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_VOLUME, param_spec);
 
-  gst_element_class_set_static_metadata (gstelement_class, "Envelope",
+  gst_element_class_set_static_metadata (element_class, "Envelope",
                                          "Filter/Effect/Audio",
                                          "Shape the sound using "
                                          "an a-d-s-r envelope",
@@ -658,6 +701,7 @@ gst_envelope_class_init (GstEnvelopeClass * klass)
   trans_class->transform = GST_DEBUG_FUNCPTR (envelope_transform);
   trans_class->stop = GST_DEBUG_FUNCPTR (envelope_stop);
   trans_class->transform_ip_on_passthrough = FALSE;
+  trans_class->sink_event = GST_DEBUG_FUNCPTR (envelope_event_handler);
 
   filter_class->setup = envelope_setup;
 }
@@ -678,9 +722,12 @@ gst_envelope_init (GstEnvelope * self)
   self->release_duration_string = g_strdup ((gchar *) "0");
   self->release_duration_time = 0;
   self->release_duration_infinite = FALSE;
-  self->release_start_volume = 0.0;
+  self->release_started_volume = 0.0;
+  self->release_started_time = 0;
   self->release_triggered = FALSE;
   self->volume = 1.0;
+  self->external_release_seen = FALSE;
+  self->last_message = NULL;
 }
 
 /* Set a property.  */
@@ -835,6 +882,65 @@ gst_envelope_get_property (GObject * object, guint prop_id, GValue * value,
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
     }
+}
+
+/* The event handler is called when an event is sent to the sink pad.
+ * We care only about custom events: start, pause, continue and release.
+ * These are mostly processed by the looper, which is upstream of the
+ * envelope element.  The envelope element only cares about release.
+ */
+static gboolean
+envelope_event_handler (GstBaseTransform * trans, GstEvent * event)
+{
+  GstEnvelope *self = GST_ENVELOPE (trans);
+  const GstStructure *event_structure;
+  const gchar *structure_name;
+  const gchar *event_name;
+  gchar *structure_as_string;
+  gboolean ret;
+
+  GST_OBJECT_LOCK (self);
+  g_free (self->last_message);
+  self->last_message = NULL;
+  event_name = gst_event_type_get_name (GST_EVENT_TYPE (event));
+  event_structure = gst_event_get_structure (event);
+  if (event_structure != NULL)
+    {
+      structure_as_string = gst_structure_to_string (event_structure);
+    }
+  else
+    {
+      structure_as_string = g_strdup ("");
+    }
+  self->last_message =
+    g_strdup_printf ("event (%s:%s) type: %s (%d), %s %p",
+                     GST_DEBUG_PAD_NAME (trans->sinkpad), event_name,
+                     GST_EVENT_TYPE (event), structure_as_string, event);
+  g_free (structure_as_string);
+  GST_DEBUG_OBJECT (self, "%s", self->last_message);
+  GST_OBJECT_UNLOCK (self);
+
+  if (event_structure != NULL)
+    {
+      structure_name = gst_structure_get_name (event_structure);
+      if (GST_EVENT_TYPE (event) == GST_EVENT_CUSTOM_BOTH_OOB)
+        {
+          GST_INFO_OBJECT (self, "Processing %s.", structure_name);
+          if (g_strcmp0 (structure_name, (gchar *) "release"))
+            {
+              /* This is a release event, which might be caused by receipt
+               * of a Note Off MIDI message, or by an operator pushing a
+               * stop button.  Set a flag that will force release processing
+               * to begin.  */
+              GST_OBJECT_LOCK (self);
+              self->external_release_seen = TRUE;
+              GST_OBJECT_UNLOCK (self);
+            }
+        }
+    }
+
+  ret = GST_BASE_TRANSFORM_CLASS (parent_class)->sink_event (trans, event);
+  return ret;
 }
 
 /* entry point to initialize the plug-in

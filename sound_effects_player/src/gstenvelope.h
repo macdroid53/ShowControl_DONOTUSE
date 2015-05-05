@@ -62,8 +62,11 @@ struct _GstEnvelope
   guint64 release_duration_time;
   gboolean release_duration_infinite;
   gboolean release_triggered;
-  gdouble release_start_volume;
+  gdouble release_started_volume;
   gdouble last_volume;
+  guint64 release_started_time;
+  gchar *last_message;
+  gboolean external_release_seen;
 };
 
 struct _GstEnvelopeClass
