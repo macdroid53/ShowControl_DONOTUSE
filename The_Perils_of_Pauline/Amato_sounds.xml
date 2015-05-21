@@ -11,7 +11,7 @@
       <!-- the WAV file contains the waveform for the sound -->
       <wav_file_name>440Hz.wav</wav_file_name>
       <!-- volume ramps up from 0 to attack level in attack duration time -->
-      <attack_duration_time>0.000000000</attack_duration_time>
+      <attack_duration_time>2.000000000</attack_duration_time>
       <attack_level>1.00</attack_level>
       <!-- after reaching attack level, volume ramps down to sustain level
 	   in decay time -->
@@ -19,9 +19,9 @@
       <sustain_level>1.00</sustain_level>
       <!-- release starts on external signal or when reaching the
 	   release start time -->
-      <release_start_time>0.000000000</release_start_time>
+      <release_start_time>10.000000000</release_start_time>
       <!-- upon release, volume ramps down to 0 in release duration time -->
-      <release_duration_time>0.000000000</release_duration_time>
+      <release_duration_time>2.000000000</release_duration_time>
       <!-- sound loops between loop times -->
       <loop_from_time>0.000000000</loop_from_time>
       <loop_to_time>0.000000000</loop_to_time>

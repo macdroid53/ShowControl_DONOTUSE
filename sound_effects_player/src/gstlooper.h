@@ -1,5 +1,6 @@
 /* 
- * show_control, a GStreamer application.
+ * gstlooper.h, a file in sound_effects_player, a component of show_control, 
+ * which is a GStreamer application.
  * Copyright © 2006 Stefan Kost <ensonic@users.sf.net>
  * Copyright © 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
@@ -26,9 +27,6 @@
 #define __GST_LOOPER_H__
 
 #include <gst/gst.h>
-#include <gst/base/gstbasetransform.h>
-#include <gst/audio/audio.h>
-#include <gst/audio/gstaudiofilter.h>
 
 G_BEGIN_DECLS
 #define GST_TYPE_LOOPER \
@@ -46,24 +44,64 @@ typedef struct _GstLooperClass GstLooperClass;
 
 struct _GstLooper
 {
-  GstAudioFilter element;
+  GstElement element;
+
 
   /* Parameters */
   gboolean silent;
   guint64 loop_from;
   guint64 loop_to;
+  guint64 max_duration;
   guint loop_limit;
+  gboolean autostart;
 
   /* Locals */
+
+  GstPad *sinkpad;
+  GstPad *srcpad;
+  GstBuffer *local_buffer;      /* The buffer that holds the data to send 
+                                 * downstream.  */
+
+  guint64 local_buffer_fill_level;
+  guint64 local_buffer_drain_level;
+  guint64 local_buffer_size;    /* number of bytes in the local buffer */
+  guint64 loop_from_position;
+  guint64 loop_to_position;
   guint64 loop_duration;
   guint64 timestamp_offset;
+  guint64 local_clock;          /* The current time, in nanoseconds.  
+                                 * This counts continuously through loops.  */
+  gdouble bytes_per_ns;         /* data rate in bytes per nanosecond */
+  gchar *format;                /* The format of incoming data--for example,
+                                 * F32LE.  */
+  GRecMutex interlock;          /* used to prevent interference between tasks */
   guint loop_counter;
-  guint channel_count;
+  gint width;                   /* the size of a sample in bits */
+  gint channel_count;           /* The number of channels of sound.  
+                                 * Stereo has two.  A frame consists of
+                                 * channel_count samples, each of width bits. */
+  gint data_rate;               /* the data rate, in frames per second.  */
+  GstPadMode src_pad_mode;      /* The mode of the source pad: push or pull. */
+  GstPadMode sink_pad_mode;     /* The mode of the sink pad: push or pull.  */
+  gboolean started;             /* We have received a Start signal.  */
+  gboolean paused;              /* We have received a Pause signal, and it has 
+                                 * not yet been canceled by a Continue signal.
+                                 */
+  gboolean released;            /* We have received a Release signal.  */
+  gboolean data_buffered;       /* We have received all the data we need into 
+                                 * our sink pad.  */
+  gboolean src_pad_active;
+  gboolean sink_pad_active;
+  gboolean sink_pad_flushing;
+  gboolean src_pad_flushing;
+  gboolean src_pad_task_running;
+  gboolean send_EOS;
 };
 
 struct _GstLooperClass
 {
-  GstAudioFilterClass parent_class;
+  GstElementClass parent_class;
+
 };
 
 GType gst_looper_get_type (void);

@@ -226,50 +226,20 @@ void
 sound_start_playing (struct sound_info *sound_data, GApplication * app)
 {
   GstBin *bin_element;
-  GstPipeline *pipeline_element;
-  GstElement *volume_element;
-  GstStateChangeReturn set_state_val;
+  GstEvent *event;
+  GstStructure *structure;
 
   bin_element = sound_data->sound_control;
   if (bin_element == NULL)
     return;
 
-  /* Get the volume element so we can unmute the bin.  This is temporary:
-   * when we have the looper element the pipeline will run continuously
-   * and the looper will start and stop sounds, based on events.
-   */
-  volume_element = gstreamer_get_volume (bin_element);
-  if (volume_element == NULL)
-    return;
-
-  /* Repostion the bin to its starting point.  */
-  gst_element_seek_simple (GST_ELEMENT (bin_element), GST_FORMAT_TIME,
-                           GST_SEEK_FLAG_ACCURATE, sound_data->start_time);
-  /* Unmute it.  */
-  g_object_set (volume_element, "mute", FALSE, NULL);
-
-  /* Start it running.  */
-  set_state_val =
-    gst_element_set_state (GST_ELEMENT (bin_element), GST_STATE_PLAYING);
-  if (set_state_val == GST_STATE_CHANGE_FAILURE)
-    {
-      g_print ("Unable to start the gstreamer bin for %s.\n",
-               sound_data->name);
-    }
-
-  /* Start the pipeline, in case this is the only sound playing.  
-   * It doesn't hurt if the other sound bins also start, since all non-playing
-   * bins are muted.  */
-  pipeline_element = sep_get_pipeline_from_app (app);
-  set_state_val =
-    gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_PLAYING);
-  if (set_state_val == GST_STATE_CHANGE_FAILURE)
-    {
-      g_print ("Unable to start the gstreamer pipeline for %s.\n",
-               sound_data->name);
-    }
-
-  gstreamer_dump_pipeline (pipeline_element);
+  /* Send a start message to the bin.  It will be routed to the source, and
+   * flow from there downstream through the looper and envelope.  
+   * The looper element will start sending its local buffer,
+   * and the envelope element will start shaping the volume.  */
+  structure = gst_structure_new_empty ((gchar *) "start");
+  event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
+  gst_element_send_event (GST_ELEMENT (bin_element), event);
 
   return;
 }
@@ -279,41 +249,17 @@ void
 sound_stop_playing (struct sound_info *sound_data, GApplication * app)
 {
   GstBin *bin_element;
-  GstElement *volume_element;
-  GstStateChangeReturn set_state_val;
-  GstPipeline *pipeline_element;
   GstEvent *event;
   GstStructure *structure;
 
   bin_element = sound_data->sound_control;
-  volume_element = gstreamer_get_volume (bin_element);
-  if (volume_element == NULL)
-    return;
 
-  /* Send a release message to the bin.  */
+  /* Send a release message to the bin.  The looper element will stop
+   * looping, and the envelope element will start shutting down the sound.
+   */
   structure = gst_structure_new_empty ((gchar *) "release");
-  event = gst_event_new_custom (GST_EVENT_CUSTOM_BOTH_OOB, structure);
+  event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
   gst_element_send_event (GST_ELEMENT (bin_element), event);
-
-  /* Pause, mute and rewind the bin in anticipation of using the sound effect
-   * again.  This is temporary until we have the looper element, which
-   * will handle start, release, pause and continue events itself.  */
-  set_state_val =
-    gst_element_set_state (GST_ELEMENT (bin_element), GST_STATE_PAUSED);
-  if (set_state_val == GST_STATE_CHANGE_FAILURE)
-    {
-      g_print ("Unable to pause the gstreamer bin for %s.\n",
-               sound_data->name);
-    }
-
-  /* Mute it.  */
-  g_object_set (volume_element, "mute", TRUE, NULL);
-
-  gst_element_seek_simple (GST_ELEMENT (bin_element), GST_FORMAT_TIME,
-                           GST_SEEK_FLAG_ACCURATE, sound_data->start_time);
-
-  pipeline_element = sep_get_pipeline_from_app (app);
-  gstreamer_dump_pipeline (pipeline_element);
 
   return;
 }

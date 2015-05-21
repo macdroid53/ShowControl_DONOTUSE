@@ -50,23 +50,30 @@ struct _GstEnvelope
 
   /* Parameters */
   gboolean silent;
-  guint64 attack_duration_time;
+  GstClockTimeDiff attack_duration_time;
   gdouble attack_level;
-  guint64 decay_duration_time;
+  GstClockTimeDiff decay_duration_time;
   gdouble sustain_level;
-  guint64 release_start_time;
+  GstClockTimeDiff release_start_time;
   gchar *release_duration_string;
   gdouble volume;
+  gboolean autostart;
 
   /* Locals */
-  guint64 release_duration_time;
+  GstClockTimeDiff release_duration_time;
   gboolean release_duration_infinite;
-  gboolean release_triggered;
+  gboolean release_started;
   gdouble release_started_volume;
   gdouble last_volume;
-  guint64 release_started_time;
+  GstClockTimeDiff release_started_time;
   gchar *last_message;
   gboolean external_release_seen;
+  gboolean released;
+  gboolean application_notified;
+  gboolean completed;
+  gboolean running;
+  gboolean started;
+  GstClockTime base_time;
 };
 
 struct _GstEnvelopeClass

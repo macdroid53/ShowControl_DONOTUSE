@@ -138,6 +138,13 @@ libgstenvelope_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(libgstenvelope_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
 	$(CCLD) $(libgstenvelope_la_CFLAGS) $(CFLAGS) \
 	$(libgstenvelope_la_LDFLAGS) $(LDFLAGS) -o $@
+libgstlooper_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_libgstlooper_la_OBJECTS = libgstlooper_la-gstlooper.lo
+libgstlooper_la_OBJECTS = $(am_libgstlooper_la_OBJECTS)
+libgstlooper_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(libgstlooper_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link \
+	$(CCLD) $(libgstlooper_la_CFLAGS) $(CFLAGS) \
+	$(libgstlooper_la_LDFLAGS) $(LDFLAGS) -o $@
 PROGRAMS = $(bin_PROGRAMS)
 am_sound_effects_player_OBJECTS = main.$(OBJEXT) \
 	sound_effects_player.$(OBJEXT) sound_subroutines.$(OBJEXT) \
@@ -185,8 +192,9 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libgstenvelope_la_SOURCES) $(sound_effects_player_SOURCES)
-DIST_SOURCES = $(libgstenvelope_la_SOURCES) \
+SOURCES = $(libgstenvelope_la_SOURCES) $(libgstlooper_la_SOURCES) \
+	$(sound_effects_player_SOURCES)
+DIST_SOURCES = $(libgstenvelope_la_SOURCES) $(libgstlooper_la_SOURCES) \
 	$(sound_effects_player_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -412,19 +420,24 @@ sound_effects_player_LDADD = $(SOUND_EFFECTS_PLAYER_LIBS)
 EXTRA_DIST = $(ui_DATA)
 
 # Note: plugindir is set in configure
-plugin_LTLIBRARIES = libgstenvelope.la
+plugin_LTLIBRARIES = libgstenvelope.la libgstlooper.la
 
-# sources used to compile this plug-in
+# sources used to compile these plug-ins
 libgstenvelope_la_SOURCES = gstenvelope.c gstenvelope.h
+libgstlooper_la_SOURCES = gstlooper.c gstlooper.h
 
-# compiler and linker flags used to compile this plugin, set in configure.ac
+# compiler and linker flags used to compile these plugins, set in configure.ac
 libgstenvelope_la_CFLAGS = $(GST_CFLAGS)
 libgstenvelope_la_LIBADD = $(GST_LIBS)
 libgstenvelope_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstenvelope_la_LIBTOOLFLAGS = --tag=disable-static
+libgstlooper_la_CFLAGS = $(GST_CFLAGS)
+libgstlooper_la_LIBADD = $(GST_LIBS)
+libgstlooper_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
+libgstlooper_la_LIBTOOLFLAGS = --tag=disable-static
 
 # headers we need but don't want installed
-noinst_HEADERS = gstenvelope.h
+noinst_HEADERS = gstenvelope.h gstlooper.h
 all: all-am
 
 .SUFFIXES:
@@ -497,6 +510,9 @@ clean-pluginLTLIBRARIES:
 
 libgstenvelope.la: $(libgstenvelope_la_OBJECTS) $(libgstenvelope_la_DEPENDENCIES) $(EXTRA_libgstenvelope_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libgstenvelope_la_LINK) -rpath $(plugindir) $(libgstenvelope_la_OBJECTS) $(libgstenvelope_la_LIBADD) $(LIBS)
+
+libgstlooper.la: $(libgstlooper_la_OBJECTS) $(libgstlooper_la_DEPENDENCIES) $(EXTRA_libgstlooper_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libgstlooper_la_LINK) -rpath $(plugindir) $(libgstlooper_la_OBJECTS) $(libgstlooper_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
@@ -561,6 +577,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/display_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gstreamer_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstenvelope_la-gstenvelope.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgstlooper_la-gstlooper.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/menu_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message_subroutines.Po@am__quote@
@@ -597,6 +614,13 @@ libgstenvelope_la-gstenvelope.lo: gstenvelope.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstenvelope.c' object='libgstenvelope_la-gstenvelope.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstenvelope_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstenvelope_la_CFLAGS) $(CFLAGS) -c -o libgstenvelope_la-gstenvelope.lo `test -f 'gstenvelope.c' || echo '$(srcdir)/'`gstenvelope.c
+
+libgstlooper_la-gstlooper.lo: gstlooper.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstlooper_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstlooper_la_CFLAGS) $(CFLAGS) -MT libgstlooper_la-gstlooper.lo -MD -MP -MF $(DEPDIR)/libgstlooper_la-gstlooper.Tpo -c -o libgstlooper_la-gstlooper.lo `test -f 'gstlooper.c' || echo '$(srcdir)/'`gstlooper.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgstlooper_la-gstlooper.Tpo $(DEPDIR)/libgstlooper_la-gstlooper.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gstlooper.c' object='libgstlooper_la-gstlooper.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(libgstlooper_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgstlooper_la_CFLAGS) $(CFLAGS) -c -o libgstlooper_la-gstlooper.lo `test -f 'gstlooper.c' || echo '$(srcdir)/'`gstlooper.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

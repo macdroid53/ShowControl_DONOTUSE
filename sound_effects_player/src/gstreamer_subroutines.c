@@ -104,8 +104,8 @@ GstBin *
 gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
                       GstPipeline * pipeline_element, GApplication * app)
 {
-  GstElement *source_element, *parse_element, *envelope_element, *pan_element,
-    *volume_element;
+  GstElement *source_element, *parse_element, *looper_element;
+  GstElement *envelope_element, *pan_element, *volume_element;
   GstElement *bin_element, *final_bin_element;
   gchar *sound_name, *pad_name, *element_name;
   GstPad *last_source_pad, *sink_pad;
@@ -123,6 +123,9 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
   element_name = g_strconcat (sound_name, (gchar *) "/parse", NULL);
   parse_element = gst_element_factory_make ("wavparse", element_name);
   g_free (element_name);
+  element_name = g_strconcat (sound_name, (gchar *) "/looper", NULL);
+  looper_element = gst_element_factory_make ("looper", element_name);
+  g_free (element_name);
   element_name = g_strconcat (sound_name, (gchar *) "/envelope", NULL);
   envelope_element = gst_element_factory_make ("envelope", element_name);
   g_free (element_name);
@@ -136,8 +139,9 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
   element_name = NULL;
   sound_name = NULL;
   if ((bin_element == NULL) || (source_element == NULL)
-      || (parse_element == NULL) || (envelope_element == NULL)
-      || (pan_element == NULL) || (volume_element == NULL))
+      || (parse_element == NULL) || (looper_element == NULL)
+      || (envelope_element == NULL) || (pan_element == NULL)
+      || (volume_element == NULL))
     {
       GST_ERROR
         ("Unable to create all the gstreamer sound effect elements.\n");
@@ -147,6 +151,12 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
   /* Set parameter values of the elements.  */
   g_object_set (source_element, "location", sound_data->wav_file_name_full,
                 NULL);
+
+  g_object_set (looper_element, "loop-to", sound_data->loop_to_time, NULL);
+  g_object_set (looper_element, "loop-from", sound_data->loop_from_time,
+                NULL);
+  g_object_set (looper_element, "loop-limit", sound_data->loop_limit, NULL);
+
   g_object_set (envelope_element, "attack-duration-time",
                 sound_data->attack_duration_time, NULL);
   g_object_set (envelope_element, "attack_level", sound_data->attack_level,
@@ -174,16 +184,16 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
 
   g_object_set (pan_element, "panorama", sound_data->designer_pan, NULL);
 
-  /* The bin is initially muted. */
-  g_object_set (volume_element, "mute", TRUE, NULL);
-
   /* Place the various elements in the bin. */
   gst_bin_add_many (GST_BIN (bin_element), source_element, parse_element,
-                    envelope_element, pan_element, volume_element, NULL);
+                    looper_element, envelope_element, pan_element,
+                    volume_element, NULL);
 
-  /* Link them together in this order: source->parse->envelope->pan->volume. */
+  /* Link them together in this order: source->parse->looper->envelope->pan->
+   * volume. */
   gst_element_link (source_element, parse_element);
-  gst_element_link (parse_element, envelope_element);
+  gst_element_link (parse_element, looper_element);
+  gst_element_link (looper_element, envelope_element);
   gst_element_link (envelope_element, pan_element);
   gst_element_link (pan_element, volume_element);
 
@@ -227,13 +237,13 @@ gstreamer_complete_pipeline (GstPipeline * pipeline_element,
   GstMessage *msg;
   GError *err = NULL;
 
-  /* Now that the pipeline is constructed, set it to the ready state
-   * until we have a sound to play.  */
+  /* Now that the pipeline is constructed, start it running.  There will be no
+   * sound until a sound effect bin receives a start message.  */
   set_state_val =
-    gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_READY);
+    gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_PLAYING);
   if (set_state_val == GST_STATE_CHANGE_FAILURE)
     {
-      g_print ("Unable to initial ready the gstreamer pipeline.\n");
+      g_print ("Unable to initial start the gstreamer pipeline.\n");
 
       /* Check for an error message with details on the bus.  */
       bus = gst_pipeline_get_bus (pipeline_element);
@@ -277,9 +287,8 @@ gstreamer_async_done (GApplication * app)
   return;
 }
 
-/* The pipeline has reached end of stream.  This means none of the
- * sound effects are playing.  Ready the pipeline and rewind all of
- * the sound effects, in preparation for playing one of them.
+/* The pipeline has reached end of stream.  This shouldn't happen, because
+ * the looper will just output silence if it runs out of buffer.
  */
 void
 gstreamer_process_eos (GApplication * app)
@@ -294,8 +303,9 @@ gstreamer_process_eos (GApplication * app)
   GList *l;
 
   pipeline_element = sep_get_pipeline_from_app (app);
+  gstreamer_dump_pipeline (pipeline_element);
 
-  /* Rewind and mute all the sound effects bins, and reset the clusters.  */
+  /* Stop playing all the sounds, and reset the clusters.  */
   sound_list = sep_get_sound_list (app);
   for (l = sound_list; l != NULL; l = l->next)
     {
@@ -325,8 +335,6 @@ gstreamer_process_eos (GApplication * app)
           gst_message_unref (msg);
         }
     }
-
-  gstreamer_dump_pipeline (pipeline_element);
 
   return;
 }

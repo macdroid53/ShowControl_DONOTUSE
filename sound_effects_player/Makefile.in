@@ -392,8 +392,7 @@ dist_doc_DATA = \
 	NEWS \
 	doc/sound_effects_player.odt \
 	doc/sound_effects_player.pdf \
-	doc/sound_effects_player.rtf \
-	doc/sound_effects_player.tex
+	doc/sound_effects_player.rtf 
 
 INTLTOOL_FILES = intltool-extract.in \
 	intltool-merge.in \

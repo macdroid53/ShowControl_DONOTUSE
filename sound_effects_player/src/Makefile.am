@@ -51,19 +51,24 @@ EXTRA_DIST = $(ui_DATA)
 
 # Note: plugindir is set in configure
 
-plugin_LTLIBRARIES = libgstenvelope.la
+plugin_LTLIBRARIES = libgstenvelope.la libgstlooper.la
 
-# sources used to compile this plug-in
+# sources used to compile these plug-ins
 libgstenvelope_la_SOURCES = gstenvelope.c gstenvelope.h
+libgstlooper_la_SOURCES = gstlooper.c gstlooper.h
 
-# compiler and linker flags used to compile this plugin, set in configure.ac
+# compiler and linker flags used to compile these plugins, set in configure.ac
 libgstenvelope_la_CFLAGS = $(GST_CFLAGS)
 libgstenvelope_la_LIBADD = $(GST_LIBS)
 libgstenvelope_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstenvelope_la_LIBTOOLFLAGS = --tag=disable-static
+libgstlooper_la_CFLAGS = $(GST_CFLAGS)
+libgstlooper_la_LIBADD = $(GST_LIBS)
+libgstlooper_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
+libgstlooper_la_LIBTOOLFLAGS = --tag=disable-static
 
 # headers we need but don't want installed
-noinst_HEADERS = gstenvelope.h
+noinst_HEADERS = gstenvelope.h gstlooper.h
 
 # Remove ui directory on uninstall
 uninstall-local:
