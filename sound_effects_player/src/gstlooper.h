@@ -96,6 +96,7 @@ struct _GstLooper
   gboolean src_pad_flushing;
   gboolean src_pad_task_running;
   gboolean send_EOS;
+  gboolean state_change_pending;
 };
 
 struct _GstLooperClass

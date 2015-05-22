@@ -24,27 +24,27 @@
 /* Subroutines defined in sound_subroutines.c */
 
 /* Initialize the sounds. */
-GstPipeline
-*sound_init (GApplication * app);
+GstPipeline * sound_init (GApplication * app);
 
 /* Append a sound to the list of sounds.  */
-void
-sound_append_sound (struct sound_info *sound_data, GApplication *app);
+void sound_append_sound (struct sound_info *sound_data, GApplication * app);
 
 /* Start playing a sound in a specified cluster.  */
-void
-sound_cluster_start (int cluster_number, GApplication * app);
+void sound_cluster_start (int cluster_number, GApplication * app);
 
 /* Stop playing a sound in a specified cluster.  */
-void
-sound_cluster_stop (int cluster_number, GApplication * app);
+void sound_cluster_stop (int cluster_number, GApplication * app);
 
 /* Start playing a sound.  */
-void
-sound_start_playing (struct sound_info *sound_data, GApplication *app);
+void sound_start_playing (struct sound_info *sound_data, GApplication * app);
 
 /* Stop playing a sound.  */
-void
-sound_stop_playing (struct sound_info *sound_data, GApplication *app);
+void sound_stop_playing (struct sound_info *sound_data, GApplication * app);
+
+/* Note that a sound has completed.  */
+void sound_completed (const gchar * sound_name, GApplication * app);
+
+/* Note that a sound has terminated.  */
+void sound_terminated (const gchar * sound_name, GApplication * app);
 
 /* End of file sound_subroutines.h */

@@ -181,6 +181,7 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
     }
   g_object_set (envelope_element, "volume", sound_data->designer_volume_level,
                 NULL);
+  g_object_set (envelope_element, "sound-name", sound_data->name, NULL);
 
   g_object_set (pan_element, "panorama", sound_data->designer_pan, NULL);
 

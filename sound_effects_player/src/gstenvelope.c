@@ -61,6 +61,10 @@
  * envelope processing will start as soon as sound data passes through
  * it, without waiting for a Start event.
  *
+ * #GstEnvelope:sound-name is the name of the sound being shaped.  This name
+ * is used in messages to the application, to identify the sound.  It
+ * defaults to the empty string.
+ *
  * If all the properties except autostart are defaulted, and release is never 
  * signaled, this audio filter does not change the sound passing through it.
  *
@@ -110,7 +114,8 @@ enum
   PROP_RELEASE_START_TIME,
   PROP_RELEASE_DURATION_TIME,
   PROP_VOLUME,
-  PROP_AUTOSTART
+  PROP_AUTOSTART,
+  PROP_SOUND_NAME
 };
 
 /* For simplicity, we handle only floating point samples.
@@ -173,6 +178,10 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
 {
   GstClockTime timestamp, duration;
   GstEnvelope *self = GST_ENVELOPE (base);
+  GstStructure *structure;
+  GstMessage *message;
+  gboolean result;
+  GValue sound_name_value = G_VALUE_INIT;
 
   timestamp = GST_BUFFER_TIMESTAMP (buffer);
   timestamp =
@@ -194,10 +203,33 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
    * by reaching the release start time the application is told that the
    * sound completed.  If it was caused by receiving a Release event,
    * the application is told that the sound was terminated.  */
-  if (self->released && !self->application_notified)
+  if (self->release_started && !self->application_notified)
     {
-      /* FIXME: code this, based on self->external_release_seen.  */
+      if (self->external_release_seen)
+        {
+          structure = gst_structure_new_empty ("terminated");
+          GST_INFO_OBJECT (self, "sound is terminated");
+        }
+      else
+        {
+          structure = gst_structure_new_empty ("completed");
+          GST_INFO_OBJECT (self, "sound is completed");
+        }
+      g_value_init (&sound_name_value, G_TYPE_STRING);
+      g_value_set_string (&sound_name_value, self->sound_name);
+      gst_structure_set_value (structure, (gchar *) "sound_name",
+                               &sound_name_value);
+
+      message = gst_message_new_element (GST_OBJECT (self), structure);
+      result = gst_element_post_message (GST_ELEMENT (self), message);
+      if (!result)
+        {
+          GST_DEBUG_OBJECT (self,
+                            "unable to post a completed or terminated "
+                            "message");
+        }
       self->application_notified = TRUE;
+      g_value_unset (&sound_name_value);
     }
 
   /* If we have completed the envelope, recycle it so we can use it again
@@ -207,8 +239,12 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
    * immediately after the release is complete.  */
   if (self->completed && !self->autostart)
     {
+      self->external_release_seen = FALSE;
       self->running = FALSE;
       self->completed = FALSE;
+      self->release_started = FALSE;
+      self->base_time = 0;
+      self->last_volume = 0;
     }
 
   /* If we have seen a start message, or if we are autostarted,
@@ -542,8 +578,8 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
                           GST_INFO_OBJECT (self,
                                            "Release triggered at %"
                                            GST_TIME_FORMAT " with volume %f.",
-                                           GST_TIME_ARGS (self->
-                                                          release_started_time),
+                                           GST_TIME_ARGS
+                                           (self->release_started_time),
                                            self->release_started_volume);
                         }
                     }
@@ -623,10 +659,6 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
                       release_fraction);
       volume_val = self->release_started_volume * (1.0 - release_fraction);
 
-      /* Note that we are in the release portion of the envelope.  This is
-       * used to send a completion or termination message out to the 
-       * application.  */
-      self->released = TRUE;
       break;
 
     case completed:
@@ -680,6 +712,8 @@ gst_envelope_dispose (GObject * object)
   self->release_duration_string = NULL;
   g_free (self->last_message);
   self->last_message = NULL;
+  g_free (self->sound_name);
+  self->sound_name = NULL;
   G_OBJECT_CLASS (parent_class)->dispose (object);
 };
 
@@ -696,6 +730,7 @@ gst_envelope_class_init (GstEnvelopeClass * klass)
   GstCaps *caps;
   GParamSpec *param_spec;
   gchar *release_duration_default;
+  gchar *sound_name_default;
 
   gobject_class = (GObjectClass *) klass;
   element_class = (GstElementClass *) klass;
@@ -766,6 +801,16 @@ gst_envelope_class_init (GstEnvelopeClass * klass)
                           G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_AUTOSTART, param_spec);
 
+  sound_name_default = g_strdup ("");
+  param_spec =
+    g_param_spec_string ("sound-name", "Sound_name",
+                         "The name of the sound being shaped",
+                         sound_name_default, G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class, PROP_SOUND_NAME,
+                                   param_spec);
+  g_free (sound_name_default);
+  sound_name_default = NULL;
+
   gst_element_class_set_static_metadata (element_class, "Envelope",
                                          "Filter/Effect/Audio",
                                          "Shape the sound using "
@@ -810,11 +855,12 @@ gst_envelope_init (GstEnvelope * self)
   self->release_started_time = 0;
   self->release_started = FALSE;
   self->volume = 1.0;
-  self->external_release_seen = FALSE;
   self->autostart = FALSE;
+  self->sound_name = g_strdup ("");
+
+  self->external_release_seen = FALSE;
   self->running = FALSE;
   self->started = FALSE;
-  self->released = FALSE;
   self->completed = FALSE;
   self->last_message = NULL;
   self->application_notified = FALSE;
@@ -915,6 +961,14 @@ gst_envelope_set_property (GObject * object, guint prop_id,
       GST_OBJECT_UNLOCK (self);
       break;
 
+    case PROP_SOUND_NAME:
+      GST_OBJECT_LOCK (self);
+      g_free (self->sound_name);
+      self->sound_name = g_value_dup_string (value);
+      GST_INFO_OBJECT (self, "sound-name set to %s.", self->sound_name);
+      GST_OBJECT_UNLOCK (self);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -980,6 +1034,12 @@ gst_envelope_get_property (GObject * object, guint prop_id, GValue * value,
     case PROP_AUTOSTART:
       GST_OBJECT_LOCK (self);
       g_value_set_boolean (value, self->autostart);
+      GST_OBJECT_UNLOCK (self);
+      break;
+
+    case PROP_SOUND_NAME:
+      GST_OBJECT_LOCK (self);
+      g_value_set_string (value, self->sound_name);
       GST_OBJECT_UNLOCK (self);
       break;
 

@@ -58,7 +58,8 @@ struct _GstEnvelope
   gchar *release_duration_string;
   gdouble volume;
   gboolean autostart;
-
+  gchar *sound_name;
+  
   /* Locals */
   GstClockTimeDiff release_duration_time;
   gboolean release_duration_infinite;
@@ -68,7 +69,6 @@ struct _GstEnvelope
   GstClockTimeDiff release_started_time;
   gchar *last_message;
   gboolean external_release_seen;
-  gboolean released;
   gboolean application_notified;
   gboolean completed;
   gboolean running;

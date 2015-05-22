@@ -39,7 +39,6 @@ button_start_clicked (GtkButton * button, gpointer user_data)
   /* Tell gstreamer to start playing the sound.  */
   sound_start_playing (sound_data, app);
 
-
   /* Change the text on the button from "Start" to "Playing". */
   gtk_button_set_label (button, "Playing");
 
@@ -60,11 +59,10 @@ button_stop_clicked (GtkButton * button, gpointer user_data)
   if (sound_data == NULL)
     return;
 
-  /* stop playing this sound.  */
+  /* Stop playing this sound.  We will reset the cluster appearance
+   * when we get an acknowledgment back from gstreamer that the sound
+   * has entered the release section of its amplitude envelope.  */
   sound_stop_playing (sound_data, app);
-
-  /* Reset the cluster appearance.  */
-  button_reset_cluster (sound_data, app);
 
   return;
 }
@@ -83,21 +81,26 @@ button_reset_cluster (struct sound_info *sound_data, GApplication * app)
    * The start button will be a child of the cluster, and will be named
    * "start_button".  */
   parent_container = sound_data->cluster;
-  children_list =
-    gtk_container_get_children (GTK_CONTAINER (parent_container));
-  while (children_list != NULL)
-    {
-      child_name = gtk_widget_get_name (children_list->data);
-      if (g_ascii_strcasecmp (child_name, "start_button") == 0)
-        {
-          start_button = children_list->data;
-          break;
-        }
-      children_list = children_list->next;
-    }
-  g_list_free (children_list);
-  gtk_button_set_label (start_button, "Start");
 
+  /* It is possible, though unlikely, that the sound will no longer
+   * be in a cluster.  */
+  if (parent_container != NULL)
+    {
+      children_list =
+        gtk_container_get_children (GTK_CONTAINER (parent_container));
+      while (children_list != NULL)
+        {
+          child_name = gtk_widget_get_name (children_list->data);
+          if (g_strcmp0 (child_name, "start_button") == 0)
+            {
+              start_button = children_list->data;
+              break;
+            }
+          children_list = children_list->next;
+        }
+      g_list_free (children_list);
+      gtk_button_set_label (start_button, "Start");
+    }
   return;
 }
 
@@ -124,7 +127,7 @@ button_volume_changed (GtkButton * button, gpointer user_data)
   while (children_list != NULL)
     {
       child_name = gtk_widget_get_name (children_list->data);
-      if (g_ascii_strcasecmp (child_name, "volume_label") == 0)
+      if (g_strcmp0 (child_name, "volume_label") == 0)
         {
           volume_label = children_list->data;
           break;
@@ -185,7 +188,7 @@ button_pan_changed (GtkButton * button, gpointer user_data)
   while (children_list != NULL)
     {
       child_name = gtk_widget_get_name (children_list->data);
-      if (g_ascii_strcasecmp (child_name, "pan_label") == 0)
+      if (g_strcmp0 (child_name, "pan_label") == 0)
         {
           pan_label = children_list->data;
           break;

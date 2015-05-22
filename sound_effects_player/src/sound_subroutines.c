@@ -79,7 +79,7 @@ sound_init (GApplication * app)
           while (children_list != NULL)
             {
               child_name = gtk_widget_get_name (children_list->data);
-              if (g_ascii_strcasecmp (child_name, "title") == 0)
+              if (g_strcmp0 (child_name, "title") == 0)
                 {
                   title_label = children_list->data;
                   break;
@@ -256,10 +256,78 @@ sound_stop_playing (struct sound_info *sound_data, GApplication * app)
 
   /* Send a release message to the bin.  The looper element will stop
    * looping, and the envelope element will start shutting down the sound.
-   */
+   * We should get a call to sound_terminated shortly.  */
   structure = gst_structure_new_empty ((gchar *) "release");
   event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
   gst_element_send_event (GST_ELEMENT (bin_element), event);
 
+  return;
+}
+
+/* Receive a completed message, which indicates that a sound has entered
+ * its release stage.  */
+void
+sound_completed (const gchar * sound_name, GApplication * app)
+{
+  GList *sound_effect_list;
+  struct sound_info *sound_effect = NULL;
+  gboolean sound_effect_found;
+
+  g_print ("sound %s completed.\n", sound_name);
+
+  /* Search through the sound effects for the one with this name.  */
+  sound_effect_list = sep_get_sound_list (app);
+  sound_effect_found = FALSE;
+  while (sound_effect_list != NULL)
+    {
+      sound_effect = sound_effect_list->data;
+      if (g_strcmp0 (sound_effect->name, sound_name) == 0)
+        {
+          sound_effect_found = TRUE;
+          break;
+        }
+      sound_effect_list = sound_effect_list->next;
+    }
+  if (sound_effect_found)
+    {
+      /* Set the Playing label on the button back to Start.  */
+      button_reset_cluster (sound_effect, app);
+    }
+
+  /* More code will be needed for the sequencer.  */
+  return;
+}
+
+/* Receive a terminated message, which indicates that a sound has entered
+ * its release stage due to an external event.  */
+void
+sound_terminated (const gchar * sound_name, GApplication * app)
+{
+  GList *sound_effect_list;
+  struct sound_info *sound_effect = NULL;
+  gboolean sound_effect_found;
+
+  g_print ("sound %s terminated.\n", sound_name);
+
+  /* Search through the sound effects for the one with this name.  */
+  sound_effect_list = sep_get_sound_list (app);
+  sound_effect_found = FALSE;
+  while (sound_effect_list != NULL)
+    {
+      sound_effect = sound_effect_list->data;
+      if (g_strcmp0 (sound_effect->name, sound_name) == 0)
+        {
+          sound_effect_found = TRUE;
+          break;
+        }
+      sound_effect_list = sound_effect_list->next;
+    }
+  if (sound_effect_found)
+    {
+      /* Set the Playing label on the button back to Start.  */
+      button_reset_cluster (sound_effect, app);
+    }
+
+  /* More code will be needed for the sequencer.  */
   return;
 }

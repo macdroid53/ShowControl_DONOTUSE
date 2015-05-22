@@ -251,6 +251,7 @@ gst_looper_init (GstLooper * self)
   self->format = NULL;
   self->data_rate = 0;
   self->send_EOS = FALSE;
+  self->state_change_pending = FALSE;
   g_rec_mutex_init (&self->interlock);
 
   self->sinkpad = gst_pad_new_from_static_template (&sinktemplate, "sink");
@@ -377,8 +378,11 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
       g_rec_mutex_lock (&self->interlock);
 
       /* We are pausing.  Have the task that is pushing data downstream
-       * send end-of-stream and terminate.  */
+       * send end-of-stream and terminate.  Do not complete the state
+       * change until it is done.  */
       self->send_EOS = TRUE;
+      result = GST_STATE_CHANGE_ASYNC;
+      self->state_change_pending = TRUE;
 
       GST_INFO_OBJECT (self, "state changed from playing to paused");
       g_rec_mutex_unlock (&self->interlock);
@@ -386,6 +390,13 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
 
     case GST_STATE_CHANGE_PAUSED_TO_READY:
       g_rec_mutex_lock (&self->interlock);
+      /* If the task that is pushing data downstream is still running,
+       * kill it.  */
+      if (self->src_pad_task_running)
+        {
+          gst_pad_stop_task (self->srcpad);
+          self->src_pad_task_running = FALSE;
+        }
       self->data_buffered = FALSE;
       self->started = FALSE;
       self->paused = FALSE;
@@ -536,6 +547,19 @@ gst_looper_push_data_downstream (GstPad * pad)
       self->src_pad_task_running = FALSE;
 
       g_rec_mutex_unlock (&self->interlock);
+
+      /* If we are making the transition from the playing to the paused
+       * state, complete the transition here.  We do this after dropping
+       * the mutex because continuing this state change may cause another.
+       */
+      if (self->state_change_pending)
+        {
+          GST_INFO_OBJECT (self, "completing state change");
+          gst_element_continue_state (GST_ELEMENT (self),
+                                      GST_STATE_CHANGE_SUCCESS);
+          GST_DEBUG_OBJECT (self, "state change completed");
+          self->state_change_pending = FALSE;
+        }
 
       return;
     }

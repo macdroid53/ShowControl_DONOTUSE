@@ -27,6 +27,7 @@
 #include <math.h>
 #include <gst/gst.h>
 #include "display_subroutines.h"
+#include "sound_subroutines.h"
 #include "gstreamer_subroutines.h"
 
 /* When debugging, it is sometimes useful to have printouts of the
@@ -43,14 +44,13 @@ message_handler (GstBus * bus_element, GstMessage * message,
   switch (GST_MESSAGE_TYPE (message))
     {
     case GST_MESSAGE_ELEMENT:
+      /* This is a special-purpose message from an element.  */
       {
         const GstStructure *s = gst_message_get_structure (message);
-        const gchar *name = gst_structure_get_name (s);
 
-        if (g_ascii_strcasecmp (name, "level") == 0)
+        if (gst_structure_has_name (s, (gchar *) "level"))
           {
-            /* Messages from the level element show the sound level 
-             * on each channel. */
+            /* The level message shows the sound level on each channel.  */
             gint channels;
             GstClockTime endtime;
             gdouble rms_dB, peak_dB, decay_dB;
@@ -99,7 +99,7 @@ message_handler (GstBus * bus_element, GstMessage * message,
           }
 
         /* Check for a forwarded message from a bin.  */
-        if (gst_structure_has_name (s, "GstBinForwarded"))
+        if (gst_structure_has_name (s, (gchar *) "GstBinForwarded"))
           {
             GstMessage *forward_msg = NULL;
 
@@ -116,11 +116,35 @@ message_handler (GstBus * bus_element, GstMessage * message,
               }
           }
 
+        if (gst_structure_has_name (s, (gchar *) "completed"))
+          {
+            /* The completed message means a sound has entered the release
+             * portion of its envelope.  */
+            const gchar *sound_name;
+
+            /* The structure in the message contains the name of the sound.  
+             */
+            sound_name = gst_structure_get_string (s, (gchar *) "sound_name");
+            sound_completed (sound_name, G_APPLICATION (user_data));
+          }
+
+        if (gst_structure_has_name (s, (gchar *) "terminated"))
+          {
+            /* The terminated message means a sound has entered the release
+             * portion of its envelope due to an external event.  */
+            const gchar *sound_name;
+
+            /* The structure in the message contains the name of the sound.  
+             */
+            sound_name = gst_structure_get_string (s, (gchar *) "sound_name");
+            sound_terminated (sound_name, G_APPLICATION (user_data));
+          }
+
         /* Catchall for unrecognized messages */
         if (TRACE_MESSAGES != 0)
           {
             g_print (" Message element: %s from %s.\n",
-                     gst_message_type_get_name (GST_MESSAGE_TYPE (message)),
+                     gst_structure_get_name (s),
                      GST_OBJECT_NAME (message->src));
           }
         break;
