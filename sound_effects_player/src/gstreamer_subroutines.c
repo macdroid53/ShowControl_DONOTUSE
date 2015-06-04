@@ -258,84 +258,71 @@ gstreamer_complete_pipeline (GstPipeline * pipeline_element,
         }
     }
 
-  /* For debugging, write out a graphical representation of the pipeline. */
-  gstreamer_dump_pipeline (pipeline_element);
-
   return;
 }
 
 /* We are done with Gstreamer; shut it down. */
 void
-gstreamer_shutdown (GstPipeline * pipeline_element)
+gstreamer_shutdown (GApplication * app)
 {
+  GstPipeline *pipeline_element;
+  GstEvent *event;
+  GstStructure *structure;
+
+  pipeline_element = sep_get_pipeline_from_app (app);
+
   if (pipeline_element != NULL)
     {
-      gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_NULL);
-      g_object_unref (pipeline_element);
+      /* Send a shutdown message to the pipeline.  The message will be
+       * received by every element, so the looper element will stop
+       * sending data in anticipation of being shut down.  */
+      structure = gst_structure_new_empty ((gchar *) "shutdown");
+      event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
+      gst_element_send_event (GST_ELEMENT (pipeline_element), event);
+
+      /* The looper element will send end-of-stream (EOS).  When that 
+       * has propagated through the pipeline, we will get it, shut down
+       * the pipeline and quit.  */
+    }
+  else
+    {
+      /* We don't have a pipeline, so just quit.  */
+      g_application_quit (app);
     }
 
   return;
 }
 
-/* Handle the async-done event from the gstreamer pipeline.  */
+/* Handle the async-done event from the gstreamer pipeline.  
+The first such event means that the gstreamer pipeline has finished
+its initialization.  */
 void
 gstreamer_async_done (GApplication * app)
 {
   GstPipeline *pipeline_element;
 
   pipeline_element = sep_get_pipeline_from_app (app);
+  sep_gstreamer_ready (app);
+
+  /* For debugging, write out a graphical representation of the pipeline. */
   gstreamer_dump_pipeline (pipeline_element);
+
   return;
 }
 
-/* The pipeline has reached end of stream.  This shouldn't happen, because
- * the looper will just output silence if it runs out of buffer.
- */
+/* The pipeline has reached end of stream.  This should happen only after
+ * the shutdown message has been sent.  */
 void
 gstreamer_process_eos (GApplication * app)
 {
   GstPipeline *pipeline_element;
-  GstStateChangeReturn set_state_val;
-  GstBus *bus;
-  GstMessage *msg;
-  GError *err = NULL;
-  GList *sound_list;
-  struct sound_info *sound_data;
-  GList *l;
 
+  /* Tell the pipeline to shut down.  */
   pipeline_element = sep_get_pipeline_from_app (app);
-  gstreamer_dump_pipeline (pipeline_element);
+  gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_NULL);
 
-  /* Stop playing all the sounds, and reset the clusters.  */
-  sound_list = sep_get_sound_list (app);
-  for (l = sound_list; l != NULL; l = l->next)
-    {
-      sound_data = l->data;
-      if (!sound_data->disabled)
-        {
-          sound_stop_playing (sound_data, app);
-          button_reset_cluster (sound_data, app);
-        }
-    }
-
-  /* Place the pipeline, and all its contents, in the Ready state.  */
-  set_state_val =
-    gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_READY);
-  if (set_state_val == GST_STATE_CHANGE_FAILURE)
-    {
-      g_print ("Unable to ready the gstreamer pipeline.\n");
-
-      /* Check for an error message with details on the bus.  */
-      bus = gst_pipeline_get_bus (pipeline_element);
-      msg = gst_bus_poll (bus, GST_MESSAGE_ERROR, 0);
-      if (msg != NULL)
-        {
-          gst_message_parse_error (msg, &err, NULL);
-          g_print ("Error: %s.\n", err->message);
-          g_error_free (err);
-          gst_message_unref (msg);
-        }
-    }
+  /* Now we can quit.  */
+  g_application_quit (app);
 
   return;
 }

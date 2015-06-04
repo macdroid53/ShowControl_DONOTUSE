@@ -1,3 +1,8 @@
+Version 0.39, June 4, 2015
+  Add a shutdown message to the looper element.  This lets us send an
+  EOS through the pipeline before shutting it down, resulting in
+  greater reliability.
+  
 Version 0.38, May 22, 2015
   Connect the buttons to the terminated and completed messages from the
   gstremer pipeline.  We are now running the pipeline continuously,

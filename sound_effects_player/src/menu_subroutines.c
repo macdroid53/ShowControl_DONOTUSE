@@ -26,6 +26,7 @@
 #include "network_subroutines.h"
 #include "sound_subroutines.h"
 #include "sound_effects_player.h"
+#include "gstreamer_subroutines.h"
 
 /* Subroutines used by the menus. */
 
@@ -127,7 +128,24 @@ menu_preferences_close_clicked (GtkButton * close_button,
 static void
 quit_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
 {
-  g_application_quit (G_APPLICATION (app));
+  /* Shut down the gstreamer pipeline, then terminate the application.  */
+  gstreamer_shutdown (app);
+}
+
+/* Subroutine called when the top-level window is closed.  */
+gboolean
+menu_delete_top_window (GtkButton * close_button, GdkEvent *event,
+			GtkWidget * top_box)
+{
+  GApplication *app;
+  
+  app = sep_get_application_from_widget (top_box);
+  gstreamer_shutdown (app);
+
+  /* The gstreamer shutdown process is asynchronous, and will terminate
+   * the application when it completes, so don't do the termination here.
+   */
+  return TRUE;
 }
 
 /* Reset the project to its defaults. */
@@ -172,11 +190,8 @@ open_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
       /* We have a file name. */
       project_file_name = gtk_file_chooser_get_filename (chooser);
       gtk_widget_destroy (dialog);
-      /* Parse the file as an XML file.  */
-      parse_xml_read_project_file (project_file_name, app);
-      /* On the assumption that we have extracted some sounds from the XML
-       * file, initialize the sound system.  */
-      sound_init (app);
+      /* Parse the file as an XML file and create the gstreamer pipeline.  */
+      sep_create_pipeline (project_file_name, (GApplication *) app);
     }
 
   return;

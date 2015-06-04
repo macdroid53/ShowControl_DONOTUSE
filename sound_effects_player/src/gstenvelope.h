@@ -69,6 +69,7 @@ struct _GstEnvelope
   GstClockTimeDiff release_started_time;
   gchar *last_message;
   gboolean external_release_seen;
+  gboolean external_completion_seen;
   gboolean application_notified;
   gboolean completed;
   gboolean running;

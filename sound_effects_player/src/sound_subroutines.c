@@ -52,53 +52,62 @@ sound_init (GApplication * app)
         sound_count = sound_count + 1;
     }
 
-  /* Create the gstreamer pipeline and place the standard items
-   * in it.  */
-  pipeline_element = gstreamer_init (sound_count, app);
-
-  /* Create a gstreamer bin for each enabled sound effect and place it in
-   * the gstreamer pipeline.  */
-  i = 0;
-  for (l = sound_list; l != NULL; l = l->next)
+  /* If we have any sounds, create the gstreamer pipeline and place the 
+   * standard items in it.  */
+  if (sound_count > 0)
     {
-      sound_data = l->data;
-      if (!sound_data->disabled)
+      pipeline_element = gstreamer_init (sound_count, app);
+
+      /* Create a gstreamer bin for each enabled sound effect and place it in
+       * the gstreamer pipeline.  */
+      i = 0;
+      for (l = sound_list; l != NULL; l = l->next)
         {
-          sound_data->sound_control =
-            gstreamer_create_bin (sound_data, i, pipeline_element, app);
-
-          /* Since we do not have an internal sequencer, place the sound
-           * in a cluster.  */
-          sound_data->cluster = sep_get_cluster (i, app);
-          sound_data->cluster_number = i;
-
-          /* Set the name of the sound in the cluster.  */
-          title_label = NULL;
-          children_list =
-            gtk_container_get_children (GTK_CONTAINER (sound_data->cluster));
-          while (children_list != NULL)
+          sound_data = l->data;
+          if (!sound_data->disabled)
             {
-              child_name = gtk_widget_get_name (children_list->data);
-              if (g_strcmp0 (child_name, "title") == 0)
+              sound_data->sound_control =
+                gstreamer_create_bin (sound_data, i, pipeline_element, app);
+
+              /* Since we do not have an internal sequencer, place the sound
+               * in a cluster.  */
+              sound_data->cluster = sep_get_cluster (i, app);
+              sound_data->cluster_number = i;
+
+              /* Set the name of the sound in the cluster.  */
+              title_label = NULL;
+              children_list =
+                gtk_container_get_children (GTK_CONTAINER
+                                            (sound_data->cluster));
+              while (children_list != NULL)
                 {
-                  title_label = children_list->data;
-                  break;
+                  child_name = gtk_widget_get_name (children_list->data);
+                  if (g_strcmp0 (child_name, "title") == 0)
+                    {
+                      title_label = children_list->data;
+                      break;
+                    }
+                  children_list = children_list->next;
                 }
-              children_list = children_list->next;
-            }
-          g_list_free (children_list);
+              g_list_free (children_list);
 
-          if (title_label != NULL)
-            {
-              gtk_label_set_label (title_label, sound_data->name);
+              if (title_label != NULL)
+                {
+                  gtk_label_set_label (title_label, sound_data->name);
+                }
+              i = i + 1;
             }
-          i = i + 1;
         }
-    }
 
-  /* Now that all of the sound effects are processed, complete the
-   * gstreamer pipeline.  */
-  gstreamer_complete_pipeline (pipeline_element, app);
+      /* Now that all of the sound effects are processed, complete the
+       * gstreamer pipeline.  */
+      gstreamer_complete_pipeline (pipeline_element, app);
+    }
+  else
+    {
+      /* If we have no sounds, we have no pipeline.  */
+      pipeline_element = NULL;
+    }
 
   return pipeline_element;
 }

@@ -200,8 +200,9 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
 
   /* If we have reached the release portion of the envelope, tell the
    * application that the sound has completed.  If the release was caused
-   * by reaching the release start time the application is told that the
-   * sound completed.  If it was caused by receiving a Release event,
+   * by reaching the release start time or the end of upstream data
+   * the application is told that the sound completed.  
+   * If it was caused by receiving a Release event,
    * the application is told that the sound was terminated.  */
   if (self->release_started && !self->application_notified)
     {
@@ -240,6 +241,7 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
   if (self->completed && !self->autostart)
     {
       self->external_release_seen = FALSE;
+      self->external_completion_seen = FALSE;
       self->running = FALSE;
       self->completed = FALSE;
       self->release_started = FALSE;
@@ -257,6 +259,7 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
       self->base_time = timestamp;
     }
 
+  return;
 }
 
 /* Convert input data to output data, using the same buffer for
@@ -493,6 +496,7 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
   } envelope_position;
   GstClockTime decay_end_time;
   gdouble attack_fraction, decay_fraction, release_fraction;
+  gchar *release_type;
 
   /* Decide where we are in the amplitude envelope.  The normal progression
    * after the note has started is attack, decay, sustain, release, completed.
@@ -507,7 +511,7 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
       return 0.0;
     }
 
-  if (self->external_release_seen)
+  if (self->external_release_seen || self->external_completion_seen)
     {
       /* We have seen an external signal initiating the release process.  */
       if (!self->release_started)
@@ -516,9 +520,18 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
           self->release_started = TRUE;
           self->release_started_volume = self->last_volume;
           self->release_started_time = ts;
+          release_type = (gchar *) "an unknown";
+          if (self->external_completion_seen)
+            {
+              release_type = (gchar *) "a complete";
+            }
+          if (self->external_release_seen)
+            {
+              release_type = (gchar *) "a release";
+            }
           GST_INFO_OBJECT (self,
-                           "Release triggered by a release event at %"
-                           GST_TIME_FORMAT " with volume %f.",
+                           "Release triggered by %s event at %"
+                           GST_TIME_FORMAT " with volume %f.", release_type,
                            GST_TIME_ARGS (self->release_started_time),
                            self->release_started_volume);
         }
@@ -578,8 +591,8 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
                           GST_INFO_OBJECT (self,
                                            "Release triggered at %"
                                            GST_TIME_FORMAT " with volume %f.",
-                                           GST_TIME_ARGS
-                                           (self->release_started_time),
+                                           GST_TIME_ARGS (self->
+                                                          release_started_time),
                                            self->release_started_volume);
                         }
                     }
@@ -859,6 +872,7 @@ gst_envelope_init (GstEnvelope * self)
   self->sound_name = g_strdup ("");
 
   self->external_release_seen = FALSE;
+  self->external_completion_seen = FALSE;
   self->running = FALSE;
   self->started = FALSE;
   self->completed = FALSE;
@@ -1122,10 +1136,9 @@ envelope_src_event_handler (GstBaseTransform * trans, GstEvent * event)
       break;
 
     case GST_EVENT_EOS:
-      /* We have reached the end of the incoming data stream.  Treat
-       * this as a release.  */
+      /* We have reached the end of the incoming data stream.  */
       GST_OBJECT_LOCK (self);
-      self->external_release_seen = TRUE;
+      self->external_completion_seen = TRUE;
       GST_OBJECT_UNLOCK (self);
       break;
 
@@ -1140,6 +1153,8 @@ envelope_src_event_handler (GstBaseTransform * trans, GstEvent * event)
 }
 
 /* This event handler is called when an event is sent to the sink pad.
+ * The event we care about here is the completion event, which is sent
+ * by the looper when it reaches the end of its buffer.
  */
 static gboolean
 envelope_sink_event_handler (GstBaseTransform * trans, GstEvent * event)
@@ -1147,6 +1162,7 @@ envelope_sink_event_handler (GstBaseTransform * trans, GstEvent * event)
   GstEnvelope *self = GST_ENVELOPE (trans);
   const GstStructure *event_structure;
   const gchar *event_name;
+  const gchar *structure_name;
   gchar *structure_as_string;
   gboolean ret;
 
@@ -1170,6 +1186,34 @@ envelope_sink_event_handler (GstBaseTransform * trans, GstEvent * event)
   g_free (structure_as_string);
   GST_INFO_OBJECT (self, "%s", self->last_message);
   GST_OBJECT_UNLOCK (self);
+
+  if (event_structure != NULL)
+    {
+      structure_name = gst_structure_get_name (event_structure);
+    }
+  else
+    {
+      structure_name = (gchar *) "";
+    }
+
+  switch (GST_EVENT_TYPE (event))
+    {
+    case GST_EVENT_CUSTOM_DOWNSTREAM:
+      GST_INFO_OBJECT (self, "Processing %s.", structure_name);
+      if (g_strcmp0 (structure_name, (gchar *) "complete") == 0)
+        {
+          /* This is a complete event, which is sent by the looper when
+           * it reaches the end of its buffer.  Set a flag that will
+           * cause release processing to begin.  */
+          GST_OBJECT_LOCK (self);
+          self->external_completion_seen = TRUE;
+          GST_OBJECT_UNLOCK (self);
+        }
+      break;
+
+    default:
+      break;
+    }
 
   /* When we are done with the event, do the default processing on it.  */
   ret = GST_BASE_TRANSFORM_CLASS (parent_class)->sink_event (trans, event);

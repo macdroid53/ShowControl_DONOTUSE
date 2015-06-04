@@ -54,6 +54,13 @@ sound_effects_player_get_type (void) G_GNUC_CONST; Sound_Effects_Player *sound_e
 
 /* Callbacks */
 
+/* The gstreamer pipeline has completed initialization; we can show
+ * the top-level window now.  */
+void sep_gstreamer_ready (GApplication *app);
+
+/* Create the gstreamer pipeline by reading an XML file.  */
+void sep_create_pipeline (gchar * filename, GApplication *app);
+
 /* Find the gstreamer pipeline.  */
 GstPipeline *sep_get_pipeline_from_app (GApplication * app);
 

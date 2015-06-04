@@ -39,9 +39,17 @@ struct _Sound_Effects_PlayerPrivate
   /* The Gstreamer pipeline. */
   GstPipeline *gstreamer_pipeline;
 
+  /* A flag that is set by the Gstreamer startup process when it is
+   * complete.  */
+  gboolean gstreamer_ready;
+  
   /* The top-level gtk window. */
   GtkWindow *top_window;
 
+  /* A flag that is set to indicate that we have told GTK to start
+   * showing the top-level window.  */
+  gboolean windows_showing;
+  
   /* The common area, needed for updating the display asynchronously. */
   GtkWidget *common_area;
 
@@ -163,6 +171,7 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
 
   /* Set up the remainder of the private data. */
   priv->gstreamer_pipeline = NULL;
+  priv->gstreamer_ready = FALSE;
   priv->sound_list = NULL;
 
   /* Initialize the network message parser. */
@@ -180,8 +189,16 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
       priv->gstreamer_pipeline = sound_init (app);
     }
 
-  /* The display is initialized; time to show it. */
-  gtk_widget_show_all (GTK_WIDGET (top_window));
+  /* If we have a gstreamer pipeline but it has not completed its
+   * initialization, don't display the window.  It will be displayed
+   * when the gstreamer pipeline is ready.  */
+
+  if ((priv->gstreamer_pipeline == NULL) || (priv->gstreamer_ready))
+    {
+      /* The display is initialized; time to show it. */
+      gtk_widget_show_all (GTK_WIDGET (top_window));
+      priv->windows_showing = TRUE;
+    }
 }
 
 /* GApplication implementation */
@@ -213,15 +230,17 @@ sound_effects_player_init (Sound_Effects_Player * object)
 static void
 sound_effects_player_finalize (GObject * object)
 {
-  GstPipeline *pipeline_element;
   GList *sound_effect_list;
   GList *next_sound_effect;
   struct sound_info *sound_effect;
   Sound_Effects_Player *self = (Sound_Effects_Player *) object;
 
-  /* Shut down gstreamer and deallocate all of its storage. */
-  pipeline_element = self->priv->gstreamer_pipeline;
-  gstreamer_shutdown (pipeline_element);
+  /* Deallocate the gstreamer pipeline.  */
+  if (self->priv->gstreamer_pipeline != NULL)
+    {
+      g_object_unref (self->priv->gstreamer_pipeline);
+      self->priv->gstreamer_pipeline = NULL;
+    }
 
   /* Deallocate the list of sound effects. */
   sound_effect_list = self->priv->sound_list;
@@ -266,6 +285,40 @@ sound_effects_player_new (void)
 /* Callbacks from other modules.  The names of the callbacks are prefixed
  * with sep_ rather than sound_effects_player_ for readability. */
 
+/* Display the gtk top-level window.  This is called when the gstreamer
+ * pipeline has completed initialization.  */
+void
+sep_gstreamer_ready (GApplication *app)
+{
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+
+  priv->gstreamer_ready = TRUE;
+  if (!priv->windows_showing)
+    {
+      /* The gstreamer pipeline is ready, time to show the top-level window. */
+      gtk_widget_show_all (GTK_WIDGET (priv->top_window));
+      priv->windows_showing = TRUE;
+    }
+
+  return;
+}
+
+/* Create the gstreamer pipeline by reading an XML file.  */
+void
+sep_create_pipeline (gchar * filename, GApplication *app)
+{
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+  gchar *local_filename;
+
+  local_filename = g_strdup (filename);
+  parse_xml_read_project_file (local_filename, app);
+  priv->gstreamer_pipeline = sound_init (app);
+
+  return;
+}
+
 /* Find the gstreamer pipeline.  */
 GstPipeline *
 sep_get_pipeline_from_app (GApplication * app)
@@ -291,7 +344,7 @@ sep_get_application_from_widget (GtkWidget * object)
   /* Find the top-level window.  */
   toplevel_widget = gtk_widget_get_toplevel (object);
   toplevel_window = GTK_WINDOW (toplevel_widget);
-  /* The top level window's knows where to find the application.  */
+  /* The top level window knows where to find the application.  */
   gtk_app = gtk_window_get_application (toplevel_window);
   app = (GApplication *) gtk_app;
   return (app);

@@ -237,6 +237,7 @@ gst_looper_init (GstLooper * self)
   self->max_duration = 0;
   self->autostart = FALSE;
   self->started = FALSE;
+  self->completion_sent = FALSE;
   self->paused = FALSE;
   self->released = FALSE;
   self->data_buffered = FALSE;
@@ -331,6 +332,7 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
     case GST_STATE_CHANGE_READY_TO_PAUSED:
       g_rec_mutex_lock (&self->interlock);
       self->started = FALSE;
+      self->completion_sent = FALSE;
       self->released = FALSE;
       self->paused = FALSE;
       self->data_buffered = FALSE;
@@ -377,14 +379,23 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
     case GST_STATE_CHANGE_PLAYING_TO_PAUSED:
       g_rec_mutex_lock (&self->interlock);
 
-      /* We are pausing.  Have the task that is pushing data downstream
-       * send end-of-stream and terminate.  Do not complete the state
-       * change until it is done.  */
-      self->send_EOS = TRUE;
-      result = GST_STATE_CHANGE_ASYNC;
-      self->state_change_pending = TRUE;
+      /* The pipeline is pausing.  If the task that sends data
+       * downstream is still running, tell it to send EOS and
+       * complete the state transition.  If it is not running,
+       * complete the state transition here.  */
 
-      GST_INFO_OBJECT (self, "state changed from playing to paused");
+      if (self->src_pad_task_running)
+        {
+          self->send_EOS = TRUE;
+          result = GST_STATE_CHANGE_ASYNC;
+          self->state_change_pending = TRUE;
+          GST_INFO_OBJECT (self, "state changing from playing to paused");
+        }
+      else
+        {
+          GST_INFO_OBJECT (self, "state changed from playing to paused");
+        }
+
       g_rec_mutex_unlock (&self->interlock);
       break;
 
@@ -399,6 +410,7 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
         }
       self->data_buffered = FALSE;
       self->started = FALSE;
+      self->completion_sent = FALSE;
       self->paused = FALSE;
       self->released = FALSE;
       GST_INFO_OBJECT (self, "state changed from paused to ready");
@@ -502,12 +514,14 @@ gst_looper_push_data_downstream (GstPad * pad)
   GstLooper *self = GST_LOOPER (GST_PAD_PARENT (pad));
   GstBuffer *buffer;
   GstEvent *event;
+  GstStructure *structure;
   GstMemory *memory_out;
   GstMapInfo memory_in_info, memory_out_info;
   gsize data_size;
   gboolean result, within_loop;
   GstFlowReturn flow_result;
   gboolean send_silence;
+  gboolean exiting = FALSE;
 
   /* We have a recursive mutex which prevents this task from running
    * while some other part of this plugin is running on a different task.  
@@ -532,7 +546,7 @@ gst_looper_push_data_downstream (GstPad * pad)
       result = gst_pad_push_event (self->srcpad, event);
       if (!result)
         {
-          GST_DEBUG_OBJECT (self, "failed to push an EOS event.");
+          GST_DEBUG_OBJECT (self, "failed to push an EOS event");
         }
       self->send_EOS = FALSE;
 
@@ -545,22 +559,27 @@ gst_looper_push_data_downstream (GstPad * pad)
         }
 
       self->src_pad_task_running = FALSE;
+      exiting = TRUE;
+    }
 
+  /* If we are making the transition from the playing to the paused
+   * state, complete the transition here.
+   */
+  if (self->state_change_pending)
+    {
+      GST_INFO_OBJECT (self, "completing state change");
+      gst_element_continue_state (GST_ELEMENT (self),
+                                  GST_STATE_CHANGE_SUCCESS);
+      GST_DEBUG_OBJECT (self, "state change completed");
+      self->state_change_pending = FALSE;
+      exiting = TRUE;
+    }
+
+  /* If we either sent an EOS, or completed a stage change, or both,
+   * exit now.  */
+  if (exiting)
+    {
       g_rec_mutex_unlock (&self->interlock);
-
-      /* If we are making the transition from the playing to the paused
-       * state, complete the transition here.  We do this after dropping
-       * the mutex because continuing this state change may cause another.
-       */
-      if (self->state_change_pending)
-        {
-          GST_INFO_OBJECT (self, "completing state change");
-          gst_element_continue_state (GST_ELEMENT (self),
-                                      GST_STATE_CHANGE_SUCCESS);
-          GST_DEBUG_OBJECT (self, "state change completed");
-          self->state_change_pending = FALSE;
-        }
-
       return;
     }
 
@@ -585,6 +604,22 @@ gst_looper_push_data_downstream (GstPad * pad)
         {
           send_silence = TRUE;
         }
+    }
+
+  /* If we are just reaching the end of the buffer, send a message
+   * downstream to the envelope plugin, so it knows that the
+   * sound is complete.  */
+  if (self->started && send_silence && !self->completion_sent)
+    {
+      GST_INFO_OBJECT (self, "pushing a completion event");
+      structure = gst_structure_new_empty ((gchar *) "complete");
+      event = gst_event_new_custom (GST_EVENT_CUSTOM_DOWNSTREAM, structure);
+      result = gst_pad_push_event (self->srcpad, event);
+      if (!result)
+        {
+          GST_DEBUG_OBJECT (self, "failed to push a completion event");
+        }
+      self->completion_sent = TRUE;
     }
 
   if (send_silence)
@@ -1150,10 +1185,13 @@ gst_looper_handle_src_event (GstPad * pad, GstObject * parent,
     case GST_EVENT_CUSTOM_UPSTREAM:
       g_rec_mutex_lock (&self->interlock);
 
-      /* We use four custom events: start, pause, continue and release.
+      /* We use five custom upstream events: start, pause, continue, release
+       * and shutdown.
        * The release event is processed mostly in the envelope plugin,
        * but we also use it here to terminate looping.
        * The start event causes the buffered data to be transmitted.
+       * The shutdown event is issued prior to closing down the
+       * pipeline.  The looper sends EOS and stops sending.
        * The pause event silences the looper, and the continue event
        * lets it proceed from where it paused.  */
       event_structure = gst_event_get_structure (event);
@@ -1167,6 +1205,7 @@ gst_looper_handle_src_event (GstPad * pad, GstObject * parent,
            */
           GST_INFO_OBJECT (self, "received custom start event");
           self->started = TRUE;
+          self->completion_sent = FALSE;
           self->local_buffer_drain_level = 0;
         }
 
@@ -1193,6 +1232,14 @@ gst_looper_handle_src_event (GstPad * pad, GstObject * parent,
            * Terminate any looping.  */
           GST_INFO_OBJECT (self, "received custom release event");
           self->released = TRUE;
+        }
+
+      if (g_strcmp0 (structure_name, (gchar *) "shutdown") == 0)
+        {
+          /* The shutdown event is caused by the operator shutting down
+           * the application.  We send an EOS and stop.  */
+          self->send_EOS = TRUE;
+          GST_INFO_OBJECT (self, "shutting down");
         }
 
       g_rec_mutex_unlock (&self->interlock);
