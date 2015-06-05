@@ -307,6 +307,7 @@ gstreamer_async_done (GApplication * app)
   /* For debugging, write out a graphical representation of the pipeline. */
   gstreamer_dump_pipeline (pipeline_element);
 
+  g_print ("Ready.\n");
   return;
 }
 

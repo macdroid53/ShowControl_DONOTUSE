@@ -1,3 +1,6 @@
+Version 0.40, June 5, 2015
+  Implement max-duration in the looper.
+
 Version 0.39, June 4, 2015
   Add a shutdown message to the looper element.  This lets us send an
   EOS through the pipeline before shutting it down, resulting in

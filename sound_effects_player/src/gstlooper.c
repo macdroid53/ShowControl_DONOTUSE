@@ -30,12 +30,20 @@
  * loop-from is the beginning of the section to repeat, in nanoseconds from
  * the beginning of the input.  loop-to is the end of the section to repeat,
  * also in nanoseconds.  loop-limit is the number of times to repeat; 0
- * means repeat indefinitely.  max-duration, if specified, is the maximum
+ * means repeat indefinitely.  max-duration-time, if specified, is the maximum
  * amount of time from the source to be held for repeating.  This can be
  * useful with live or infinite sources.  Note that this plugin can itself
  * be an infinite source for its downstream consumers, even if its upstream
- * is finite or limited by max-duration.  If max-duration is not specified,
- * the envelope plugin will attempt to absorb all sound provided to its sink.
+ * is finite or limited by max-duration.  If max-duration is not specified, 
+ * the looper plugin will attempt to absorb all sound provided to its sink pad.
+ * Receipt of a Release message causes looping to terminate,
+ * which means reaching the end of the loop no longer causes sound to be
+ * sent from the beginning.  The amount of sound sent after a Release message
+ * can be as little as 0, if the looper element was about to loop, and there
+ * is no sound after the loop-end time.  Therefore, if you need sound after
+ * the Release message, leave enough sound after loop-end to handle the
+ * worst case.
+ *
  * Normally, this element sends silence until it receives a Start event.
  * By setting the Autostart parameter to TRUE you can make it start as soon
  * as it has gotten all the sound data from its sink pad.
@@ -43,7 +51,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch-1.0 -v -m audiotestsrc ! looper loop_end=1000000 max-duration=1000000000 loop-limit=5 ! fakesink silent=TRUE
+ * gst-launch-1.0 -v -m audiotestsrc ! looper loop-end=1000000 max-duration=1000000000 loop-limit=5 ! fakesink silent=TRUE
  * ]|
  * </refsect2>
  */
@@ -116,7 +124,7 @@ static GstFlowReturn gst_looper_chain (GstPad * pad, GstObject * parent,
                                        GstBuffer * buffer);
 /* send outgoing data to the source pad */
 static void gst_looper_push_data_downstream (GstPad * pad);
-
+/* process events and querys on the sink and source pads */
 static gboolean gst_looper_handle_sink_event (GstPad * pad,
                                               GstObject * parent,
                                               GstEvent * event);
@@ -127,13 +135,14 @@ static gboolean gst_looper_handle_src_event (GstPad * pad, GstObject * parent,
                                              GstEvent * event);
 static gboolean gst_looper_handle_src_query (GstPad * pad, GstObject * parent,
                                              GstQuery * query);
+/* process querys directed to the element itself */
 static gboolean gst_looper_handle_query (GstElement * element,
                                          GstQuery * query);
-
+/* send data downstream in pull mode */
 static GstFlowReturn gst_looper_get_range (GstPad * pad, GstObject * parent,
                                            guint64 offset, guint length,
                                            GstBuffer ** buffer);
-
+/* activate and deactivate the source and sink pads */
 static gboolean gst_looper_src_activate_mode (GstPad * pad,
                                               GstObject * parent,
                                               GstPadMode mode,
@@ -142,12 +151,14 @@ static gboolean gst_looper_sink_activate_mode (GstPad * pad,
                                                GstObject * parent,
                                                GstPadMode mode,
                                                gboolean active);
+/* process a state change */
 static GstStateChangeReturn gst_looper_change_state (GstElement * element,
                                                      GstStateChange
                                                      transition);
 
 /* local subroutines */
 
+/* convert a time in nanoseconds into a position in the buffer */
 static guint64 round_to_position (GstLooper * self, guint64 specified_time);
 
 /* GObject vmethod implementations */
@@ -191,8 +202,8 @@ gst_looper_class_init (GstLooperClass * klass)
 
   param_spec =
     g_param_spec_uint64 ("max-duration", "Max_duration",
-                         "Maximum time to accept from source", 0, G_MAXUINT64,
-                         0, G_PARAM_READWRITE);
+                         "Maximum time to accept from upstream", 0,
+                         G_MAXUINT64, 0, G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_MAX_DURATION,
                                    param_spec);
 
@@ -255,6 +266,7 @@ gst_looper_init (GstLooper * self)
   self->state_change_pending = FALSE;
   g_rec_mutex_init (&self->interlock);
 
+  /* create the pads */
   self->sinkpad = gst_pad_new_from_static_template (&sinktemplate, "sink");
   gst_pad_set_chain_function (self->sinkpad,
                               GST_DEBUG_FUNCPTR (gst_looper_chain));
@@ -291,15 +303,15 @@ gst_looper_init (GstLooper * self)
   GST_PAD_SET_PROXY_CAPS (self->srcpad);
   gst_element_add_pad (GST_ELEMENT (self), self->srcpad);
 
-  GST_INFO_OBJECT (self, "completed initialization of looper");
+  return;
 }
 
+/* Deallocate everything */
 static void
 gst_looper_finalize (GObject * object)
 {
   GstLooper *self = GST_LOOPER (object);
 
-  GST_INFO_OBJECT (self, "finalizing looper");
   if (self->local_buffer != NULL)
     {
       gst_buffer_unref (self->local_buffer);
@@ -312,8 +324,11 @@ gst_looper_finalize (GObject * object)
     }
   g_rec_mutex_clear (&self->interlock);
   G_OBJECT_CLASS (parent_class)->finalize (object);
+  return;
 }
 
+/* Process a state change.  The state either climbs up from NULL to READY
+ * to PAUSED to RUNNING, or down from RUNNING to PAUSED to READY to NULL.   */
 static GstStateChangeReturn
 gst_looper_change_state (GstElement * element, GstStateChange transition)
 {
@@ -321,7 +336,6 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
   GstStateChangeReturn result = GST_STATE_CHANGE_SUCCESS;
 
   self = GST_LOOPER (element);
-  GST_DEBUG_OBJECT (self, "change state");
 
   switch (transition)
     {
@@ -336,7 +350,7 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
       self->released = FALSE;
       self->paused = FALSE;
       self->data_buffered = FALSE;
-      GST_INFO_OBJECT (self, "state changed from ready to paused");
+      GST_DEBUG_OBJECT (self, "state changed from ready to paused");
       g_rec_mutex_unlock (&self->interlock);
       break;
 
@@ -357,7 +371,7 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
             }
           self->src_pad_task_running = TRUE;
         }
-      GST_INFO_OBJECT (self, "state changed from paused to playing");
+      GST_DEBUG_OBJECT (self, "state changed from paused to playing");
       g_rec_mutex_unlock (&self->interlock);
       break;
 
@@ -365,6 +379,8 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
       break;
     }
 
+  /* Let our parent do its state change after us if we are going up,
+   * or before us if we are going down.  */
   result =
     GST_ELEMENT_CLASS (parent_class)->change_state (element, transition);
 
@@ -389,11 +405,11 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
           self->send_EOS = TRUE;
           result = GST_STATE_CHANGE_ASYNC;
           self->state_change_pending = TRUE;
-          GST_INFO_OBJECT (self, "state changing from playing to paused");
+          GST_DEBUG_OBJECT (self, "state changing from playing to paused");
         }
       else
         {
-          GST_INFO_OBJECT (self, "state changed from playing to paused");
+          GST_DEBUG_OBJECT (self, "state changed from playing to paused");
         }
 
       g_rec_mutex_unlock (&self->interlock);
@@ -413,7 +429,7 @@ gst_looper_change_state (GstElement * element, GstStateChange transition)
       self->completion_sent = FALSE;
       self->paused = FALSE;
       self->released = FALSE;
-      GST_INFO_OBJECT (self, "state changed from paused to ready");
+      GST_DEBUG_OBJECT (self, "state changed from paused to ready");
       g_rec_mutex_unlock (&self->interlock);
       break;
 
@@ -444,14 +460,14 @@ gst_looper_src_activate_mode (GstPad * pad, GstObject * parent,
        * getrange function to get data.  */
       if (active)
         {
-          GST_INFO_OBJECT (self, "activating source pad in pull mode");
+          GST_DEBUG_OBJECT (self, "activating source pad in pull mode");
           result = TRUE;
           self->src_pad_mode = mode;
           self->src_pad_active = TRUE;
         }
       else
         {
-          GST_INFO_OBJECT (self, "deactivating source pad in pull mode");
+          GST_DEBUG_OBJECT (self, "deactivating source pad in pull mode");
           self->src_pad_mode = mode;
           self->src_pad_active = FALSE;
           result = TRUE;
@@ -466,7 +482,7 @@ gst_looper_src_activate_mode (GstPad * pad, GstObject * parent,
        */
       if (active)
         {
-          GST_INFO_OBJECT (self, "activating source pad in push mode");
+          GST_DEBUG_OBJECT (self, "activating source pad in push mode");
           self->src_pad_mode = mode;
           if ((self->data_buffered) && (!self->src_pad_task_running))
             {
@@ -487,7 +503,7 @@ gst_looper_src_activate_mode (GstPad * pad, GstObject * parent,
         }
       else
         {
-          GST_INFO_OBJECT (self, "deactivating source pad in push mode");
+          GST_DEBUG_OBJECT (self, "deactivating source pad in push mode");
           self->src_pad_mode = mode;
           self->src_pad_active = FALSE;
           /* If the task that is sending data downstream is still running, 
@@ -538,8 +554,11 @@ gst_looper_push_data_downstream (GstPad * pad)
       return;
     }
 
-  /* If requested, send an end-of-stream message and stop.  */
-  if (self->send_EOS)
+  /* If requested, or if we are autostarted and have reached the end of
+   * the buffer, send an end-of-stream message and stop.  */
+  if ((self->send_EOS)
+      || (self->autostart
+          && (self->local_buffer_drain_level >= self->local_buffer_size)))
     {
       GST_INFO_OBJECT (self, "pushing an EOS event");
       event = gst_event_new_eos ();
@@ -567,7 +586,7 @@ gst_looper_push_data_downstream (GstPad * pad)
    */
   if (self->state_change_pending)
     {
-      GST_INFO_OBJECT (self, "completing state change");
+      GST_DEBUG_OBJECT (self, "completing state change");
       gst_element_continue_state (GST_ELEMENT (self),
                                   GST_STATE_CHANGE_SUCCESS);
       GST_DEBUG_OBJECT (self, "state change completed");
@@ -592,7 +611,7 @@ gst_looper_push_data_downstream (GstPad * pad)
     }
 
   /* If we have not received a start event, or if we have completely
-   * drained the buffer, send silence downstream.  */
+   * drained the buffer, remember to send silence downstream.  */
   send_silence = FALSE;
   if (!self->started)
     {
@@ -606,18 +625,25 @@ gst_looper_push_data_downstream (GstPad * pad)
         }
     }
 
-  /* If we are just reaching the end of the buffer, send a message
-   * downstream to the envelope plugin, so it knows that the
-   * sound is complete.  */
+  /* If we are just reaching the end of the buffer, and we are not
+   * autostarted, send a message downstream to the envelope plugin, 
+   * so it knows that the sound is complete.  We don't send EOS because 
+   * we don't want to drain the pipeline--we may get another Start message 
+   * asking us to play this sound again.  On the other hand, if we are
+   * autostarted, we sent an EOS message above.  */
   if (self->started && send_silence && !self->completion_sent)
     {
-      GST_INFO_OBJECT (self, "pushing a completion event");
+      GST_DEBUG_OBJECT (self, "pushing a completion event");
       structure = gst_structure_new_empty ((gchar *) "complete");
       event = gst_event_new_custom (GST_EVENT_CUSTOM_DOWNSTREAM, structure);
       result = gst_pad_push_event (self->srcpad, event);
       if (!result)
         {
           GST_DEBUG_OBJECT (self, "failed to push a completion event");
+        }
+      else
+        {
+          GST_DEBUG_OBJECT (self, "successfully pushed a completion event");
         }
       self->completion_sent = TRUE;
     }
@@ -694,13 +720,13 @@ gst_looper_push_data_downstream (GstPad * pad)
     {
       self->local_buffer_drain_level = self->loop_to_position;
       self->loop_counter = self->loop_counter + 1;
-      GST_INFO_OBJECT (self,
-                       "loop counter %d, looping from %" GST_TIME_FORMAT
-                       " to %" GST_TIME_FORMAT ".", self->loop_counter,
-                       GST_TIME_ARGS (self->loop_from_position /
-                                      self->bytes_per_ns),
-                       GST_TIME_ARGS (self->loop_to_position /
-                                      self->bytes_per_ns));
+      GST_DEBUG_OBJECT (self,
+                        "loop counter %d, looping from %" GST_TIME_FORMAT
+                        " to %" GST_TIME_FORMAT ".", self->loop_counter,
+                        GST_TIME_ARGS (self->loop_from_position /
+                                       self->bytes_per_ns),
+                        GST_TIME_ARGS (self->loop_to_position /
+                                       self->bytes_per_ns));
     }
   /* If the loop is very short, we will output buffers of its length.  */
   if (within_loop
@@ -709,10 +735,14 @@ gst_looper_push_data_downstream (GstPad * pad)
     {
       data_size = self->loop_from_position - self->local_buffer_drain_level;
     }
+  /* now that we know how much memory we need, allocate it */
   memory_out = gst_allocator_alloc (NULL, data_size, NULL);
+  /* place the memory in our buffer and mark it for writing */
   gst_buffer_append_memory (buffer, memory_out);
   gst_buffer_map (buffer, &memory_out_info, GST_MAP_WRITE);
+  /* mark our local buffer for reading */
   gst_buffer_map (self->local_buffer, &memory_in_info, GST_MAP_READ);
+  /* copy data from our local buffer to the newly-allocated buffer */
   gst_buffer_fill (buffer, 0,
                    memory_in_info.data + self->local_buffer_drain_level,
                    memory_out_info.size);
@@ -735,6 +765,7 @@ gst_looper_push_data_downstream (GstPad * pad)
                     "sending %" G_GUINT64_FORMAT " bytes of data downstream.",
                     memory_out_info.size);
 
+  /* we are finished with the new buffer and our local buffer */
   gst_buffer_unmap (buffer, &memory_out_info);
   gst_buffer_unmap (self->local_buffer, &memory_in_info);
 
@@ -748,7 +779,7 @@ gst_looper_push_data_downstream (GstPad * pad)
       GST_DEBUG_OBJECT ("pad push of data returned with %s.",
                         gst_flow_get_name (flow_result));
     }
-  GST_DEBUG_OBJECT (self, "completed push.");
+  GST_DEBUG_OBJECT (self, "completed push of data");
 
   return;
 
@@ -800,6 +831,8 @@ gst_looper_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
   guint64 byte_offset;
   char *byte_data_in_pointer, *byte_data_out_pointer;
   gboolean result;
+  guint64 max_position;
+  gboolean max_duration_reached;
 
   g_rec_mutex_lock (&self->interlock);
   GST_DEBUG_OBJECT (self,
@@ -808,6 +841,60 @@ gst_looper_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
                     buffer, gst_buffer_get_size (buffer),
                     GST_TIME_ARGS (GST_BUFFER_TIMESTAMP (buffer)),
                     GST_TIME_ARGS (GST_BUFFER_DURATION (buffer)));
+
+  /* If we have received max-duration data, discard any more.  */
+  max_duration_reached = FALSE;
+  if (self->max_duration > 0)
+    {
+      max_position = round_to_position (self, self->max_duration);
+      if (self->local_buffer_fill_level >= max_position)
+        {
+          max_duration_reached = TRUE;
+        }
+    }
+
+  if (max_duration_reached)
+    {
+      if (!self->data_buffered)
+        {
+          /* This is the first time we have received a buffer beyond
+           * max-duration, so start sending our buffered data
+           * downstream.  */
+          GST_INFO_OBJECT (self,
+                           "reached max-duration at offset %" G_GUINT64_FORMAT
+                           ".", self->local_buffer_fill_level);
+
+          self->data_buffered = TRUE;
+          /* We now know the size of our local buffer.  We may have filled it
+           * a little beyond max-duration, but we will use only max-duration.
+           */
+          self->local_buffer_size = max_position;
+          self->local_buffer_drain_level = 0;
+
+          /* If the Autostart parameter has been set to TRUE, don't wait
+           * for a Start event.  */
+          if (self->autostart)
+            {
+              self->started = TRUE;
+              self->local_clock = 0;
+            }
+          /* Begin pushing data from our local buffer downstream using the 
+           * source pad.  Until we get a Start message, unless we are
+           * autostarted, just send silence.  */
+          result =
+            gst_pad_start_task (self->srcpad,
+                                (GstTaskFunction)
+                                gst_looper_push_data_downstream, self->srcpad,
+                                NULL);
+          self->src_pad_task_running = TRUE;
+        }
+
+      /* We discard the buffer from upstream.  */
+      gst_buffer_unref (buffer);
+
+      g_rec_mutex_unlock (&self->interlock);
+      return GST_FLOW_OK;
+    }
 
   /* Allocate more memory at the end of our local buffer, then copy the data in
    * the received buffer to it.  */
@@ -1075,9 +1162,9 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
        * buffer corresponding to the loop_from and loop_to times.  */
       self->loop_from_position = round_to_position (self, self->loop_from);
       self->loop_to_position = round_to_position (self, self->loop_to);
-      GST_DEBUG_OBJECT (self,
-                        "from %" G_GUINT64_FORMAT " to %" G_GUINT64_FORMAT,
-                        self->loop_from_position, self->loop_to_position);
+      GST_INFO_OBJECT (self,
+                       "from %" G_GUINT64_FORMAT " to %" G_GUINT64_FORMAT,
+                       self->loop_from_position, self->loop_to_position);
 
       g_rec_mutex_unlock (&self->interlock);
       result = gst_pad_push_event (self->srcpad, event);
@@ -1090,29 +1177,34 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
                        "reached end-of-stream at offset %" G_GUINT64_FORMAT
                        ".", self->local_buffer_fill_level);
 
-      self->data_buffered = TRUE;
-      /* We now know the size of our local buffer.  */
-      self->local_buffer_size = self->local_buffer_fill_level;
-      self->local_buffer_drain_level = 0;
-
-      /* If the Autostart parameter has been set to TRUE, don't wait
-       * for a Start event.  */
-      if (self->autostart)
+      /* If we have already filled the buffer due to reaching max-duration, 
+       * we don't need to do anything here.  */
+      if (!self->data_buffered)
         {
-          self->started = TRUE;
-          self->local_clock = 0;
-        }
-      /* Begin pushing data from our local buffer downstream using the 
-       * source pad.  Until we get a Start message, or we are
-       * autostarted, just send silence.  */
-      result =
-        gst_pad_start_task (self->srcpad,
-                            (GstTaskFunction) gst_looper_push_data_downstream,
-                            self->srcpad, NULL);
-      self->src_pad_task_running = TRUE;
+          self->data_buffered = TRUE;
+          /* We now know the size of our local buffer.  */
+          self->local_buffer_size = self->local_buffer_fill_level;
+          self->local_buffer_drain_level = 0;
 
-      /* Don't send the EOS event downstream until we are done with our
-       * local buffer.  */
+          /* If the Autostart parameter has been set to TRUE, don't wait
+           * for a Start event.  */
+          if (self->autostart)
+            {
+              self->started = TRUE;
+              self->local_clock = 0;
+            }
+          /* Begin pushing data from our local buffer downstream using the 
+           * source pad.  Until we get a Start message, unless we are
+           * autostarted, just send silence.  */
+          result =
+            gst_pad_start_task (self->srcpad,
+                                (GstTaskFunction)
+                                gst_looper_push_data_downstream, self->srcpad,
+                                NULL);
+          self->src_pad_task_running = TRUE;
+        }
+
+      /* Don't send the EOS event downstream until we are shut down.  */
       gst_event_unref (event);
       g_rec_mutex_unlock (&self->interlock);
       break;
@@ -1191,7 +1283,7 @@ gst_looper_handle_src_event (GstPad * pad, GstObject * parent,
        * but we also use it here to terminate looping.
        * The start event causes the buffered data to be transmitted.
        * The shutdown event is issued prior to closing down the
-       * pipeline.  The looper sends EOS and stops sending.
+       * pipeline.  The looper sends EOS and stops sending data.
        * The pause event silences the looper, and the continue event
        * lets it proceed from where it paused.  */
       event_structure = gst_event_get_structure (event);
@@ -1246,7 +1338,6 @@ gst_looper_handle_src_event (GstPad * pad, GstObject * parent,
 
       /* Push the event upstream.  */
       result = gst_pad_push_event (self->sinkpad, event);
-
       break;
 
     default:
@@ -1400,20 +1491,24 @@ round_to_position (GstLooper * self, guint64 specified_time)
   guint64 position;             /* unrounded buffer position corresponding to
                                  * the specified time.  */
   guint frame_size;             /* The number of bytes in one frame.  */
-  guint64 frame_index;          /* The number of complete frames before the position.  */
+  guint64 frame_index;          /* The number of complete frames before the 
+                                 * position.  */
   guint64 byte_position;        /* the position in the buffer corresponding to 
-                                 * the first frame after the specified time.  */
+                                 * the beginning of the first frame after the 
+                                 * specified time.  */
 
   /* The time is specified in nanoseconds.  Convert it to a buffer
    * positon that is on a frame boundary.  */
   position = (gdouble) specified_time *self->bytes_per_ns;
   frame_size = self->width * self->channel_count / 8;
   frame_index = (position / frame_size);
-  byte_position = frame_index * frame_size;
+  byte_position = (frame_index + 1) * frame_size;
   GST_DEBUG_OBJECT (self,
                     "time %" GST_TIME_FORMAT " rounded to %" GST_TIME_FORMAT
-                    ".", GST_TIME_ARGS (specified_time),
-                    GST_TIME_ARGS (byte_position / self->bytes_per_ns));
+                    " for buffer position %" G_GUINT64_FORMAT ".",
+                    GST_TIME_ARGS (specified_time),
+                    GST_TIME_ARGS (byte_position / self->bytes_per_ns),
+                    byte_position);
   return byte_position;
 }
 
