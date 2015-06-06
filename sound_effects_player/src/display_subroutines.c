@@ -99,3 +99,43 @@ display_update_vu_meter (gpointer * user_data, gint channel,
 
   return;
 }
+
+/* Show the user a message.  The return value is a message ID, which
+ * can be used to remove the message.  */
+guint
+display_show_message (gchar * message_text, GApplication * app)
+{
+  GtkStatusbar *status_bar;
+  guint context_id;
+  guint message_id;
+
+  /* Find the GUI's status display area.  */
+  status_bar = sep_get_status_bar (app);
+
+  /* Use the regular context for messages.  */
+  context_id = sep_get_context_id (app);
+
+  /* Show the message.  */
+  message_id = gtk_statusbar_push (status_bar, context_id, message_text);
+
+  return message_id;
+}
+
+/* Remove a previously-displayed message.  */
+void
+display_remove_message (guint message_id, GApplication * app)
+{
+  GtkStatusbar *status_bar;
+  guint context_id;
+
+  /* Find the GUI's status display area.  */
+  status_bar = sep_get_status_bar (app);
+
+  /* Get the message context ID.  */
+  context_id = sep_get_context_id (app);
+
+  /* Remove the specified message.  */
+  gtk_statusbar_remove (status_bar, context_id, message_id);
+
+  return;
+}

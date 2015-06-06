@@ -42,16 +42,20 @@ struct _Sound_Effects_PlayerPrivate
   /* A flag that is set by the Gstreamer startup process when it is
    * complete.  */
   gboolean gstreamer_ready;
-  
+
   /* The top-level gtk window. */
   GtkWindow *top_window;
 
   /* A flag that is set to indicate that we have told GTK to start
    * showing the top-level window.  */
   gboolean windows_showing;
-  
+
   /* The common area, needed for updating the display asynchronously. */
   GtkWidget *common_area;
+
+  /* The status bar and context ID, used for showing messages.  */
+  GtkStatusbar *status_bar;
+  guint context_id;
 
   /* The list of sounds we can make.  Each item of the GList points
    * to a sound_info structure. */
@@ -85,6 +89,8 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
 {
   GtkWindow *top_window;
   GtkWidget *common_area;
+  GtkStatusbar *status_bar;
+  guint context_id;
   GtkBuilder *builder;
   GError *error = NULL;
   gint cluster_number;
@@ -122,13 +128,25 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
                   filename);
     }
 
-  /* Also get the common area. */
+  /* Also get the common area and status bar. */
   common_area = GTK_WIDGET (gtk_builder_get_object (builder, "common_area"));
-  priv->common_area = GTK_WIDGET (common_area);
-  if (!common_area)
+  priv->common_area = common_area;
+  if (common_area == NULL)
     {
       g_critical ("Widget \"common_area\" is missing in file %s.", filename);
     }
+
+  status_bar = GTK_STATUSBAR (gtk_builder_get_object (builder, "status_bar"));
+  priv->status_bar = status_bar;
+  if (status_bar == NULL)
+    {
+      g_critical ("Status bar is missing in file %s.", filename);
+    }
+
+  /* Generate a context ID for the status bar.  */
+  context_id =
+    gtk_statusbar_get_context_id (status_bar, (gchar *) "messages");
+  priv->context_id = context_id;
 
   /* We are done with the name of the user interface file. */
   g_free (filename);
@@ -288,7 +306,7 @@ sound_effects_player_new (void)
 /* Display the gtk top-level window.  This is called when the gstreamer
  * pipeline has completed initialization.  */
 void
-sep_gstreamer_ready (GApplication *app)
+sep_gstreamer_ready (GApplication * app)
 {
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
@@ -306,7 +324,7 @@ sep_gstreamer_ready (GApplication *app)
 
 /* Create the gstreamer pipeline by reading an XML file.  */
 void
-sep_create_pipeline (gchar * filename, GApplication *app)
+sep_create_pipeline (gchar * filename, GApplication * app)
 {
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
@@ -497,6 +515,30 @@ sep_get_top_window (GApplication * app)
 
   top_window = priv->top_window;
   return (top_window);
+}
+
+/* Find the status bar, which is used for messages.  */
+GtkStatusbar *
+sep_get_status_bar (GApplication * app)
+{
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+  GtkStatusbar *status_bar;
+
+  status_bar = priv->status_bar;
+  return status_bar;
+}
+
+/* Find the context ID, which is also needed for messages.  */
+guint
+sep_get_context_id (GApplication * app)
+{
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+  guint context_id;
+
+  context_id = priv->context_id;
+  return context_id;
 }
 
 /* Find the project file which contains the parameters. */

@@ -21,3 +21,4 @@
 /* Subroutines defined in menu_subroutines.c */
 
 void menu_init (GApplication * app, gchar * file_name);
+

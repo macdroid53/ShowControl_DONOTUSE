@@ -85,6 +85,12 @@ void *sep_get_parse_net_data (GApplication * app);
 /* Find the top-level window. */
 GtkWindow *sep_get_top_window (GApplication * app);
 
+/* Find the status bar.  */
+GtkStatusbar *sep_get_status_bar (GApplication * app);
+
+/* Find the context ID.  */
+guint sep_get_context_id (GApplication * app);
+
 /* Find the project file. */
 xmlDocPtr sep_get_project_file (GApplication * app);
 

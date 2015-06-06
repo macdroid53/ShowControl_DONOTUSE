@@ -23,3 +23,7 @@
 void display_update_vu_meter (gpointer * user_data, gint channel,
                               gdouble new_value, gdouble peak_dB,
                               gdouble decay_dB);
+
+guint display_show_message (gchar *message_text, GApplication *app);
+
+void display_remove_message (guint message_id, GApplication *app);

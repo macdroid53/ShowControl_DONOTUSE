@@ -134,11 +134,11 @@ quit_activated (GSimpleAction * action, GVariant * parameter, gpointer app)
 
 /* Subroutine called when the top-level window is closed.  */
 gboolean
-menu_delete_top_window (GtkButton * close_button, GdkEvent *event,
-			GtkWidget * top_box)
+menu_delete_top_window (GtkButton * close_button, GdkEvent * event,
+                        GtkWidget * top_box)
 {
   GApplication *app;
-  
+
   app = sep_get_application_from_widget (top_box);
   gstreamer_shutdown (app);
 
@@ -315,6 +315,7 @@ menu_init (GApplication * app, gchar * file_name)
   gtk_application_set_app_menu (GTK_APPLICATION (app), app_menu);
   gtk_application_set_menubar (GTK_APPLICATION (app), menu_bar);
 
+  /* We are finished with the builder.  */
   g_object_unref (builder);
 
   return;

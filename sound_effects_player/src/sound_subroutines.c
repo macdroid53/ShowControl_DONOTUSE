@@ -24,6 +24,7 @@
 #include "sound_effects_player.h"
 #include "gstreamer_subroutines.h"
 #include "button_subroutines.h"
+#include "display_subroutines.h"
 
 /* Subroutines for processing sounds.  */
 
@@ -303,8 +304,7 @@ sound_completed (const gchar * sound_name, GApplication * app)
   GList *sound_effect_list;
   struct sound_info *sound_effect = NULL;
   gboolean sound_effect_found;
-
-  g_print ("sound %s completed.\n", sound_name);
+  gchar *message_string;
 
   /* Search through the sound effects for the one with this name.  */
   sound_effect_list = sep_get_sound_list (app);
@@ -325,7 +325,14 @@ sound_completed (const gchar * sound_name, GApplication * app)
       button_reset_cluster (sound_effect, app);
     }
 
-  /* More code will be needed for the sequencer.  */
+  /* FIXME: More code will be needed for the sequencer.  */
+
+  /* Tell the user that the sound has completed.  */
+  message_string = g_strdup_printf ("sound %s completed.", sound_name);
+  display_show_message (message_string, app);
+  g_free (message_string);
+  message_string = NULL;
+
   return;
 }
 
@@ -337,8 +344,7 @@ sound_terminated (const gchar * sound_name, GApplication * app)
   GList *sound_effect_list;
   struct sound_info *sound_effect = NULL;
   gboolean sound_effect_found;
-
-  g_print ("sound %s terminated.\n", sound_name);
+  gchar *message_string;
 
   /* Search through the sound effects for the one with this name.  */
   sound_effect_list = sep_get_sound_list (app);
@@ -359,6 +365,13 @@ sound_terminated (const gchar * sound_name, GApplication * app)
       button_reset_cluster (sound_effect, app);
     }
 
-  /* More code will be needed for the sequencer.  */
+  /* FIXME: More code will be needed for the sequencer.  */
+
+  /* Tell the user that the sound has terminated.  */
+  message_string = g_strdup_printf ("sound %s terminated.", sound_name);
+  display_show_message (message_string, app);
+  g_free (message_string);
+  message_string = NULL;
+
   return;
 }
