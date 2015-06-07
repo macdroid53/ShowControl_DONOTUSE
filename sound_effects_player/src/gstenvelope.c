@@ -199,7 +199,8 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
     gst_object_sync_values (GST_OBJECT (self), timestamp);
 
   /* If we have reached the release portion of the envelope, tell the
-   * application that the sound has completed.  If the release was caused
+   * application that the sound has completed or terminated.  
+   * If the release was caused
    * by reaching the release start time or the end of upstream data
    * the application is told that the sound completed.  
    * If it was caused by receiving a Release event,
@@ -230,14 +231,19 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
                             "message");
         }
       self->application_notified = TRUE;
+      /* Having notified the application that the sound has terminated
+       * or completed, we will now pay attention to a new message starting
+       * the sound over again, as soon as the release is complete.  */
+      self->started = FALSE;
       g_value_unset (&sound_name_value);
     }
 
-  /* If we have completed the envelope, recycle it so we can use it again
+  /* If we have completed the envelope, including the release stage,
+   * recycle it so we can use it again
    * unless we are autostarting, in which case don't bother.  
    * Note that this test is performed before the start test, so a Start
-   * message that arrives while a sound is playing will restart it
-   * immediately after the release is complete.  */
+   * message that arrives during the release stage of the envelope will
+   * restart it immediately after the release is complete.  */
   if (self->completed && !self->autostart)
     {
       self->external_release_seen = FALSE;
@@ -485,17 +491,15 @@ envelope_transform (GstBaseTransform * base, GstBuffer * inbuf,
   return GST_FLOW_OK;
 }
 
-/* Compute the volume adjustment for a frame.  */
-static gdouble
-compute_volume (GstEnvelope * self, GstClockTime ts)
+/* This enumeration type indicates a stage of envelope processing.  */
+enum envelope_stage
+{ not_started, attack, decay, sustain, release, completed };
+
+/* Determine the stage of envelope processing, given the time since
+ * the envelope started.  */
+static enum envelope_stage
+compute_envelope_stage (GstEnvelope * self, GstClockTime ts)
 {
-  gdouble volume_val;
-  enum
-  { not_started, attack, decay, sustain, release,
-    completed
-  } envelope_position;
-  GstClockTime decay_end_time;
-  gdouble attack_fraction, decay_fraction, release_fraction;
   gchar *release_type;
 
   /* Decide where we are in the amplitude envelope.  The normal progression
@@ -504,11 +508,10 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
    * duration time is 0 we go straight from attack to sustain, so sustain 
    * level should equal attack level.  */
 
-  /* if the envelope is not running, the volume is zero.  */
+  /* if the envelope is not running, it is not yet started.  */
   if (!self->running)
     {
-      GST_LOG_OBJECT (self, "envelope position: not started");
-      return 0.0;
+      return not_started;
     }
 
   if (self->external_release_seen || self->external_completion_seen)
@@ -541,77 +544,79 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
       if ((ts < (self->release_started_time + self->release_duration_time))
           || self->release_duration_infinite)
         {
-          envelope_position = release;
+          return release;
         }
       else
         {
-          envelope_position = completed;
+          return completed;
         }
     }
-  else
+
+  /* We have not seen a release event, so the envelope proceeds
+   * along its normal path.  */
+  if (ts < self->attack_duration_time)
     {
-      /* We have not seen a release event, so the envelope proceeds
-       * along its normal path.  */
-      if (ts < self->attack_duration_time)
-        {
-          /* The attack is not yet complete.  */
-          envelope_position = attack;
-        }
-      else
-        {
-          if (ts < self->attack_duration_time + self->decay_duration_time)
-            {
-              /* The decay is not yet complete.  */
-              envelope_position = decay;
-            }
-          else
-            {
-              if ((ts < self->release_start_time)
-                  || (self->release_start_time == 0))
-                {
-                  /* The decay is complete but we have not yet started 
-                   * release.  */
-                  envelope_position = sustain;
-                }
-              else
-                {
-                  if (self->release_duration_infinite
-                      || ts <
-                      (self->release_start_time +
-                       self->release_duration_time))
-                    {
-                      /* The release section of the envelope is running.  */
-                      envelope_position = release;
-                      if (!self->release_started)
-                        {
-                          /* This is the beginning of the release.  */
-                          self->release_started = TRUE;
-                          self->release_started_volume = self->last_volume;
-                          self->release_started_time = ts;
-                          GST_INFO_OBJECT (self,
-                                           "Release triggered at %"
-                                           GST_TIME_FORMAT " with volume %f.",
-                                           GST_TIME_ARGS (self->
-                                                          release_started_time),
-                                           self->release_started_volume);
-                        }
-                    }
-                  else
-                    {
-                      /* The release is complete.  */
-                      envelope_position = completed;
-                    }
-                }
-            }
-        }
+      /* The attack is not yet complete.  */
+      return attack;
     }
+
+  /* The attack is complete.  */
+  if (ts < self->attack_duration_time + self->decay_duration_time)
+    {
+      /* The decay is not yet complete.  */
+      return decay;
+    }
+
+  /* The decay is complete.  */
+  if ((ts < self->release_start_time) || (self->release_start_time == 0))
+    {
+      /* The decay is complete but we have not yet started 
+       * release.  */
+      return sustain;
+    }
+
+  if (self->release_duration_infinite
+      || ts < (self->release_start_time + self->release_duration_time))
+    {
+      /* The release section of the envelope is running.  */
+      if (!self->release_started)
+        {
+          /* This is the beginning of the release.  */
+          self->release_started = TRUE;
+          self->release_started_volume = self->last_volume;
+          self->release_started_time = ts;
+          GST_INFO_OBJECT (self,
+                           "Release triggered at %" GST_TIME_FORMAT
+                           " with volume %f.",
+                           GST_TIME_ARGS (self->release_started_time),
+                           self->release_started_volume);
+        }
+      return release;
+    }
+  /* The release is complete.  */
+  return completed;
+}
+
+/* Compute the volume adjustment for a frame.  */
+static gdouble
+compute_volume (GstEnvelope * self, GstClockTime ts)
+{
+  gdouble volume_val;
+  enum envelope_stage envelope_position;
+  GstClockTime decay_end_time;
+  gdouble attack_fraction, decay_fraction, release_fraction;
+
+  /* Decide where we are in the amplitude envelope.  The normal progression
+   * after the note has started is attack, decay, sustain, release, completed.
+   * However, a release event can arrive at at any time.  If the decay 
+   * duration time is 0 we go straight from attack to sustain, so sustain 
+   * level should equal attack level.  */
+  envelope_position = compute_envelope_stage (self, ts);
 
   switch (envelope_position)
     {
     case not_started:
-      /* This case is not actually used, since we bypass it in the
-       * analyzer above, but it is listed here for completeness.
-       * If the note has not yet started, the volume is 0.  */
+      /* If the note has not yet started, the volume is 0.  */
       GST_LOG_OBJECT (self, "envelope position: not started");
       volume_val = 0.0;
       break;

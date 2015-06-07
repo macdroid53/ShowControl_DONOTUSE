@@ -1,3 +1,6 @@
+Version 0.42, June 7, 2015
+  Only accept a sound's restart command after it has started release.
+  
 Version 0.41, June 6, 2015
   Use a status bar to display messages.
 
