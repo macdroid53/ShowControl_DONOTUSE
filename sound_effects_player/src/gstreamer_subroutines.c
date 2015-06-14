@@ -157,6 +157,9 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
   g_object_set (looper_element, "loop-from", sound_data->loop_from_time,
                 NULL);
   g_object_set (looper_element, "loop-limit", sound_data->loop_limit, NULL);
+  g_object_set (looper_element, "max-duration", sound_data->max_duration_time,
+                NULL);
+  g_object_set (looper_element, "start-time", sound_data->start_time, NULL);
 
   g_object_set (envelope_element, "attack-duration-time",
                 sound_data->attack_duration_time, NULL);

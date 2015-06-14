@@ -1,3 +1,6 @@
+Version 0.43, June 14, 2015
+  Implement start-time in the looper.
+  
 Version 0.42, June 7, 2015
   Only accept a sound's restart command after it has started release.
   

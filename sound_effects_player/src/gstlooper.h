@@ -52,6 +52,7 @@ struct _GstLooper
   guint64 loop_from;
   guint64 loop_to;
   guint64 max_duration;
+  guint64 start_time;
   guint loop_limit;
   gboolean autostart;
 
@@ -85,8 +86,8 @@ struct _GstLooper
   GstPadMode sink_pad_mode;     /* The mode of the sink pad: push or pull.  */
   gboolean started;             /* We have received a Start signal.  */
   gboolean completion_sent;     /* We have sent a "complete" message downstream
-				 * to tell the envelope plugin that the
-				 * sound is complete.  */
+                                 * to tell the envelope plugin that the
+                                 * sound is complete.  */
   gboolean paused;              /* We have received a Pause signal, and it has 
                                  * not yet been canceled by a Continue signal.
                                  */

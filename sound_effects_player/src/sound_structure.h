@@ -39,13 +39,16 @@ struct sound_info
   gdouble decay_duration_time;  /* decay time, in nanoseconds */
   gdouble sustain_level;        /* 1.0 means 100% of volume */
   guint64 release_start_time;   /* release start time, in nanoseconds */
-  guint64 release_duration_time;/* release duration time, in nanoseconds */
-  gboolean release_duration_infinite; /* TRUE if duration is 
-					 infinite */
+  guint64 release_duration_time;        /* release duration time, 
+                                         * in nanoseconds */
+  gboolean release_duration_infinite;   /* TRUE if duration is 
+                                           infinite */
   gint64 loop_from_time;        /* loop from time, in nanoseconds */
   gint64 loop_to_time;          /* loop to time, in nanoseconds */
   gint loop_limit;              /* loop limit, a count */
-  gint64 start_time;            /* start time, in nanoseconds */
+  guint64 max_duration_time;    /* maximum time taken from WAV file,
+                                 * in nanoseconds.  */
+  guint64 start_time;           /* start time, in nanoseconds */
   gfloat designer_volume_level; /* 1.0 means 100% of waveform's volume */
   gfloat designer_pan;          /* -1.0 is left, 0.0 is center, 1.0 is right */
   gint MIDI_program_number;     /* MIDI program number, if specified */

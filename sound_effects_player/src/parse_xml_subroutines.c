@@ -84,6 +84,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
           sound_data->loop_from_time = 0;
           sound_data->loop_to_time = 0;
           sound_data->loop_limit = 0;
+          sound_data->max_duration_time = 0;
           sound_data->start_time = 0;
           sound_data->designer_volume_level = 1.0;
           sound_data->designer_pan = 0.0;
@@ -313,6 +314,21 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                       name_data = NULL;
                     }
                 }
+              if (xmlStrEqual (name, (const xmlChar *) "max_duration_time"))
+                {
+                  /* The maximum amount of time to absorb from the WAV file  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      sound_data->max_duration_time = double_data * 1E9;
+                      name_data = NULL;
+                    }
+                }
               if (xmlStrEqual (name, (const xmlChar *) "start_time"))
                 {
                   /* The time within the WAV file to start this sound effect.
@@ -329,6 +345,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                       name_data = NULL;
                     }
                 }
+
               if (xmlStrEqual
                   (name, (const xmlChar *) "designer_volume_level"))
                 {
