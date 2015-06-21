@@ -54,8 +54,8 @@ receive_data_callback (GSocket * socket, GIOCondition condition,
   if ((condition & G_IO_IN) != 0)
     {
       nread =
-        g_socket_receive (socket, network_buffer, sizeof (network_buffer),
-                          NULL, &error);
+        g_socket_receive (socket, network_buffer, network_buffer_size, NULL,
+                          &error);
 
       if (error != NULL)
         {

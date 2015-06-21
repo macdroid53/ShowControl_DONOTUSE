@@ -66,9 +66,6 @@ struct _GstLooper
   guint64 local_buffer_fill_level;
   guint64 local_buffer_drain_level;
   guint64 local_buffer_size;    /* number of bytes in the local buffer */
-  guint64 loop_from_position;
-  guint64 loop_to_position;
-  guint64 loop_duration;
   guint64 timestamp_offset;
   guint64 local_clock;          /* The current time, in nanoseconds.  
                                  * This counts continuously through loops.  */
@@ -76,12 +73,12 @@ struct _GstLooper
   gchar *format;                /* The format of incoming data--for example,
                                  * F32LE.  */
   GRecMutex interlock;          /* used to prevent interference between tasks */
-  guint loop_counter;
-  gint width;                   /* the size of a sample in bits */
-  gint channel_count;           /* The number of channels of sound.  
+  guint64 loop_counter;
+  guint64 width;                /* the size of a sample in bits */
+  guint64 channel_count;        /* The number of channels of sound.  
                                  * Stereo has two.  A frame consists of
                                  * channel_count samples, each of width bits. */
-  gint data_rate;               /* the data rate, in frames per second.  */
+  guint64 data_rate;            /* the data rate, in frames per second.  */
   GstPadMode src_pad_mode;      /* The mode of the source pad: push or pull. */
   GstPadMode sink_pad_mode;     /* The mode of the sink pad: push or pull.  */
   gboolean started;             /* We have received a Start signal.  */

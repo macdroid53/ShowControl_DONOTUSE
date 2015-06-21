@@ -27,24 +27,27 @@
  * SECTION:element-looper
  *
  * Repeat a section of the input stream a specified number of times.
- * loop-from is the beginning of the section to repeat, in nanoseconds from
- * the beginning of the input.  loop-to is the end of the section to repeat,
- * also in nanoseconds.  loop-limit is the number of times to repeat; 0
- * means repeat indefinitely.  max-duration-time, if specified, is the maximum
- * amount of time from the source to be held for repeating.  This can be
- * useful with live or infinite sources.  Note that this plugin can itself
- * be an infinite source for its downstream consumers, even if its upstream
- * is finite or limited by max-duration.  If max-duration is not specified, 
- * the looper plugin will attempt to absorb all sound provided to its sink pad.
- * Start-time is the offset from the beginning of the input to start the
- * output, in nanoseconds.
+ * loop-to is the beginning of the section to repeat, in nanoseconds from
+ * the beginning of the input.  loop-from is the end of the section to repeat,
+ * also in nanoseconds.  If the sample rate is less than 1,000,000,000
+ * samples per second, looping at exactly loop-from and loop-to might not
+ * be possible, in which case the loop includes all of the sample at loop-to
+ * and all of the sample at loop-from.  Loop-limit is the number of times to 
+ * repeat; 0 means repeat indefinitely.  Max-duration-time, if specified, 
+ * is the maximum amount of time from the source to be held for repeating.  
+ * This can be useful with live or infinite sources.  Note that this plugin 
+ * can itself be an infinite source for its downstream consumers, even if its 
+ * upstream is finite or limited by max-duration.  If max-duration is not 
+ * specified, the looper plugin will attempt to absorb all sound provided to 
+ * its sink pad.  Start-time is the offset from the beginning of the input to 
+ * start the output, in nanoseconds.
  *
  * Receipt of a Release message causes looping to terminate,
  * which means reaching the end of the loop no longer causes sound to be
  * sent from the beginning.  The amount of sound sent after a Release message
  * can be as little as 0, if the looper element was about to loop, and there
- * is no sound after the loop-end time.  Therefore, if you need sound after
- * the Release message, leave enough sound after loop-end to handle the
+ * is no sound after the loop-from time.  Therefore, if you need sound after
+ * the Release message, leave enough sound after loop-from to handle the
  * worst case.
  *
  * Normally, this element sends silence until it receives a Start message.
@@ -54,7 +57,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch-1.0 -v -m audiotestsrc ! looper loop-end=1000000 max-duration=1000000000 loop-limit=5 ! fakesink silent=TRUE
+ * gst-launch-1.0 -v -m audiotestsrc ! audio/x-raw,rate=96000,format=S32LE ! looper start-time=1000000000 max-duration=5000000000 loop-from=1000000000 loop-limit=2 autostart=TRUE ! fakesink silent=TRUE
  * ]|
  * </refsect2>
  */
@@ -257,7 +260,6 @@ gst_looper_init (GstLooper * self)
   self->loop_from = 0;
   self->loop_limit = 0;
   self->loop_counter = 0;
-  self->loop_duration = 0;
   self->timestamp_offset = 0;
   self->max_duration = 0;
   self->start_time = 0;
@@ -524,6 +526,7 @@ gst_looper_src_activate_mode (GstPad * pad, GstObject * parent,
           /* If the task that is sending data downstream is still running, 
            * have it send EOS and terminate.  */
           self->send_EOS = TRUE;
+          result = TRUE;
         }
       g_rec_mutex_unlock (&self->interlock);
       break;
@@ -553,6 +556,7 @@ gst_looper_push_data_downstream (GstPad * pad)
   GstFlowReturn flow_result;
   gboolean send_silence;
   gboolean exiting = FALSE;
+  guint64 loop_from_position, loop_to_position;
 
   /* We have a recursive mutex which prevents this task from running
    * while some other part of this plugin is running on a different task.  
@@ -718,10 +722,12 @@ gst_looper_push_data_downstream (GstPad * pad)
     {
       data_size = self->local_buffer_size - self->local_buffer_drain_level;
     }
+
   /* We are within the loop if this isn't our last time around.  */
   within_loop = FALSE;
+  loop_from_position = round_up_to_position (self, self->loop_from);
   if ((!self->released) && (self->loop_from > 0)
-      && (self->local_buffer_drain_level <= self->loop_from_position))
+      && (self->local_buffer_drain_level <= loop_from_position))
     {
       if ((self->loop_limit == 0) || (self->loop_counter < self->loop_limit))
         {
@@ -730,25 +736,25 @@ gst_looper_push_data_downstream (GstPad * pad)
     }
   /* If we are within the loop but at the very end, go back to the beginning.
    */
-  if (within_loop
-      && (self->local_buffer_drain_level == self->loop_from_position))
+  if (within_loop && (self->local_buffer_drain_level == loop_from_position))
     {
-      self->local_buffer_drain_level = self->loop_to_position;
+      loop_to_position = round_down_to_position (self, self->loop_to);
+      self->local_buffer_drain_level = loop_to_position;
       self->loop_counter = self->loop_counter + 1;
       GST_DEBUG_OBJECT (self,
-                        "loop counter %d, looping from %" GST_TIME_FORMAT
-                        " to %" GST_TIME_FORMAT ".", self->loop_counter,
-                        GST_TIME_ARGS (self->loop_from_position /
+                        "loop counter %" G_GUINT64_FORMAT ", looping from %"
+                        GST_TIME_FORMAT " to %" GST_TIME_FORMAT ".",
+                        self->loop_counter,
+                        GST_TIME_ARGS (loop_from_position /
                                        self->bytes_per_ns),
-                        GST_TIME_ARGS (self->loop_to_position /
+                        GST_TIME_ARGS (loop_to_position /
                                        self->bytes_per_ns));
     }
   /* If the loop is very short, we will output buffers of its length.  */
   if (within_loop
-      && (data_size >
-          self->loop_from_position - self->local_buffer_drain_level))
+      && (data_size > loop_from_position - self->local_buffer_drain_level))
     {
-      data_size = self->loop_from_position - self->local_buffer_drain_level;
+      data_size = loop_from_position - self->local_buffer_drain_level;
     }
   /* now that we know how much memory we need, allocate it */
   memory_out = gst_allocator_alloc (NULL, data_size, NULL);
@@ -1033,6 +1039,7 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
   gchar format_code;
   gdouble bits_per_second, bits_per_nanosecond;
   guint64 start_position;
+  gint data_rate, channel_count;
 
   GST_DEBUG_OBJECT (self, "received an event on the sink pad");
 
@@ -1104,21 +1111,23 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
       caps_structure = gst_caps_get_structure (in_caps, 0);
       /* Fill in local information about the format, and values based on it.  
        */
-      result =
-        gst_structure_get_int (caps_structure, "rate", &self->data_rate);
+      result = gst_structure_get_int (caps_structure, "rate", &data_rate);
       if (!result)
         {
           GST_WARNING_OBJECT (self, "no rate in caps");
-          self->data_rate = 48000;
+          data_rate = 48000;
         }
+      self->data_rate = data_rate;
+
       result =
-        gst_structure_get_int (caps_structure, "channels",
-                               &self->channel_count);
+        gst_structure_get_int (caps_structure, "channels", &channel_count);
       if (!result)
         {
           GST_WARNING_OBJECT (self, "no channel count in caps");
-          self->channel_count = 2;
+          channel_count = 2;
         }
+      self->channel_count = channel_count;
+
       g_free (self->format);
       self->format =
         g_strdup (gst_structure_get_string (caps_structure, "format"));
@@ -1127,6 +1136,7 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
           GST_WARNING_OBJECT (self, "no format in caps");
           self->format = g_strdup (GST_AUDIO_NE (F64));
         }
+
       out_caps =
         gst_caps_new_simple ("audio/x-raw", "format", G_TYPE_STRING,
                              self->format, "rate", G_TYPE_INT,
@@ -1165,7 +1175,8 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
           break;
         }
       GST_LOG_OBJECT (self, "second character of format is %c.", format_code);
-      GST_DEBUG_OBJECT (self, "each sample has %d bits.", self->width);
+      GST_DEBUG_OBJECT (self, "each sample has %" G_GUINT64_FORMAT " bits.",
+                        self->width);
 
       /* Compute the data rate in bytes per nanosecond.
        * data_rate times width times channel_count is bits per second.
@@ -1176,15 +1187,6 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
       self->bytes_per_ns = bits_per_nanosecond / 8.0;
       GST_DEBUG_OBJECT (self, "data rate is %f bytes per nanosecond.",
                         self->bytes_per_ns);
-
-      /* Now that we have the data rate, we can compute the position in the
-       * buffer corresponding to the loop_from and loop_to times.  */
-      self->loop_from_position =
-        round_down_to_position (self, self->loop_from);
-      self->loop_to_position = round_up_to_position (self, self->loop_to);
-      GST_INFO_OBJECT (self,
-                       "from %" G_GUINT64_FORMAT " to %" G_GUINT64_FORMAT,
-                       self->loop_from_position, self->loop_to_position);
 
       g_rec_mutex_unlock (&self->interlock);
       result = gst_pad_push_event (self->srcpad, event);

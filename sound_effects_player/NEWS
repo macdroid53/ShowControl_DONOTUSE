@@ -1,3 +1,6 @@
+Version 0.44, June 21, 2015
+  Add /cue network command, so we can be driven by CueEngine.
+  
 Version 0.43, June 14, 2015
   Implement start-time in the looper.
   

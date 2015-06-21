@@ -26,6 +26,8 @@
 #include "sound_effects_player.h"
 #include "sound_structure.h"
 #include "sound_subroutines.h"
+#include "sequence_structure.h"
+#include "sequence_subroutines.h"
 
 /* Dig through a sounds xml file, or the sounds content of an equipment
  * or project xml file, looking for the individual sounds.  Construct the
@@ -363,6 +365,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                       name_data = NULL;
                     }
                 }
+
               if (xmlStrEqual (name, (const xmlChar *) "designer_pan"))
                 {
                   /* For monaural WAV files, the amount to send to the left and
@@ -383,6 +386,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                       name_data = NULL;
                     }
                 }
+
               if (xmlStrEqual (name, (const xmlChar *) "MIDI_program_number"))
                 {
                   /* If we aren't using the internal sequencer, the MIDI 
@@ -401,6 +405,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                     }
                   name_data = NULL;
                 }
+
               if (xmlStrEqual (name, (const xmlChar *) "MIDI_note_number"))
                 {
                   /* If we aren't using the internal sequencer, the MIDI Note
@@ -418,6 +423,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                       name_data = NULL;
                     }
                 }
+
               if (xmlStrEqual (name, (const xmlChar *) "OSC_name"))
                 {
                   /* If we are not using the internal sequencer, this is the
@@ -434,6 +440,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                       name_data = NULL;
                     }
                 }
+
               if (xmlStrEqual (name, (const xmlChar *) "function_key"))
                 {
                   /* If we are not using the internal sequencer, this is the
@@ -466,6 +473,771 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
   return;
 }
 
+/* Dig through a sequence xml file, or the sequence content of an equipment
+ * or project xml file, looking for the individual sequence items.  
+ * Construct the sound effect player's internal data structure for each 
+ * sequence item.  */
+static void
+parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
+                     xmlNodePtr sequence_loc, GApplication * app)
+{
+  const xmlChar *name;
+  xmlChar *name_data;
+  gdouble double_data;
+  gint64 long_data;
+  xmlNodePtr sequence_item_loc;
+  struct sequence_item_info *sequence_item_data;
+  enum sequence_item_type item_type;
+
+  name_data = NULL;
+  /* We start at the children of a "sequence" section.  Each child should
+   * be a "version" or "sequence_item" section. */
+  while (sequence_loc != NULL)
+    {
+      name = sequence_loc->name;
+      if (xmlStrEqual (name, (const xmlChar *) "version"))
+        {
+          name_data =
+            xmlNodeListGetString (sequence_file,
+                                  sequence_loc->xmlChildrenNode, 1);
+          if ((!g_str_has_prefix ((gchar *) name_data, (gchar *) "1.")))
+            {
+              g_printerr ("Version number of sequence is %s, "
+                          "should start with 1.\n", name_data);
+              return;
+            }
+        }
+      if (xmlStrEqual (name, (const xmlChar *) "sequence_item"))
+        {
+          /* This is a sequence item.  Copy its information.  */
+          sequence_item_loc = sequence_loc->xmlChildrenNode;
+          /* Allocate a structure to hold sequence item information. */
+          sequence_item_data = g_malloc (sizeof (struct sequence_item_info));
+          /* Set the fields to their default values.  If a field does not
+           * appear in the XML file, it will retain its default value.
+           * This lets us add new fields without invalidating old XML files.
+           */
+          /* Fields used in the Start Sound sequence item.  */
+          sequence_item_data->name = NULL;
+          sequence_item_data->type = unknown;
+          sequence_item_data->use_external_velocity = 0;
+          sequence_item_data->volume = 1.0;
+          sequence_item_data->pan = 0.0;
+          sequence_item_data->program_number = 0;
+          sequence_item_data->bank_number = 0;
+          sequence_item_data->cluster_number = 0;
+          sequence_item_data->cluster_number_specified = FALSE;
+          sequence_item_data->next_completion = NULL;
+          sequence_item_data->next_terminated = NULL;
+          sequence_item_data->next_starts = NULL;
+          sequence_item_data->importance = 0;
+          sequence_item_data->Q_number = NULL;
+          sequence_item_data->text_to_display = NULL;
+
+          /* Fields used in the Stop sequence item but not mentioned above.  */
+          sequence_item_data->sound_to_stop = NULL;
+          sequence_item_data->next = NULL;
+
+          /* Fields used in the Wait sequence item but not mentioned above.  */
+          sequence_item_data->time_to_wait = 0;
+
+          /* Fields used in the Offer Sound sequence item but not mentioned
+           * above.  */
+          sequence_item_data->next_start = NULL;
+          sequence_item_data->MIDI_program_number = 0;
+          sequence_item_data->MIDI_note_number = 0;
+          sequence_item_data->MIDI_note_number_specified = FALSE;
+          sequence_item_data->OSC_name = NULL;
+          sequence_item_data->macro_number = 0;
+          sequence_item_data->function_key = NULL;
+
+          /* The Cease Offering Sounds, Operator Wait and Start Sequence
+           *  sequence items uses only fields already mentioned.  */
+
+          /* Collect information from the XML file.  */
+          while (sequence_item_loc != NULL)
+            {
+              name = sequence_item_loc->name;
+              if (xmlStrEqual (name, (const xmlChar *) "name"))
+                {
+                  /* This is the name of the sequence item.  It is mandatory.  
+                   */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->name = g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "type"))
+                {
+                  /* The type field specifies what this sequence item does.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  /* Convert the textual name in the XML file into an enum.  */
+                  item_type = unknown;
+                  if (xmlStrEqual
+                      (name_data, (const xmlChar *) "start_sound"))
+                    {
+                      item_type = start_sound;
+                    }
+                  if (xmlStrEqual (name_data, (const xmlChar *) "stop"))
+                    {
+                      item_type = stop;
+                    }
+                  if (xmlStrEqual (name_data, (const xmlChar *) "wait"))
+                    {
+                      item_type = wait;
+                    }
+                  if (xmlStrEqual
+                      (name_data, (const xmlChar *) "offer_sound"))
+                    {
+                      item_type = offer_sound;
+                    }
+                  if (xmlStrEqual
+                      (name_data, (const xmlChar *) "cease_offering_sound"))
+                    {
+                      item_type = cease_offering_sound;
+                    }
+                  if (xmlStrEqual
+                      (name_data, (const xmlChar *) "operator_wait"))
+                    {
+                      item_type = operator_wait;
+                    }
+                  if (xmlStrEqual
+                      (name_data, (const xmlChar *) "start_sequence"))
+                    {
+                      item_type = start_sequence;
+                    }
+
+                  sequence_item_data->type = item_type;
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual
+                  (name, (const xmlChar *) "use_external_velocity"))
+                {
+                  /* For the Start Sound sequence item, if this is set to 1
+                   * we use the velocity of an external Note On message to
+                   * scale the volume of the sound.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sequence_item_data->use_external_velocity = long_data;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "volume"))
+                {
+                  /* For the Start Sound sequence item, scale the sound
+                   * designer's volume by this amount.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      sequence_item_data->volume = double_data;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "pan"))
+                {
+                  /* For the Start Sound sequence item, adjust the sound
+                   * designer's pan by this amount.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      double_data =
+                        g_ascii_strtod ((gchar *) name_data, NULL);
+                      xmlFree (name_data);
+                      sequence_item_data->pan = double_data;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "program_number"))
+                {
+                  /* For the Start Sound and Offer Sound sequence items, 
+                   * the program number of
+                   * the cluster in which we display the sound.  The program
+                   * number of the clusters being shown is controlled by
+                   * the sound effects operator.  Unless there are a large
+                   * number of clusters being used, let this value default
+                   * to zero.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sequence_item_data->program_number = long_data;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "bank_number"))
+                {
+                  /* For the Start Sound and Offer Sound sequence items, 
+                   * the bank number of the cluster in which we display 
+                   * the sound.  The bank
+                   * number of the clusters being shown is controlled by
+                   * the sound effects operator.  Unless there are a large
+                   * number of clusters being used, let this value default
+                   * to zero.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sequence_item_data->bank_number = long_data;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "cluster_number"))
+                {
+                  /* For the Start Sound and Offer Sound sequence items, 
+                   * the cluster number in which we display the sound.  
+                   * If none is specified,
+                   * one will be chosen at run time.  Use this to place
+                   * a sound in the same cluster as a previous, related,
+                   * sound.  For example, you might devote a particular
+                   * cluster to ringing a telephone even though it doesn't
+                   * ring throughtout the show.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sequence_item_data->cluster_number = long_data;
+                      sequence_item_data->cluster_number_specified = TRUE;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "next_completion"))
+                {
+                  /* The next sequence item to execute, when and if this
+                   * sound completes normally.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->next_completion =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "next_terminated"))
+                {
+                  /* The next sequence item to execute, when and if this
+                   * sound terminates due to an external event, such as
+                   * a MIDI Note Off or the sound effects operator pressing
+                   * his Stop key.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->next_terminated =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "next_starts"))
+                {
+                  /* The next sequence item to execute when this sound has
+                   * started.  This can be used to fork the sequencer.
+                   */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->next_starts =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "importance"))
+                {
+                  /* The importance of this sound to the sound effects
+                   * operator.  The most important sound being played
+                   * is displayed on the console.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sequence_item_data->importance = long_data;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "Q_number"))
+                {
+                  /* The Q number of this sound, for MIDI Show Control.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->Q_number =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "text_to_display"))
+                {
+                  /* The text to display to the sound effects operator when
+                   * this sound is playing.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->text_to_display =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "sound_to_stop"))
+                {
+                  /* In the Stop sequence item, the sound to be stopped.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->sound_to_stop =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "next"))
+                {
+                  /* In other than the Start Sound sequence item, the next
+                   * seqeunce item to execute when this one is done.  The
+                   * Start Sound sequence item has three specialized next
+                   * sequence items, and so does not use this general one.
+                   */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->next = g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "time_to_wait"))
+                {
+                  /* In the Wait sequence item, the length of time to wait,
+                   * in nanoseconds.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sequence_item_data->time_to_wait = long_data;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "next_start"))
+                {
+                  /* In the Offer Sound sequence item, the sequence item
+                   * that is to be executed when the sound effects operator
+                   * presses the Start button on the specified cluster.
+                   * The sequence item can also be started remotely.  
+                   * This sequence item, like Start Sound, can be used
+                   * to fork the sequencer.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->next_start =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "MIDI_program_number"))
+                {
+                  /* In the Offer Sound sequence item, the MIDI program number
+                   * of the MIDI Note On message that will trigger the
+                   * specified sequence item.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sequence_item_data->MIDI_program_number = long_data;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "MIDI_note_number"))
+                {
+                  /* In the Offer Sound sequence item, the MIDI note number
+                   * of the MIDI Note On message that will trigger the
+                   * specified sequence item.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sequence_item_data->MIDI_note_number = long_data;
+                      sequence_item_data->MIDI_note_number_specified = TRUE;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "OSC_name"))
+                {
+                  /* In the Offer Sound sequence item, the Open Show Control
+                   * (OSC) name used to trigger the specified sequence item
+                   * remotely.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->OSC_name =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "macro_number"))
+                {
+                  /* In the Offer Sound sequence item, the macro number used
+                   * by the Fire command of MIDI Show Control to trigger
+                   * the specified sequence item remotely.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (name_data != NULL)
+                    {
+                      long_data =
+                        g_ascii_strtoll ((gchar *) name_data, NULL, 10);
+                      xmlFree (name_data);
+                      sequence_item_data->macro_number = long_data;
+                      name_data = NULL;
+                    }
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "function_key"))
+                {
+                  /* In the Offer Sound and Operator Wait sequence items, 
+                   * the function key used to trigger the specified sequence 
+                   * item remotely.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->function_key =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              /* Ignore fields we don't recognize, so we can read future
+               * XML files. */
+
+              sequence_item_loc = sequence_item_loc->next;
+            }
+
+          /* Append this sequence item to the sequence.  */
+          sequence_append_item (sequence_item_data, app);
+        }
+      sequence_loc = sequence_loc->next;
+    }
+
+  return;
+}
+
+/* Dig through the sound_effects program section of an equipment file 
+ * to find the sound and sequence information.  */
+static void
+parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
+                    xmlNodePtr program_loc, GApplication * app)
+{
+  xmlChar *key;
+  const xmlChar *name;
+  xmlChar *prop_name;
+  gchar *file_name;
+  gchar *file_dirname;
+  gchar *absolute_file_name;
+  gint64 port_number;
+  xmlNodePtr sounds_loc, sequence_loc;
+  xmlDocPtr sounds_file, sequence_file;
+  const xmlChar *root_name;
+  const xmlChar *sounds_name, *sequence_name;
+  gboolean sounds_section_parsed, sequence_section_parsed;
+
+  /* We start at the children of a "program" section which has the
+   * name "sound_effects". */
+  /* We are looking for sound and sequence sections.  */
+
+  file_name = NULL;
+  absolute_file_name = NULL;
+  prop_name = NULL;
+
+  while (program_loc != NULL)
+    {
+      name = program_loc->name;
+      if (xmlStrEqual (name, (const xmlChar *) "port"))
+        {
+          /* This is the "port" section within "program".  */
+          key =
+            xmlNodeListGetString (equipment_file,
+                                  program_loc->xmlChildrenNode, 1);
+          port_number = g_ascii_strtoll ((gchar *) key, NULL, 10);
+          /* Tell the network module the new port number. */
+          network_set_port (port_number, app);
+          xmlFree (key);
+        }
+
+      if (xmlStrEqual (name, (const xmlChar *) "sounds"))
+        {
+          /* This is the "sounds" section within "program".  
+           * It will have a reference to a sounds XML file,
+           * content or both.  First process the referenced file. */
+          xmlFree (prop_name);
+          prop_name = xmlGetProp (program_loc, (const xmlChar *) "href");
+          if (prop_name != NULL)
+            {
+              /* We have a file reference.  */
+              g_free (file_name);
+              file_name = g_strdup ((gchar *) prop_name);
+              xmlFree (prop_name);
+              /* If the file name does not have an absolute path,
+               * prepend the path of the equipment or project file.
+               * This allows equipment and project files to be 
+               * copied along with the files they reference. */
+              if (g_path_is_absolute (file_name))
+                {
+                  absolute_file_name = g_strdup (file_name);
+                }
+              else
+                {
+                  file_dirname = g_path_get_dirname (equipment_file_name);
+                  absolute_file_name =
+                    g_build_filename (file_dirname, file_name, NULL);
+                  g_free (file_dirname);
+                }
+              g_free (file_name);
+
+              /* Read the specified file as an XML file. */
+              xmlLineNumbersDefault (1);
+              xmlThrDefIndentTreeOutput (1);
+              xmlKeepBlanksDefault (0);
+              xmlThrDefTreeIndentString ("    ");
+              sounds_file = xmlParseFile (absolute_file_name);
+              if (sounds_file == NULL)
+                {
+                  g_printerr ("Load of sound file %s failed.\n",
+                              absolute_file_name);
+                  g_free (absolute_file_name);
+                  return;
+                }
+
+              /* Make sure the sounds file is valid, then extract
+               * data from it. */
+              sounds_loc = xmlDocGetRootElement (sounds_file);
+              if (sounds_loc == NULL)
+                {
+                  g_printerr ("Empty sound file: %s.\n", absolute_file_name);
+                  g_free (absolute_file_name);
+                  xmlFree (sounds_file);
+                  return;
+                }
+              root_name = sounds_loc->name;
+              if (!xmlStrEqual (root_name, (const xmlChar *) "show_control"))
+                {
+                  g_printerr ("Not a show_control file: %s; is %s.\n",
+                              absolute_file_name, root_name);
+                  xmlFree (sounds_file);
+                  g_free (absolute_file_name);
+                  return;
+                }
+              /* Within the top-level show_control structure
+               * should be a sounds structure.  If there isn't,
+               * this isn't a sound file and must be rejected.  */
+              sounds_loc = sounds_loc->xmlChildrenNode;
+              sounds_name = NULL;
+              sounds_section_parsed = FALSE;
+              while (sounds_loc != NULL)
+                {
+                  sounds_name = sounds_loc->name;
+                  if (xmlStrEqual (sounds_name, (const xmlChar *) "sounds"))
+                    {
+                      parse_sounds_info (sounds_file, absolute_file_name,
+                                         sounds_loc->xmlChildrenNode, app);
+                      sounds_section_parsed = TRUE;
+                    }
+                  sounds_loc = sounds_loc->next;
+                }
+              if (!sounds_section_parsed)
+                {
+                  g_printerr ("Not a sounds file: %s; is %s.\n",
+                              absolute_file_name, sounds_name);
+                }
+              xmlFree (sounds_file);
+            }
+          /* Now process the content of the sounds section. */
+          parse_sounds_info (equipment_file, equipment_file_name,
+                             program_loc->xmlChildrenNode, app);
+        }
+
+      if (xmlStrEqual (name, (const xmlChar *) "sequence"))
+        {
+          /* This is the "sequence" section within "program".  
+           * It will have a reference to a sequence XML file,
+           * content or both.  First process the referenced file. */
+          xmlFree (prop_name);
+          prop_name = xmlGetProp (program_loc, (const xmlChar *) "href");
+          if (prop_name != NULL)
+            {
+              /* We have a file reference.  */
+              g_free (file_name);
+              file_name = g_strdup ((gchar *) prop_name);
+              xmlFree (prop_name);
+              /* If the file name does not have an absolute path,
+               * prepend the path of the equipment or project file.
+               * This allows equipment and project files to be 
+               * copied along with the files they reference. */
+              if (g_path_is_absolute (file_name))
+                {
+                  absolute_file_name = g_strdup (file_name);
+                }
+              else
+                {
+                  file_dirname = g_path_get_dirname (equipment_file_name);
+                  absolute_file_name =
+                    g_build_filename (file_dirname, file_name, NULL);
+                  g_free (file_dirname);
+                }
+              g_free (file_name);
+
+              /* Read the specified file as an XML file. */
+              xmlLineNumbersDefault (1);
+              xmlThrDefIndentTreeOutput (1);
+              xmlKeepBlanksDefault (0);
+              xmlThrDefTreeIndentString ("    ");
+              sequence_file = xmlParseFile (absolute_file_name);
+              if (sequence_file == NULL)
+                {
+                  g_printerr ("Load of sequence file %s failed.\n",
+                              absolute_file_name);
+                  g_free (absolute_file_name);
+                  return;
+                }
+
+              /* Make sure the sequence file is valid, then extract
+               * data from it. */
+              sequence_loc = xmlDocGetRootElement (sequence_file);
+              if (sequence_loc == NULL)
+                {
+                  g_printerr ("Empty sequence file: %s.\n",
+                              absolute_file_name);
+                  g_free (absolute_file_name);
+                  xmlFree (sequence_file);
+                  return;
+                }
+              root_name = sequence_loc->name;
+              if (!xmlStrEqual (root_name, (const xmlChar *) "show_control"))
+                {
+                  g_printerr ("Not a show_control file: %s; is %s.\n",
+                              absolute_file_name, root_name);
+                  xmlFree (sequence_file);
+                  g_free (absolute_file_name);
+                  return;
+                }
+              /* Within the top-level show_control structure
+               * should be a sequence structure.  If there isn't,
+               * this isn't a sequence file and must be rejected.  */
+              sequence_loc = sequence_loc->xmlChildrenNode;
+              sequence_name = NULL;
+              sequence_section_parsed = FALSE;
+              while (sequence_loc != NULL)
+                {
+                  sequence_name = sequence_loc->name;
+                  if (xmlStrEqual
+                      (sequence_name, (const xmlChar *) "sequence"))
+                    {
+                      parse_sequence_info (sequence_file, absolute_file_name,
+                                           sequence_loc->xmlChildrenNode,
+                                           app);
+                      sequence_section_parsed = TRUE;
+                    }
+                  sequence_loc = sequence_loc->next;
+                }
+              if (!sequence_section_parsed)
+                {
+                  g_printerr ("Not a sequence file: %s; is %s.\n",
+                              absolute_file_name, sequence_name);
+                }
+              xmlFree (sequence_file);
+            }
+          /* Now process the content of the sequence section. */
+          parse_sequence_info (equipment_file, equipment_file_name,
+                               program_loc->xmlChildrenNode, app);
+        }
+
+      program_loc = program_loc->next;
+    }
+}
+
 /* Dig through an equipment xml file, or the equipment section of a project
  * xml file, looking for the sound effect player's sounds and network port.  
  * When we find the network port, tell the network module about it. 
@@ -476,25 +1248,14 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
 {
   xmlChar *key;
   const xmlChar *name;
-  xmlChar *prop_name;
-  gchar *file_name;
-  gchar *file_dirname;
   gchar *absolute_file_name;
-  gint64 port_number;
   xmlNodePtr program_loc;
   xmlChar *program_id;
-  xmlNodePtr sounds_loc;
-  xmlDocPtr sounds_file;
-  const xmlChar *root_name;
-  const xmlChar *sounds_name;
-  gboolean sounds_section_parsed;
 
   /* We start at the children of an "equipment" section. */
   /* We are looking for version and program sections. */
 
-  file_name = NULL;
   absolute_file_name = NULL;
-  prop_name = NULL;
 
   while (equipment_loc != NULL)
     {
@@ -523,123 +1284,8 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
               /* This is the section of the XML file that contains information
                * about the sound effects program.  */
               program_loc = equipment_loc->xmlChildrenNode;
-              while (program_loc != NULL)
-                {
-                  name = program_loc->name;
-                  if (xmlStrEqual (name, (const xmlChar *) "port"))
-                    {
-                      /* This is the "port" section within "program".  */
-                      key =
-                        xmlNodeListGetString (equipment_file,
-                                              program_loc->xmlChildrenNode,
-                                              1);
-                      port_number = g_ascii_strtoll ((gchar *) key, NULL, 10);
-                      /* Tell the network module the new port number. */
-                      network_set_port (port_number, app);
-                      xmlFree (key);
-                    }
-                  if (xmlStrEqual (name, (const xmlChar *) "sounds"))
-                    {
-                      /* This is the "sounds" section within "program".  
-                       * It will have a reference to a sounds XML file,
-                       * content or both.  First process the referenced file. */
-                      xmlFree (prop_name);
-                      prop_name =
-                        xmlGetProp (program_loc, (const xmlChar *) "href");
-                      if (prop_name != NULL)
-                        {
-                          /* We have a file reference.  */
-                          g_free (file_name);
-                          file_name = g_strdup ((gchar *) prop_name);
-                          xmlFree (prop_name);
-                          /* If the file name does not have an absolute path,
-                           * prepend the path of the equipment or project file.
-                           * This allows equipment and project files to be 
-                           * copied along with the files they reference. */
-                          if (g_path_is_absolute (file_name))
-                            {
-                              absolute_file_name = g_strdup (file_name);
-                            }
-                          else
-                            {
-                              file_dirname =
-                                g_path_get_dirname (equipment_file_name);
-                              absolute_file_name =
-                                g_build_filename (file_dirname, file_name,
-                                                  NULL);
-                              g_free (file_dirname);
-                            }
-                          g_free (file_name);
-
-                          /* Read the specified file as an XML file. */
-                          xmlLineNumbersDefault (1);
-                          xmlThrDefIndentTreeOutput (1);
-                          xmlKeepBlanksDefault (0);
-                          xmlThrDefTreeIndentString ("    ");
-                          sounds_file = xmlParseFile (absolute_file_name);
-                          if (sounds_file == NULL)
-                            {
-                              g_printerr ("Load of sound file %s failed.\n",
-                                          absolute_file_name);
-                              g_free (absolute_file_name);
-                              return;
-                            }
-
-                          /* Make sure the sounds file is valid, then extract
-                           * data from it. */
-                          sounds_loc = xmlDocGetRootElement (sounds_file);
-                          if (sounds_loc == NULL)
-                            {
-                              g_printerr ("Empty sound file: %s.\n",
-                                          absolute_file_name);
-                              g_free (absolute_file_name);
-                              xmlFree (sounds_file);
-                              return;
-                            }
-                          root_name = sounds_loc->name;
-                          if (!xmlStrEqual
-                              (root_name, (const xmlChar *) "show_control"))
-                            {
-                              g_printerr
-                                ("Not a show_control file: %s; is %s.\n",
-                                 absolute_file_name, root_name);
-                              xmlFree (sounds_file);
-                              g_free (absolute_file_name);
-                              return;
-                            }
-                          /* Within the top-level show_control structure
-                           * should be a sounds structure.  If there isn't,
-                           * this isn't a sound file and must be rejected.  */
-                          sounds_loc = sounds_loc->xmlChildrenNode;
-                          sounds_name = NULL;
-                          sounds_section_parsed = FALSE;
-                          while (sounds_loc != NULL)
-                            {
-                              sounds_name = sounds_loc->name;
-                              if (xmlStrEqual
-                                  (sounds_name, (const xmlChar *) "sounds"))
-                                {
-                                  parse_sounds_info (sounds_file,
-                                                     absolute_file_name,
-                                                     sounds_loc->xmlChildrenNode,
-                                                     app);
-                                  sounds_section_parsed = TRUE;
-                                }
-                              sounds_loc = sounds_loc->next;
-                            }
-                          if (!sounds_section_parsed)
-                            {
-                              g_printerr ("Not a sounds file: %s; is %s.\n",
-                                          absolute_file_name, sounds_name);
-                            }
-                          xmlFree (sounds_file);
-                        }
-                      /* Now process the content of the sounds section. */
-                      parse_sounds_info (equipment_file, equipment_file_name,
-                                         program_loc->xmlChildrenNode, app);
-                    }
-                  program_loc = program_loc->next;
-                }
+              parse_program_info (equipment_file, equipment_file_name,
+                                  program_loc, app);
             }
           xmlFree (program_id);
         }

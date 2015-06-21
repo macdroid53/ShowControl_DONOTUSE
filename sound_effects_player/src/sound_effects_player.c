@@ -26,6 +26,7 @@
 #include "parse_xml_subroutines.h"
 #include "parse_net_subroutines.h"
 #include "sound_subroutines.h"
+#include "sequence_subroutines.h"
 
 G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player,
                GTK_TYPE_APPLICATION);
@@ -60,6 +61,9 @@ struct _Sound_Effects_PlayerPrivate
   /* The list of sounds we can make.  Each item of the GList points
    * to a sound_info structure. */
   GList *sound_list;
+
+  /* The persistent information for the internal sequencer.  */
+  void *sequence_data;
 
   /* The list of clusters that might contain sound effects. */
   GList *clusters;
@@ -191,6 +195,9 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   priv->gstreamer_pipeline = NULL;
   priv->gstreamer_ready = FALSE;
   priv->sound_list = NULL;
+
+  /* Initialize the internal sequencer.  */
+  priv->sequence_data = sequence_init (app);
 
   /* Initialize the network message parser. */
   priv->parse_net_data = parse_net_init (app);
@@ -633,4 +640,16 @@ sep_set_sound_list (GList * sound_list, GApplication * app)
 
   priv->sound_list = sound_list;
   return;
+}
+
+/* Find the persistent data for the internal sequencer.  */
+void *
+sep_get_sequence_data (GApplication * app)
+{
+  void *sequence_data;
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+
+  sequence_data = priv->sequence_data;
+  return (sequence_data);
 }

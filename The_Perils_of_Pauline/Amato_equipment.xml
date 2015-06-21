@@ -18,7 +18,7 @@
       <name>sound_effects_player</name>
       <type>sound</type>
       <IP_address>localhost6</IP_address>
-      <port>1500</port>
+      <port>5005</port>
       <sounds href="Amato_sounds.xml"/>
       <sound_sequence href="Amato_sound_sequence.xml"/>
     </program>

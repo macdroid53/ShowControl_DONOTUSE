@@ -41,10 +41,10 @@ struct parse_net_info
 
 /* The keyword hash table. */
 enum keyword_codes
-{ keyword_start = 1, keyword_stop, keyword_quit };
+{ keyword_start = 1, keyword_stop, keyword_quit, keyword_cue };
 
 static enum keyword_codes keyword_values[] =
-{ keyword_start, keyword_stop, keyword_quit };
+{ keyword_start, keyword_stop, keyword_quit, keyword_cue };
 
 struct keyword_value_pairs
 {
@@ -55,7 +55,8 @@ struct keyword_value_pairs
 static struct keyword_value_pairs keywords_with_values[] = {
   {"start", &keyword_values[0]},
   {"stop", &keyword_values[1]},
-  {"quit", &keyword_values[2]}
+  {"quit", &keyword_values[2]},
+  {"/cue", &keyword_values[3]}
 };
 
 /* Initialize the network messages parser */
@@ -164,7 +165,9 @@ parse_net_text (gchar * text, GApplication * app)
           switch (keyword_value)
             {
             case keyword_start:
-              /* For the Start command, the operand is the cluster number. */
+            case keyword_cue:
+              /* For the Start and Cue commands, the operand is the 
+               * cluster number. */
               cluster_no = strtol (extra_text, NULL, 0);
               sound_cluster_start (cluster_no, app);
               break;

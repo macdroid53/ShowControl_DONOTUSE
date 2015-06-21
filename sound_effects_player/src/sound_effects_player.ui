@@ -1590,14 +1590,13 @@
                           <object class="GtkAlignment" id="alignment1">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="left_padding">12</property>
                             <child>
                               <object class="GtkGrid" id="cluster_00">
                                 <property name="name">cluster_00</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="margin_left">5</property>
-                                <property name="margin_right">5</property>
+                                <property name="margin_start">5</property>
+                                <property name="margin_end">5</property>
                                 <property name="margin_top">5</property>
                                 <property name="margin_bottom">5</property>
                                 <property name="border_width">5</property>
@@ -1626,7 +1625,6 @@
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="resize_mode">immediate</property>
                                     <signal name="clicked" handler="button_stop_clicked" object="cluster_00" swapped="no"/>
                                   </object>
                                   <packing>
@@ -1797,8 +1795,6 @@ audio-volume-medium-symbolic</property>
                           <object class="GtkAlignment" id="alignment2">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="yscale">0.98000001907348633</property>
-                            <property name="left_padding">12</property>
                             <child>
                               <object class="GtkGrid" id="cluster_01">
                                 <property name="name">cluster_01</property>
@@ -1832,7 +1828,6 @@ audio-volume-medium-symbolic</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="resize_mode">immediate</property>
                                     <signal name="clicked" handler="button_stop_clicked" object="cluster_01" swapped="no"/>
                                   </object>
                                   <packing>
@@ -2001,7 +1996,6 @@ audio-volume-medium-symbolic</property>
                           <object class="GtkAlignment" id="alignment3">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="left_padding">12</property>
                             <child>
                               <object class="GtkGrid" id="cluster_02">
                                 <property name="name">cluster_02</property>
@@ -2035,7 +2029,6 @@ audio-volume-medium-symbolic</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="resize_mode">immediate</property>
                                     <signal name="clicked" handler="button_stop_clicked" object="cluster_02" swapped="no"/>
                                   </object>
                                   <packing>
@@ -2203,14 +2196,13 @@ audio-volume-medium-symbolic</property>
                           <object class="GtkAlignment" id="alignment4">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="left_padding">12</property>
                             <child>
                               <object class="GtkGrid" id="cluster_03">
                                 <property name="name">cluster_03</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="margin_left">5</property>
-                                <property name="margin_right">5</property>
+                                <property name="margin_start">5</property>
+                                <property name="margin_end">5</property>
                                 <property name="margin_top">5</property>
                                 <property name="margin_bottom">5</property>
                                 <property name="border_width">5</property>
@@ -2239,7 +2231,6 @@ audio-volume-medium-symbolic</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
-                                    <property name="resize_mode">immediate</property>
                                     <signal name="clicked" handler="button_stop_clicked" object="cluster_03" swapped="no"/>
                                   </object>
                                   <packing>
@@ -2414,8 +2405,6 @@ audio-volume-medium-symbolic</property>
           <object class="GtkStatusbar" id="status_bar">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="margin_left">10</property>
-            <property name="margin_right">10</property>
             <property name="margin_start">10</property>
             <property name="margin_end">10</property>
             <property name="margin_top">6</property>

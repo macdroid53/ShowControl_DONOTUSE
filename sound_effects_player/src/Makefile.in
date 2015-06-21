@@ -148,7 +148,8 @@ libgstlooper_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 PROGRAMS = $(bin_PROGRAMS)
 am_sound_effects_player_OBJECTS = main.$(OBJEXT) \
 	sound_effects_player.$(OBJEXT) sound_subroutines.$(OBJEXT) \
-	network_subroutines.$(OBJEXT) parse_net_subroutines.$(OBJEXT) \
+	sequence_subroutines.$(OBJEXT) network_subroutines.$(OBJEXT) \
+	parse_net_subroutines.$(OBJEXT) \
 	parse_xml_subroutines.$(OBJEXT) button_subroutines.$(OBJEXT) \
 	gstreamer_subroutines.$(OBJEXT) menu_subroutines.$(OBJEXT) \
 	message_subroutines.$(OBJEXT) display_subroutines.$(OBJEXT)
@@ -396,6 +397,9 @@ sound_effects_player_SOURCES = \
 	sound_structure.h \
 	sound_subroutines.c \
 	sound_subroutines.h \
+	sequence_structure.h \
+	sequence_subroutines.c \
+	sequence_subroutines.h \
 	network_subroutines.c \
 	network_subroutines.h \
 	parse_net_subroutines.c \
@@ -584,6 +588,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/network_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse_net_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse_xml_subroutines.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sequence_subroutines.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sound_effects_player.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sound_subroutines.Po@am__quote@
 
