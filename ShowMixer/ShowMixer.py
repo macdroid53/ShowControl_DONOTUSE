@@ -2,8 +2,14 @@
 import sys
 import types
 import argparse
+import socket
+from time import sleep
 
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+
+
 import xml.etree.ElementTree as ET
 from os import path
 
@@ -12,12 +18,16 @@ from MixerConf import MixerConf
 from MixerMap import MixerCharMap
 from Cues import CueList
 
-#import ui_DynChanStripDlg
-import mainwindow
+import ui_ShowMixer
+#import mainwindow
 from pythonosc import osc_message_builder
 from pythonosc import udp_client
 
-from lisp.ui import styles
+import styles
+
+UDP_IP = "127.0.0.1"
+UDP_PORT = 5005
+
 
 def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
@@ -30,6 +40,12 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Convert the 0-1 range into a value in the right range.
     return rightMin + (valueScaled * rightSpan)
 
+class UDPSignals(QObject):
+    """object will ultimately be the gui object we want to interact with(in this example, the label on the gui
+       str is the string we wan to put in the label
+    """
+    #updatesignal = pyqtSignal(object, str)
+    UDPCue_rcvd = pyqtSignal(object, str)
 
 
 class Show:
@@ -50,7 +66,7 @@ class Show:
         self.cues.setcurrentcuestate(self.cues.currentcueindex)
 
 
-class ChanStripDlg(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
+class ChanStripDlg(QtWidgets.QMainWindow, ui_ShowMixer.Ui_MainWindow):
     ChanStrip_MinWidth = 50
 
     def __init__(self, cuelistfile, parent=None):
@@ -58,18 +74,28 @@ class ChanStripDlg(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         QtGui.QIcon.setThemeSearchPaths(styles.QLiSPIconsThemePaths)
         QtGui.QIcon.setThemeName(styles.QLiSPIconsThemeName)
         self.__index = 0
+
+        #Setup thread to handle inbound UDP
+        self.rcvrthread = QThread()
+        self.rcvrthread.run = self.UDPRcvr
+        self.rcvrthread.should_close = False
+
+        self.UDPsignal = UDPSignals()
+        self.UDPsignal.UDPCue_rcvd.connect(self.on_UDPCue_rcvd)
+
         self.setupUi(self)
         self.nextButton.clicked.connect(self.on_buttonNext_clicked)
 
     def addChanStrip(self):
-        layout = self.stripgridLayout
+        #layout = self.stripgridLayout
+        layout = self.stripgridLayout_2
         self.channumlabels = []
         self.mutes = []
         self.levs = []
         self.sliders = []
         self.scrbls = []
         for i in range(1,chans+1):
-            #print(str(i))
+            print(str(i))
             #Add scribble for this channel Qt::AlignHCenter
             scrbl = QtWidgets.QLabel()
             scrbl.setObjectName('scr' + '{0:02}'.format(i))
@@ -147,6 +173,38 @@ class ChanStripDlg(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
         
         for btncnt in range(1, The_Show.mixer.inputsliders.__len__() + 1):
             mute = self.findChild(QtWidgets.QPushButton, name='{0:02}'.format(btncnt))
+#             print('Object name: ' + mute.objectName())
+#             print('ch' + '{0}'.format(btncnt))
+#             print(The_Show.cues.mutestate['ch7'])
+#             print(The_Show.cues.mutestate['ch' + '{0}'.format(btncnt)])
+            osc_add='/ch/' + mute.objectName() + '/mix/on'
+            #print(osc_add)
+            msg = osc_message_builder.OscMessageBuilder(address=osc_add)
+            if The_Show.cues.mutestate['ch' + '{0}'.format(btncnt)] == 1:
+                mute.setChecked(False)
+                msg.add_arg(The_Show.mixer.mutestyle['unmute'])
+            else:
+                mute.setChecked(True)
+                msg.add_arg(The_Show.mixer.mutestyle['mute'])
+            #print(mute.objectName())
+            msg = msg.build()
+            client.send(msg)
+
+    def on_UDPCue_rcvd(self, guiref, command):
+#         print(The_Show.cues.mutestate)
+#         print('Next')
+        print('Command: ' + command)
+
+        previdx = The_Show.cues.currentcueindex
+        The_Show.cues.currentcueindex = int(command.split(' ')[1])
+        tblvw = guiref.findChild(QtWidgets.QTableView)
+        tblvw.selectRow(The_Show.cues.currentcueindex)
+        #print('Old index: ' + str(previdx) + '   New: ' + str(The_Show.cues.currentcueindex))
+        The_Show.cues.setcurrentcuestate(The_Show.cues.currentcueindex)
+        #print(The_Show.cues.mutestate)
+
+        for btncnt in range(1, The_Show.mixer.inputsliders.__len__() + 1):
+            mute = guiref.findChild(QtWidgets.QPushButton, name='{0:02}'.format(btncnt))
 #             print('Object name: ' + mute.objectName())
 #             print('ch' + '{0}'.format(btncnt))
 #             print(The_Show.cues.mutestate['ch7'])
@@ -253,6 +311,32 @@ class ChanStripDlg(QtWidgets.QMainWindow, mainwindow.Ui_MainWindow):
                      q.find('Cue').text])
         #print(self.tabledata)
 
+    def UDPRcvr(self):
+        """
+        Here self is a reference to the instance the GUI object
+        """
+        sock = socket.socket(socket.AF_INET,  # Internet
+        socket.SOCK_DGRAM)  # UDP
+        sock.bind((UDP_IP, UDP_PORT)) #note UDPRcvWorker.UDP_IP is a class attribute, thus dot syntax
+        while True:
+            sock.settimeout(1)
+            try:
+                data = sock.recv(1024)  # buffer size is 1024 bytes
+                if data:
+                    self.UDPsignal.UDPCue_rcvd.emit(self, "".join(map(chr,data)))#here we send a reference to the GUI label object
+            except socket.timeout:
+                print("received timeout:")
+            if self.rcvrthread.should_close:
+                break
+            sleep(0.1)
+
+    def closeEvent(self, e):
+        print('My application is ending!')
+        self.rcvrthread.should_close = True
+        self.rcvrthread.wait()
+
+
+
 class MyTableModel(QtCore.QAbstractTableModel):
     def __init__(self, datain, headerdata, parent=None):
         """
@@ -297,7 +381,7 @@ class MyTableModel(QtCore.QAbstractTableModel):
             self.arraydata.reverse()
         self.emit(SIGNAL("layoutChanged()"))
 
-             
+
 
 The_Show = Show(path.abspath(path.join(path.dirname(__file__))) + '/')
 #print('Show Object:',The_Show)
@@ -317,8 +401,8 @@ for x in range(1, len(outsliders)+1):
     
 #print(The_Show.cues)
 qs = The_Show.cues.cuelist.findall('cue')
-# for q in qs:
-#     print(q.attrib)
+for q in qs:
+     print(q.attrib)
 
 #print(The_Show.chrchnmap)
 chs = The_Show.chrchnmap.maplist.findall('input')
@@ -344,10 +428,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     client = udp_client.UDPClient(args.ip, args.port)
-    ui.set_scribble(The_Show.chrchnmap.maplist)
+    #ui.set_scribble(The_Show.chrchnmap.maplist)
     ui.initmutes()
-    tblvw = ui.findChild(QtWidgets.QTableView)
-    tblvw.selectRow(The_Show.cues.currentcueindex)
+    #tblvw = ui.findChild(QtWidgets.QTableView)
+    #tblvw.selectRow(The_Show.cues.currentcueindex)
 
+    ui.rcvrthread.start()
     ui.show()
     sys.exit(app.exec_())

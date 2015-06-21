@@ -74,16 +74,16 @@
   <connection>
    <sender>quitButton</sender>
    <signal>clicked()</signal>
-   <receiver>stripDialog</receiver>
-   <slot>reject()</slot>
+   <receiver>quitButton</receiver>
+   <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>856</x>
      <y>773</y>
     </hint>
     <hint type="destinationlabel">
-     <x>726</x>
-     <y>744</y>
+     <x>850</x>
+     <y>773</y>
     </hint>
    </hints>
   </connection>
