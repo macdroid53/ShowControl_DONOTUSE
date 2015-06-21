@@ -18,13 +18,13 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include "parse_net_subroutines.h"
 #include "sound_effects_player.h"
 #include "sound_subroutines.h"
 
 /* These subroutines are used to process network messages.
- * Each message is terminated by a new line character ("\n")
- * and consists of a keyword followed by a value.  Upon receiving
+ * Each message consists of a keyword followed by a value.  Upon receiving
  * a command we perform the action specified by the keyword.
  */
 
@@ -89,18 +89,13 @@ parse_net_init (GApplication * app)
   return parse_net_data;
 }
 
-/* Receive some text from the network.  If we have a complete command,
- * parse and execute it.
+/* Receive a datagram from the network.  Parse and execute the command.
  */
 void
 parse_net_text (gchar * text, GApplication * app)
 {
   struct parse_net_info *parse_net_data;
-  gchar *new_message;
-  gchar *old_message;
-  gchar *nl_pointer;
   int command_length;
-  gchar *command_string;
   int kl;                       /* keyword length */
   gchar *keyword_string;
   gpointer *p;
@@ -110,81 +105,50 @@ parse_net_text (gchar * text, GApplication * app)
 
   parse_net_data = sep_get_parse_net_data (app);
 
-  /* Append the text we have just received onto any leftover unprocessed text.
-   */
-  old_message = parse_net_data->message_buffer;
-  if (old_message == NULL)
+  command_length = strlen (text);
+  /* Isolate the keyword that starts the command. The keyword will be
+   * terminated by white space or the end of the string.  */
+  for (kl = 0; kl < command_length; kl++)
+    if (g_ascii_isspace (text[kl]))
+      break;
+
+  keyword_string = g_strndup (text, kl);
+  /* If there is any text after the keyword, it is probably a parameter
+   * to the command.  Isolate it, also. */
+  extra_text = g_strdup (text + kl);
+
+  /* Find the keyword in the hash table. */
+  p = g_hash_table_lookup (parse_net_data->hash_table, keyword_string);
+  if (p == NULL)
     {
-      new_message = g_strdup (text);
-      parse_net_data->message_buffer = new_message;
+      g_print ("Unknown command\n");
     }
   else
     {
-      new_message = g_strconcat (old_message, text, NULL);
-      parse_net_data->message_buffer = new_message;
-      g_free (old_message);
-    }
-
-  /* Process any and all complete commands in the message buffer. */
-  while (1)
-    {
-      new_message = parse_net_data->message_buffer;
-      nl_pointer = g_strstr_len (new_message, -1, "\n");
-      if (nl_pointer == NULL)
-        /* There are no new line characters in the buffer; wait for
-         * more text to arrive. */
-        return;
-
-      /* Capture the text up to and including the new line, returning
-       * the remainder to the message buffer. */
-      command_length = nl_pointer - new_message + 1;
-      command_string = g_strndup (new_message, command_length);
-      parse_net_data->message_buffer = g_strdup (nl_pointer + 1);
-      g_free (new_message);
-
-      /* Isolate the keyword that starts the command. The keyword will be
-       * terminated by white space or the end of the string.  */
-      for (kl = 0; kl < command_length; kl++)
-        if (g_ascii_isspace (command_string[kl]))
+      keyword_value = (enum keyword_codes) *p;
+      switch (keyword_value)
+        {
+        case keyword_start:
+        case keyword_cue:
+          /* For the Start and Cue commands, the operand is the 
+           * cluster number. */
+          cluster_no = strtol (extra_text, NULL, 0);
+          sound_cluster_start (cluster_no, app);
           break;
-
-      keyword_string = g_strndup (command_string, kl);
-      /* If there is any text after the keyword, it is probably a parameter
-       * to the command.  Isolate it, also. */
-      extra_text = g_strdup (command_string + kl);
-
-      /* Find the keyword in the hash table. */
-      p = g_hash_table_lookup (parse_net_data->hash_table, keyword_string);
-      if (p == NULL)
-        {
-          g_print ("Unknown command\n");
+        case keyword_stop:
+          /* Likewise for the Stop command. */
+          cluster_no = strtol (extra_text, NULL, 0);
+          sound_cluster_stop (cluster_no, app);
+          break;
+        case keyword_quit:
+          /* The Quit command takes no arguments. */
+          g_application_quit (app);
+          break;
+        default:
+          g_print ("unknown command\n");
         }
-      else
-        {
-          keyword_value = (enum keyword_codes) *p;
-          switch (keyword_value)
-            {
-            case keyword_start:
-            case keyword_cue:
-              /* For the Start and Cue commands, the operand is the 
-               * cluster number. */
-              cluster_no = strtol (extra_text, NULL, 0);
-              sound_cluster_start (cluster_no, app);
-              break;
-            case keyword_stop:
-              /* Likewise for the Stop command. */
-              cluster_no = strtol (extra_text, NULL, 0);
-              sound_cluster_stop (cluster_no, app);
-              break;
-            case keyword_quit:
-              /* The Quit command takes no arguments. */
-              g_application_quit (app);
-              break;
-            default:
-              g_print ("unknown command\n");
-            }
-        }
-      g_free (command_string);
+
+
       g_free (keyword_string);
       g_free (extra_text);
     }

@@ -1,3 +1,6 @@
+Version 0.45, June 21, 2015
+  Network UDP messages are datagrams, not streams of text.
+  
 Version 0.44, June 21, 2015
   Add /cue network command, so we can be driven by CueEngine.
   
