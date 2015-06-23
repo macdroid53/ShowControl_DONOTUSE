@@ -1,0 +1,40 @@
+#LiSP (Linux Show Player) configuration
+
+#Do not modified this section values
+[Version]
+Number = -0
+
+[Themes]
+UseStandAloneTheme = True
+
+[GStreamer]
+DefaultPipeline = filesrc name=location ! decodebin name=decoder ! audioconvert name=convert ! volume name=volume ! equalizer-10bands name=equalizer ! audioconvert ! audiodynamic name=audiodynamic ! audioconvert ! pitch name=pitch ! audioconvert ! level name=level interval=50000000 peak-ttl=500000000 peak-falloff=20 ! audioconvert ! audioresample ! autoaudiosink name=audiout
+ImagePipeline = filesrc name=location ! decodebin ! videoconvert ! imagefreeze ! videomixer name=mix sink_1::xpos=0 sink_1::ypos=0 sink_1::alpha=0.1 sink_1::zorder=3 sink_2::xpos=0 sink_2::ypos=0 sink_2::zorder=2 ! videoconvert ! xvimagesink videotestsrc pattern=2 ! video/x-raw, format=AYUV, framerate=10/1, width=709, height=644 ! mix.
+
+[Layout]
+UseDefault = False
+Default = layout_grids
+#Packages = layout_grids
+Packages = layout_grids,layout_list
+
+[Plugins]
+Packages = gain,scenes,media_info,sync,controller,programming
+
+[MIDI]
+DeviceID = -1
+
+[Actions]
+StacksSize = 0
+PrintInfo = False
+EmitInfo = True
+
+[GridLayout]
+GridXSize = 9
+GridYSize = 6
+ShowSliders = False
+ShowLevels = False
+Countdown = True
+AutoAddPage = True
+
+[ListLayout]
+ShowLevels = False
