@@ -27,6 +27,7 @@
 #include "parse_net_subroutines.h"
 #include "sound_subroutines.h"
 #include "sequence_subroutines.h"
+#include "display_subroutines.h"
 
 G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player,
                GTK_TYPE_APPLICATION);
@@ -102,6 +103,7 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   GtkWidget *cluster_widget;
   gchar *filename;
   gchar *local_filename;
+  guint message_code;
 
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
@@ -205,25 +207,27 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
   /* Listen for network messages. */
   priv->network_data = network_init (app);
 
+  /* The display is initialized; time to show it. */
+  gtk_widget_show_all (GTK_WIDGET (top_window));
+  priv->windows_showing = TRUE;
+
   /* If we have a parameter, it is the project XML file to read for our sounds.
    * If we don't, the user will read a project XML file using the menu.  */
   if (priv->project_filename != NULL)
     {
+      message_code = display_show_message ("Loading...", app);
       local_filename = g_strdup (priv->project_filename);
       parse_xml_read_project_file (local_filename, app);
       priv->gstreamer_pipeline = sound_init (app);
+      display_remove_message (message_code, app);
+      message_code = display_show_message ("Starting...", app);
     }
-
-  /* If we have a gstreamer pipeline but it has not completed its
-   * initialization, don't display the window.  It will be displayed
-   * when the gstreamer pipeline is ready.  */
-
-  if ((priv->gstreamer_pipeline == NULL) || (priv->gstreamer_ready))
+  else
     {
-      /* The display is initialized; time to show it. */
-      gtk_widget_show_all (GTK_WIDGET (top_window));
-      priv->windows_showing = TRUE;
+      message_code = display_show_message ("No sounds.", app);
     }
+
+  return;
 }
 
 /* GApplication implementation */
@@ -310,8 +314,7 @@ sound_effects_player_new (void)
 /* Callbacks from other modules.  The names of the callbacks are prefixed
  * with sep_ rather than sound_effects_player_ for readability. */
 
-/* Display the gtk top-level window.  This is called when the gstreamer
- * pipeline has completed initialization.  */
+/* This is called when the gstreamer pipeline has completed initialization.  */
 void
 sep_gstreamer_ready (GApplication * app)
 {
@@ -319,13 +322,19 @@ sep_gstreamer_ready (GApplication * app)
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
 
   priv->gstreamer_ready = TRUE;
+
+  /* If we aren't yet showing the top-level window, show it now.  */
   if (!priv->windows_showing)
     {
-      /* The gstreamer pipeline is ready, time to show the top-level window. */
       gtk_widget_show_all (GTK_WIDGET (priv->top_window));
       priv->windows_showing = TRUE;
     }
 
+  /* Tell the operator we are ready.  */
+  display_show_message ("Ready.", app);
+
+  /* Start the internal sequencer.  */
+  sequence_start (app);
   return;
 }
 
@@ -373,6 +382,34 @@ sep_get_application_from_widget (GtkWidget * object)
   gtk_app = gtk_window_get_application (toplevel_window);
   app = (GApplication *) gtk_app;
   return (app);
+}
+
+/* Find the cluster which contains the given widget.  */
+GtkWidget *
+sep_get_cluster_from_widget (GtkWidget * object)
+{
+  GtkWidget *this_object;
+  const gchar *widget_name;
+  GtkWidget *cluster_widget;
+
+  /* Work up from the given widget until we find one whose name starts
+   * with "cluster_". */
+
+  cluster_widget = NULL;
+  this_object = object;
+  do
+    {
+      widget_name = gtk_widget_get_name (this_object);
+      if (g_str_has_prefix (widget_name, "cluster_"))
+        {
+          cluster_widget = this_object;
+          break;
+        }
+      this_object = gtk_widget_get_parent (this_object);
+    }
+  while (this_object != NULL);
+
+  return (cluster_widget);
 }
 
 /* Find the sound effect information corresponding to a cluster, 
@@ -426,7 +463,7 @@ sep_get_sound_effect (GtkWidget * object)
   while (sound_effect_list != NULL)
     {
       sound_effect = sound_effect_list->data;
-      if (sound_effect->cluster == cluster_widget)
+      if (sound_effect->cluster_widget == cluster_widget)
         {
           sound_effect_found = TRUE;
           break;
@@ -441,7 +478,7 @@ sep_get_sound_effect (GtkWidget * object)
 
 /* Find a cluster, given its number.  */
 GtkWidget *
-sep_get_cluster (int cluster_number, GApplication * app)
+sep_get_cluster_from_number (guint cluster_number, GApplication * app)
 {
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
@@ -467,6 +504,25 @@ sep_get_cluster (int cluster_number, GApplication * app)
     }
 
   return NULL;
+}
+
+/* Given a cluster, find its cluster number.  */
+guint
+sep_get_cluster_number (GtkWidget * cluster_widget)
+{
+  const gchar *widget_name;
+  guint cluster_number;
+  gint result;
+
+  /* Extract the cluster number from its name.  */
+  widget_name = gtk_widget_get_name (cluster_widget);
+  result = sscanf (widget_name, "cluster_%u", &cluster_number);
+  if (result != 1)
+    {
+      g_print ("result = %d, cluster number = %d.\n", result, cluster_number);
+    }
+
+  return (cluster_number);
 }
 
 /* Find the area above the top of the clusters, 

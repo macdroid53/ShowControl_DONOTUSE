@@ -31,7 +31,8 @@
 /* There are several types of sequence item, as follows:  */
 enum sequence_item_type
 { unknown, start_sound, stop, wait, offer_sound, cease_offering_sound,
-    operator_wait, start_sequence };
+  operator_wait, start_sequence
+};
 
 /* The following structure is used for all sequence items.  No item uses
  * all the fields.  */
@@ -39,6 +40,9 @@ struct sequence_item_info
 {
   gchar *name;                  /* name of the sequence item */
   enum sequence_item_type type; /* The type of sequence item */
+  gchar *sound_name;            /* The name of the sound to start */
+  gchar *tag;                   /* The sound's or offering's tag, used to
+                                 * stop the sound or offering.  */
   guint use_external_velocity;  /* If 1, use the velocity of an external
                                  * Note On message to scale the volume.  */
   gdouble volume;               /* Scale the sound designer's velocity by
@@ -47,25 +51,23 @@ struct sequence_item_info
   gdouble pan;                  /* Pan the sound by this much, in addition
                                  * to the specification in the sound,
                                  * when starting the sound.  */
-  gint program_number;          /* The pgogram number, bank number and */
-  gint bank_number;             /* cluster number are used to display */
-  gint cluster_number;          /* a sound for the operator to control.  */
+  guint program_number;         /* The pgogram number, bank number and */
+  guint bank_number;            /* cluster number are used to display */
+  guint cluster_number;         /* a sound for the operator to control.  */
   gboolean cluster_number_specified;    /* If a cluster is not specified, 
                                          * one as chosen at run time.  */
   gchar *next_completion;       /* Sequence item to execute on completion.  */
   gchar *next_terminated;       /* sequence item to execute on termination.  */
   gchar *next_starts;           /* sequence item to execute when this sound 
                                  * starts.  */
-  gint importance;              /* importance of this sound, 
+  guint importance;             /* importance of this sound, 
                                  * for display purposes.  */
   gchar *Q_number;              /* The Q_number is used by MIDI Show 
                                  * Control.  */
   gchar *text_to_display;       /* What to show the operator */
-  gchar *sound_to_stop;         /* In the Stop sequence item, 
-                                 * the sound to stop.  */
   gchar *next;                  /* The next sequence item to execute.  */
-  gint time_to_wait;            /* Time to wait in the Wait sequence item.  */
-  gchar *next_start;            /* The sequence item to execute when
+  guint time_to_wait;           /* Time to wait in the Wait sequence item.  */
+  gchar *next_to_start;         /* The sequence item to execute when
                                  * the operator presses the cluster's Start
                                  * button.  */
   gint MIDI_program_number;     /* The MIDI program number and */
@@ -73,7 +75,7 @@ struct sequence_item_info
   gboolean MIDI_note_number_specified;  /* They may be omitted.  */
   gchar *OSC_name;              /* The Open Show Control (OSC) name which 
                                  * triggers this cluster */
-  gint macro_number;            /* Used by MIDI Show Control's Fire command
+  guint macro_number;           /* Used by MIDI Show Control's Fire command
                                  * to trigger this cluster.  */
   gchar *function_key;          /* The function key which triggers this 
                                  * cluster */

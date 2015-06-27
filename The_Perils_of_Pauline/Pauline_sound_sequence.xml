@@ -4,9 +4,50 @@
   <!-- This sound sequence is unique to The Perils of Pauline.  These
        sequence items are available to the sound_effect_player's internal
        sequencer along with the sequence items in Amato_sound_sequence.xml.  -->
+
   <sound_sequence>
     <version>1.0</version>
 
+    <sequence_item>
+      <name>start_of_sequence</name>
+      <type>start_sequence</type>
+      <next>offer_tone</next>
+    </sequence_item>
+
+    <sequence_item>
+      <name>offer_tone</name>
+      <type>offer_sound</type>
+      <next_to_start>play_tone</next_to_start>
+      <Q_number>1</Q_number>
+      <cluster_number>0</cluster_number>
+      <text_to_display>play 440Hz tone</text_to_display>
+      <next>offer_to_stop</next>      
+    </sequence_item>
+
+    <sequence_item>
+      <name>offer_to_stop</name>
+      <type>offer_sound</type>
+      <next_to_start>stop_tone</next_to_start>
+      <Q_number>2</Q_number>
+      <cluster_number>1</cluster_number>
+      <text_to_display>stop playing 440Hz tone</text_to_display>
+    </sequence_item>
+    
+    <sequence_item>
+      <name>play_tone</name>
+      <type>start_sound</type>
+      <sound_name>440Hz</sound_name>
+      <cluster>0</cluster>
+      <text_to_display>playing 440HZ tone</text_to_display>
+      <tag>tone</tag>
+    </sequence_item>
+
+    <sequence_item>
+      <name>stop_tone</name>
+      <type>stop</type>
+      <tag>tone</tag>
+    </sequence_item>
+    
     <sequence_item>
       <name>train</name>
       <type>start_sound</type>
@@ -23,6 +64,6 @@
       <Q_number>2.0</Q_number>
       <display>train</display>
     </sequence_item>
-  
+
   </sound_sequence>
 </show_control>

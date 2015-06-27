@@ -307,14 +307,11 @@ gstreamer_async_done (GApplication * app)
 
   pipeline_element = sep_get_pipeline_from_app (app);
 
-  /* If we aren't doing it already, display the top-level window.  */
-  sep_gstreamer_ready (app);
-
   /* For debugging, write out a graphical representation of the pipeline. */
   gstreamer_dump_pipeline (pipeline_element);
 
-  /* Tell the user that we are ready to make sounds.  */
-  display_show_message ((gchar *) "Ready", app);
+  /* Tell the core that we have completed gstreamer initialization.  */
+  sep_gstreamer_ready (app);
 
   return;
 }

@@ -67,11 +67,18 @@ GstPipeline *sep_get_pipeline_from_app (GApplication * app);
 /* Given a widget, get the app.  */
 GApplication *sep_get_application_from_widget (GtkWidget * object);
 
+/* Given a widget within a cluster, find the cluster.  */
+GtkWidget *sep_get_cluster_from_widget (GtkWidget *the_widget);
+
 /* Given a widget in a cluster, get its sound_effect structure. */
 struct sound_info *sep_get_sound_effect (GtkWidget * object);
 
 /* Given a cluster number, get the cluster.  */
-GtkWidget *sep_get_cluster (int cluster_number, GApplication * app);
+GtkWidget *sep_get_cluster_from_number (guint cluster_number,
+					GApplication * app);
+
+/* Given a cluster, get its number.  */
+guint sep_get_cluster_number (GtkWidget *cluster_widget);
 
 /* Find the common area above the clusters. */
 GtkWidget *sep_get_common_area (GApplication * app);

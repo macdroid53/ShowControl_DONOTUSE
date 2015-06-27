@@ -22,6 +22,7 @@
 #include "parse_net_subroutines.h"
 #include "sound_effects_player.h"
 #include "sound_subroutines.h"
+#include "sequence_subroutines.h"
 
 /* These subroutines are used to process network messages.
  * Each message consists of a keyword followed by a value.  Upon receiving
@@ -114,8 +115,15 @@ parse_net_text (gchar * text, GApplication * app)
 
   keyword_string = g_strndup (text, kl);
   /* If there is any text after the keyword, it is probably a parameter
-   * to the command.  Isolate it, also. */
-  extra_text = g_strdup (text + kl);
+   * to the command.  Isolate it, also.  */
+  if (kl + 1 < command_length)
+    {
+      extra_text = g_strdup (text + kl + 1);
+    }
+  else
+    {
+      extra_text = NULL;
+    }
 
   /* Find the keyword in the hash table. */
   p = g_hash_table_lookup (parse_net_data->hash_table, keyword_string);
@@ -129,21 +137,29 @@ parse_net_text (gchar * text, GApplication * app)
       switch (keyword_value)
         {
         case keyword_start:
-        case keyword_cue:
-          /* For the Start and Cue commands, the operand is the 
+          /* For the Start command, the operand is the 
            * cluster number. */
           cluster_no = strtol (extra_text, NULL, 0);
-          sound_cluster_start (cluster_no, app);
+          sequence_cluster_start (cluster_no, app);
           break;
+
         case keyword_stop:
           /* Likewise for the Stop command. */
           cluster_no = strtol (extra_text, NULL, 0);
-          sound_cluster_stop (cluster_no, app);
+          sequence_cluster_stop (cluster_no, app);
           break;
+
         case keyword_quit:
           /* The Quit command takes no arguments. */
           g_application_quit (app);
           break;
+
+        case keyword_cue:
+          /* The cue command is treated as the 
+           * MIDI Show Control command Go.  */
+          sequence_MIDI_show_control_go (extra_text, app);
+          break;
+
         default:
           g_print ("unknown command\n");
         }

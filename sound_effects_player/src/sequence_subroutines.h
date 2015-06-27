@@ -20,14 +20,38 @@
 #include <gtk/gtk.h>
 #include <gst/gst.h>
 #include "sequence_structure.h"
+#include "sound_structure.h"
 
 /* Subroutines defined in sequence_subroutines.c */
 
 /* Initialize the internal sequencer */
-void *sequence_init (GApplication *app);
+void *sequence_init (GApplication * app);
 
 /* Append a sequence item to the sequence.  */
 void sequence_append_item (struct sequence_item_info *sequence_item_data,
                            GApplication * app);
+
+/* Start the internal sequencer.  */
+void sequence_start (GApplication * app);
+
+/* Execute the MIDI Show Control command Go.  */
+void sequence_MIDI_show_control_go (gchar * Q_number, GApplication * app);
+
+/* Execute the MIDI Show Control command Stop.  */
+void sequence_MIDI_show_control_stop (gchar * Q_number, GApplication * app);
+
+/* Start the sound offered on a cluster.  */
+void sequence_cluster_start (guint cluster_number, GApplication * app);
+
+/* Stop the sound offered on a cluster.  */
+void sequence_cluster_stop (guint cluster_number, GApplication * app);
+
+/* A sound has completed.  */
+void sequence_sound_completion (struct sound_info *sound_effect,
+                                GApplication * app);
+
+/* A sound has been terminated.  */
+void sequence_sound_termination (struct sound_info *sound_effect,
+                                 GApplication * app);
 
 /* End of file sequence_subroutines.h */

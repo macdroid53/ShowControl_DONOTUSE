@@ -23,7 +23,8 @@
 
 /* Define the structure which holds the definition of a sound.
  * This structure is shared between sound_effects_player, 
- * parse_xml_subroutines, button_subroutines and sound_subroutines. */
+ * parse_xml_subroutines, button_subroutines, sound_subroutines
+ * and sequence_subroutines. */
 
 #include <gtk/gtk.h>
 #include <gst/gst.h>
@@ -59,7 +60,7 @@ struct sound_info
   gboolean OSC_name_specified;  /* TRUE if not empty */
   gchar *function_key;          /* name of function key */
   gboolean function_key_specified;      /* TRUE if not empty */
-  GtkWidget *cluster;           /* The cluster the sound is in, if any */
+  GtkWidget *cluster_widget;    /* The cluster this sound is in.  */
   GstBin *sound_control;        /* The Gstreamer bin for this sound effect */
   gint cluster_number;          /* The number of the cluster the sound is in */
 };

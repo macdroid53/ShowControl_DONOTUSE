@@ -44,6 +44,8 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
   xmlNodePtr sound_loc;
   struct sound_info *sound_data;
 
+  file_dirname = NULL;
+  absolute_file_name = NULL;
   name_data = NULL;
   /* We start at the children of a "sounds" section.  Each child should
    * be a "version" or "sound" section. */
@@ -99,9 +101,9 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
           sound_data->function_key = NULL;
           sound_data->function_key_specified = FALSE;
 
-          /* These fields will be filled by the gstreamer subroutines.  */
-          sound_data->cluster = NULL;
+          /* These fields will be filled at run time.  */
           sound_data->sound_control = NULL;
+          sound_data->cluster_widget = NULL;
           sound_data->cluster_number = 0;
 
           /* Collect information from the XML file.  */
@@ -138,13 +140,16 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                        * the files that refer to them.  */
                       if (g_path_is_absolute (sound_data->wav_file_name))
                         {
+                          g_free (absolute_file_name);
                           absolute_file_name =
                             g_strdup (sound_data->wav_file_name);
                         }
                       else
                         {
+                          g_free (file_dirname);
                           file_dirname =
                             g_path_get_dirname (sounds_file_name);
+                          g_free (absolute_file_name);
                           absolute_file_name =
                             g_build_filename (file_dirname,
                                               sound_data->wav_file_name,
@@ -520,6 +525,8 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
           /* Fields used in the Start Sound sequence item.  */
           sequence_item_data->name = NULL;
           sequence_item_data->type = unknown;
+          sequence_item_data->sound_name = NULL;
+          sequence_item_data->tag = NULL;
           sequence_item_data->use_external_velocity = 0;
           sequence_item_data->volume = 1.0;
           sequence_item_data->pan = 0.0;
@@ -535,7 +542,6 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
           sequence_item_data->text_to_display = NULL;
 
           /* Fields used in the Stop sequence item but not mentioned above.  */
-          sequence_item_data->sound_to_stop = NULL;
           sequence_item_data->next = NULL;
 
           /* Fields used in the Wait sequence item but not mentioned above.  */
@@ -543,7 +549,7 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
 
           /* Fields used in the Offer Sound sequence item but not mentioned
            * above.  */
-          sequence_item_data->next_start = NULL;
+          sequence_item_data->next_to_start = NULL;
           sequence_item_data->MIDI_program_number = 0;
           sequence_item_data->MIDI_note_number = 0;
           sequence_item_data->MIDI_note_number_specified = FALSE;
@@ -578,6 +584,7 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
                     xmlNodeListGetString (sequence_file,
                                           sequence_item_loc->xmlChildrenNode,
                                           1);
+
                   /* Convert the textual name in the XML file into an enum.  */
                   item_type = unknown;
                   if (xmlStrEqual
@@ -615,6 +622,34 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
                     }
 
                   sequence_item_data->type = item_type;
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "sound_name"))
+                {
+                  /* For the Start Sound sequence item, the name of the sound
+                   * to start.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->sound_name =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "tag"))
+                {
+                  /* The tag in Start Sound and Offer Sound is used by Stop
+                   * and Cease Offering Sound to name the sound or offering
+                   * to stop.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->tag = g_strdup ((gchar *) name_data);
                   xmlFree (name_data);
                   name_data = NULL;
                 }
@@ -837,19 +872,6 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
                   name_data = NULL;
                 }
 
-              if (xmlStrEqual (name, (const xmlChar *) "sound_to_stop"))
-                {
-                  /* In the Stop sequence item, the sound to be stopped.  */
-                  name_data =
-                    xmlNodeListGetString (sequence_file,
-                                          sequence_item_loc->xmlChildrenNode,
-                                          1);
-                  sequence_item_data->sound_to_stop =
-                    g_strdup ((gchar *) name_data);
-                  xmlFree (name_data);
-                  name_data = NULL;
-                }
-
               if (xmlStrEqual (name, (const xmlChar *) "next"))
                 {
                   /* In other than the Start Sound sequence item, the next
@@ -884,7 +906,7 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
                     }
                 }
 
-              if (xmlStrEqual (name, (const xmlChar *) "next_start"))
+              if (xmlStrEqual (name, (const xmlChar *) "next_to_start"))
                 {
                   /* In the Offer Sound sequence item, the sequence item
                    * that is to be executed when the sound effects operator
@@ -896,7 +918,7 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
                     xmlNodeListGetString (sequence_file,
                                           sequence_item_loc->xmlChildrenNode,
                                           1);
-                  sequence_item_data->next_start =
+                  sequence_item_data->next_to_start =
                     g_strdup ((gchar *) name_data);
                   xmlFree (name_data);
                   name_data = NULL;
@@ -1029,6 +1051,7 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
   /* We are looking for sound and sequence sections.  */
 
   file_name = NULL;
+  file_dirname = NULL;
   absolute_file_name = NULL;
   prop_name = NULL;
 
@@ -1060,22 +1083,27 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
               g_free (file_name);
               file_name = g_strdup ((gchar *) prop_name);
               xmlFree (prop_name);
+              prop_name = NULL;
               /* If the file name does not have an absolute path,
                * prepend the path of the equipment or project file.
                * This allows equipment and project files to be 
                * copied along with the files they reference. */
               if (g_path_is_absolute (file_name))
                 {
+                  g_free (absolute_file_name);
                   absolute_file_name = g_strdup (file_name);
                 }
               else
                 {
+                  g_free (file_dirname);
                   file_dirname = g_path_get_dirname (equipment_file_name);
                   absolute_file_name =
                     g_build_filename (file_dirname, file_name, NULL);
                   g_free (file_dirname);
+                  file_dirname = NULL;
                 }
               g_free (file_name);
+              file_name = NULL;
 
               /* Read the specified file as an XML file. */
               xmlLineNumbersDefault (1);
@@ -1088,6 +1116,7 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                   g_printerr ("Load of sound file %s failed.\n",
                               absolute_file_name);
                   g_free (absolute_file_name);
+                  absolute_file_name = NULL;
                   return;
                 }
 
@@ -1098,6 +1127,7 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                 {
                   g_printerr ("Empty sound file: %s.\n", absolute_file_name);
                   g_free (absolute_file_name);
+                  absolute_file_name = NULL;
                   xmlFree (sounds_file);
                   return;
                 }
@@ -1108,6 +1138,7 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                               absolute_file_name, root_name);
                   xmlFree (sounds_file);
                   g_free (absolute_file_name);
+                  absolute_file_name = NULL;
                   return;
                 }
               /* Within the top-level show_control structure
@@ -1137,12 +1168,14 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
           /* Now process the content of the sounds section. */
           parse_sounds_info (equipment_file, equipment_file_name,
                              program_loc->xmlChildrenNode, app);
+          g_free (absolute_file_name);
+          absolute_file_name = NULL;
         }
 
-      if (xmlStrEqual (name, (const xmlChar *) "sequence"))
+      if (xmlStrEqual (name, (const xmlChar *) "sound_sequence"))
         {
-          /* This is the "sequence" section within "program".  
-           * It will have a reference to a sequence XML file,
+          /* This is the "sound_sequence" section within "program".  
+           * It will have a reference to a sound sequence XML file,
            * content or both.  First process the referenced file. */
           xmlFree (prop_name);
           prop_name = xmlGetProp (program_loc, (const xmlChar *) "href");
@@ -1152,22 +1185,28 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
               g_free (file_name);
               file_name = g_strdup ((gchar *) prop_name);
               xmlFree (prop_name);
+              prop_name = NULL;
+
               /* If the file name does not have an absolute path,
                * prepend the path of the equipment or project file.
                * This allows equipment and project files to be 
                * copied along with the files they reference. */
               if (g_path_is_absolute (file_name))
                 {
+                  g_free (absolute_file_name);
                   absolute_file_name = g_strdup (file_name);
                 }
               else
                 {
+                  g_free (file_dirname);
                   file_dirname = g_path_get_dirname (equipment_file_name);
                   absolute_file_name =
                     g_build_filename (file_dirname, file_name, NULL);
                   g_free (file_dirname);
+                  file_dirname = NULL;
                 }
               g_free (file_name);
+              file_name = NULL;
 
               /* Read the specified file as an XML file. */
               xmlLineNumbersDefault (1);
@@ -1177,20 +1216,22 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
               sequence_file = xmlParseFile (absolute_file_name);
               if (sequence_file == NULL)
                 {
-                  g_printerr ("Load of sequence file %s failed.\n",
+                  g_printerr ("Load of sound sequence file %s failed.\n",
                               absolute_file_name);
                   g_free (absolute_file_name);
+                  absolute_file_name = NULL;
                   return;
                 }
 
-              /* Make sure the sequence file is valid, then extract
+              /* Make sure the sound sequence file is valid, then extract
                * data from it. */
               sequence_loc = xmlDocGetRootElement (sequence_file);
               if (sequence_loc == NULL)
                 {
-                  g_printerr ("Empty sequence file: %s.\n",
+                  g_printerr ("Empty sound sequence file: %s.\n",
                               absolute_file_name);
                   g_free (absolute_file_name);
+                  absolute_file_name = NULL;
                   xmlFree (sequence_file);
                   return;
                 }
@@ -1201,11 +1242,12 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                               absolute_file_name, root_name);
                   xmlFree (sequence_file);
                   g_free (absolute_file_name);
+                  absolute_file_name = NULL;
                   return;
                 }
               /* Within the top-level show_control structure
-               * should be a sequence structure.  If there isn't,
-               * this isn't a sequence file and must be rejected.  */
+               * should be a sound sequence structure.  If there isn't,
+               * this isn't a sound sequence file and must be rejected.  */
               sequence_loc = sequence_loc->xmlChildrenNode;
               sequence_name = NULL;
               sequence_section_parsed = FALSE;
@@ -1213,7 +1255,7 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                 {
                   sequence_name = sequence_loc->name;
                   if (xmlStrEqual
-                      (sequence_name, (const xmlChar *) "sequence"))
+                      (sequence_name, (const xmlChar *) "sound_sequence"))
                     {
                       parse_sequence_info (sequence_file, absolute_file_name,
                                            sequence_loc->xmlChildrenNode,
@@ -1224,14 +1266,16 @@ parse_program_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
                 }
               if (!sequence_section_parsed)
                 {
-                  g_printerr ("Not a sequence file: %s; is %s.\n",
+                  g_printerr ("Not a sound sequence file: %s; is %s.\n",
                               absolute_file_name, sequence_name);
                 }
               xmlFree (sequence_file);
             }
-          /* Now process the content of the sequence section. */
+          /* Now process the content of the sound sequence section. */
           parse_sequence_info (equipment_file, equipment_file_name,
                                program_loc->xmlChildrenNode, app);
+          g_free (absolute_file_name);
+          absolute_file_name = NULL;
         }
 
       program_loc = program_loc->next;
@@ -1248,14 +1292,11 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
 {
   xmlChar *key;
   const xmlChar *name;
-  gchar *absolute_file_name;
   xmlNodePtr program_loc;
   xmlChar *program_id;
 
   /* We start at the children of an "equipment" section. */
   /* We are looking for version and program sections. */
-
-  absolute_file_name = NULL;
 
   while (equipment_loc != NULL)
     {
@@ -1291,7 +1332,6 @@ parse_equipment_info (xmlDocPtr equipment_file, gchar * equipment_file_name,
         }
       equipment_loc = equipment_loc->next;
     }
-  g_free (absolute_file_name);
 
   return;
 }
@@ -1321,6 +1361,7 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
    */
   found_equipment_section = FALSE;
   file_name = NULL;
+  file_dirname = NULL;
   absolute_file_name = NULL;
   prop_name = NULL;
 
@@ -1357,22 +1398,27 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
               g_free (file_name);
               file_name = g_strdup ((gchar *) prop_name);
               xmlFree (prop_name);
+              prop_name = NULL;
 
               /* If the file name specified does not have an absolute path,
                * prepend the path to the project file.  This allows project 
                * files to be copied along with the files they reference.  */
               if (g_path_is_absolute (file_name))
                 {
+                  g_free (absolute_file_name);
                   absolute_file_name = g_strdup (file_name);
                 }
               else
                 {
+                  g_free (file_dirname);
                   file_dirname = g_path_get_dirname (project_file_name);
                   absolute_file_name =
                     g_build_filename (file_dirname, file_name, NULL);
                   g_free (file_dirname);
+                  file_dirname = NULL;
                 }
               g_free (file_name);
+              file_name = NULL;
 
               /* Read the specified file as an XML file. */
               xmlLineNumbersDefault (1);
@@ -1385,6 +1431,7 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
                   g_printerr ("Load of equipment file %s failed.\n",
                               absolute_file_name);
                   g_free (absolute_file_name);
+                  absolute_file_name = NULL;
                   return;
                 }
 
@@ -1397,6 +1444,7 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
                               absolute_file_name);
                   xmlFree (equipment_file);
                   g_free (absolute_file_name);
+                  absolute_file_name = NULL;
                   return;
                 }
               root_name = equipment_loc->name;
@@ -1406,6 +1454,7 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
                               absolute_file_name, root_name);
                   xmlFree (equipment_file);
                   g_free (absolute_file_name);
+                  absolute_file_name = NULL;
                   return;
                 }
 
@@ -1440,6 +1489,8 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
           /* Now process the content of the equipment section. */
           parse_equipment_info (project_file, project_file_name,
                                 current_loc->xmlChildrenNode, app);
+          g_free (absolute_file_name);
+          absolute_file_name = NULL;
         }
       current_loc = current_loc->next;
     }
@@ -1449,6 +1500,7 @@ parse_project_info (xmlDocPtr project_file, gchar * project_file_name,
                   absolute_file_name);
     }
   g_free (absolute_file_name);
+  absolute_file_name = NULL;
 
   return;
 }
@@ -1473,6 +1525,7 @@ parse_xml_read_project_file (gchar * project_file_name, GApplication * app)
     {
       g_printerr ("Load of project file %s failed.\n", project_file_name);
       g_free (project_file_name);
+      project_file_name = NULL;
       return;
     }
 
@@ -1531,10 +1584,10 @@ parse_xml_write_project_file (gchar * project_file_name, GApplication * app)
   xmlNodePtr equipment_loc;
   xmlNodePtr project_loc;
   xmlNodePtr program_loc;
-  const xmlChar *name;
-  xmlChar *prop_name;
+  const xmlChar *name = NULL;
+  xmlChar *prop_name = NULL;
   gint port_number;
-  gchar *port_number_text;
+  gchar *port_number_text = NULL;
   gboolean port_number_found;
   gchar text_buffer[G_ASCII_DTOSTR_BUF_SIZE];
 
@@ -1638,5 +1691,7 @@ parse_xml_write_project_file (gchar * project_file_name, GApplication * app)
       g_printerr ("The project file is complex, and must be edited "
                   "with an XML editor such as Emacs.\n");
     }
+  g_free (prop_name);
+
   return;
 }

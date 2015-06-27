@@ -21,54 +21,80 @@
 #include "sound_effects_player.h"
 #include "sound_subroutines.h"
 #include "sound_structure.h"
+#include "sequence_subroutines.h"
 
-/* The Start button has been pushed.  Turn the sound effect on. */
+/* The Start button has been pushed.  */
 void
 button_start_clicked (GtkButton * button, gpointer user_data)
 {
-  struct sound_info *sound_data;
   GApplication *app;
+  GtkWidget *cluster_widget;
+  guint cluster_number;
 
-  sound_data = sep_get_sound_effect (user_data);
+  /* Let the internal sequencer handle it.  */
   app = sep_get_application_from_widget (user_data);
-
-  /* If there is no sound connected to this button, do nothing.  */
-  if (sound_data == NULL)
-    return;
-
-  /* Tell gstreamer to start playing the sound.  */
-  sound_start_playing (sound_data, app);
-
-  /* Change the text on the button from "Start" to "Playing". */
-  gtk_button_set_label (button, "Playing");
+  cluster_widget = sep_get_cluster_from_widget (user_data);
+  cluster_number = sep_get_cluster_number (cluster_widget);
+  sequence_cluster_start (cluster_number, app);
 
   return;
 }
 
-/* The stop button has been pushed.  Turn the sound effect off. */
+/* The stop button has been pushed.  */
 void
 button_stop_clicked (GtkButton * button, gpointer user_data)
 {
-  struct sound_info *sound_data;
   GApplication *app;
+  GtkWidget *cluster_widget;
+  guint cluster_number;
 
-  sound_data = sep_get_sound_effect (user_data);
+  /* Let the internal sequencer handle it.  */
   app = sep_get_application_from_widget (user_data);
-
-  /* If there is no sound attached to this cluster, do nothing.  */
-  if (sound_data == NULL)
-    return;
-
-  /* Stop playing this sound.  We will reset the cluster appearance
-   * when we get an acknowledgment back from gstreamer that the sound
-   * has entered the release section of its amplitude envelope.  */
-  sound_stop_playing (sound_data, app);
+  cluster_widget = sep_get_cluster_from_widget (user_data);
+  cluster_number = sep_get_cluster_number (cluster_widget);
+  sequence_cluster_stop (cluster_number, app);
 
   return;
 }
 
-/* Reset the appearance of a cluster after its stop button has been
- * pushed or it has finished playing. */
+/* Show that the Start button has been pushed.  */
+void
+button_set_cluster_playing (struct sound_info *sound_data, GApplication * app)
+{
+  GtkButton *start_button = NULL;
+  GtkWidget *parent_container;
+  GList *children_list = NULL;
+  const gchar *child_name = NULL;
+
+  /* Find the start button and set its text to "Playing...". 
+   * The start button will be a child of the cluster, and will be named
+   * "start_button".  */
+  parent_container = sound_data->cluster_widget;
+
+  /* It is possible, though unlikely, that the sound will no longer
+   * be in a cluster.  */
+  if (parent_container != NULL)
+    {
+      children_list =
+        gtk_container_get_children (GTK_CONTAINER (parent_container));
+      while (children_list != NULL)
+        {
+          child_name = gtk_widget_get_name (children_list->data);
+          if (g_strcmp0 (child_name, "start_button") == 0)
+            {
+              start_button = children_list->data;
+              break;
+            }
+          children_list = children_list->next;
+        }
+      g_list_free (children_list);
+      gtk_button_set_label (start_button, "Playing...");
+    }
+
+  return;
+}
+
+/* Reset the appearance of a cluster after its sound has finished playing. */
 void
 button_reset_cluster (struct sound_info *sound_data, GApplication * app)
 {
@@ -80,7 +106,7 @@ button_reset_cluster (struct sound_info *sound_data, GApplication * app)
   /* Find the start button and set its text back to "Start". 
    * The start button will be a child of the cluster, and will be named
    * "start_button".  */
-  parent_container = sound_data->cluster;
+  parent_container = sound_data->cluster_widget;
 
   /* It is possible, though unlikely, that the sound will no longer
    * be in a cluster.  */
@@ -101,6 +127,7 @@ button_reset_cluster (struct sound_info *sound_data, GApplication * app)
       g_list_free (children_list);
       gtk_button_set_label (start_button, "Start");
     }
+
   return;
 }
 

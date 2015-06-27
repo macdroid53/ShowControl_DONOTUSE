@@ -24,16 +24,23 @@
 /* Subroutines defined in sound_subroutines.c */
 
 /* Initialize the sounds. */
-GstPipeline * sound_init (GApplication * app);
+GstPipeline *sound_init (GApplication * app);
+
+/* Set the name of a cluster.  */
+void sound_cluster_set_name (gchar * sound_name, guint cluster_number,
+                             GApplication * app);
 
 /* Append a sound to the list of sounds.  */
 void sound_append_sound (struct sound_info *sound_data, GApplication * app);
 
-/* Start playing a sound in a specified cluster.  */
-void sound_cluster_start (int cluster_number, GApplication * app);
+/* Associate a sound with a cluster.  */
+struct sound_info *sound_bind_to_cluster (gchar * sound_name,
+                                          guint cluster_number,
+                                          GApplication * app);
 
-/* Stop playing a sound in a specified cluster.  */
-void sound_cluster_stop (int cluster_number, GApplication * app);
+/* Disassociate a sound from its cluster.  */
+void sound_unbind_from_cluster (struct sound_info *sound_data,
+                                GApplication * app);
 
 /* Start playing a sound.  */
 void sound_start_playing (struct sound_info *sound_data, GApplication * app);

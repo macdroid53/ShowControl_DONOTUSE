@@ -25,6 +25,7 @@
 #include "gstreamer_subroutines.h"
 #include "button_subroutines.h"
 #include "display_subroutines.h"
+#include "sequence_subroutines.h"
 
 /* Subroutines for processing sounds.  */
 
@@ -39,9 +40,6 @@ sound_init (GApplication * app)
   gint sound_number, sound_count;
   GList *l;
   struct sound_info *sound_data;
-  GList *children_list;
-  const char *child_name;
-  GtkLabel *title_label;
 
   sound_list = sep_get_sound_list (app);
 
@@ -90,32 +88,6 @@ sound_init (GApplication * app)
             }
 
           sound_data->sound_control = bin_element;
-
-          /* Since we do not have an internal sequencer, place the sound
-           * in a cluster.  */
-          sound_data->cluster = sep_get_cluster (sound_number, app);
-          sound_data->cluster_number = sound_number;
-
-          /* Set the name of the sound in the cluster.  */
-          title_label = NULL;
-          children_list =
-            gtk_container_get_children (GTK_CONTAINER (sound_data->cluster));
-          while (children_list != NULL)
-            {
-              child_name = gtk_widget_get_name (children_list->data);
-              if (g_strcmp0 (child_name, "title") == 0)
-                {
-                  title_label = children_list->data;
-                  break;
-                }
-              children_list = children_list->next;
-            }
-          g_list_free (children_list);
-
-          if (title_label != NULL)
-            {
-              gtk_label_set_label (title_label, sound_data->name);
-            }
           sound_number = sound_number + 1;
         }
     }
@@ -135,6 +107,43 @@ sound_init (GApplication * app)
   return pipeline_element;
 }
 
+/* Set the name displayed in a cluster.  */
+void
+sound_cluster_set_name (gchar * sound_name, guint cluster_number,
+                        GApplication * app)
+{
+  GList *children_list;
+  const char *child_name;
+  GtkLabel *title_label;
+  GtkWidget *cluster;
+
+  /* find the cluster */
+  cluster = sep_get_cluster_from_number (cluster_number, app);
+
+  if (cluster == NULL)
+    return;
+
+  /* Set the name in the cluster.  */
+  title_label = NULL;
+  children_list = gtk_container_get_children (GTK_CONTAINER (cluster));
+  while (children_list != NULL)
+    {
+      child_name = gtk_widget_get_name (children_list->data);
+      if (g_strcmp0 (child_name, "title") == 0)
+        {
+          title_label = children_list->data;
+          break;
+        }
+      children_list = children_list->next;
+    }
+  g_list_free (children_list);
+
+  if (title_label != NULL)
+    {
+      gtk_label_set_label (title_label, sound_name);
+    }
+}
+
 /* Append a sound to the list of sounds. */
 void
 sound_append_sound (struct sound_info *sound_effect, GApplication * app)
@@ -147,108 +156,47 @@ sound_append_sound (struct sound_info *sound_effect, GApplication * app)
   return;
 }
 
-/* Start playing the sound in a specified cluster. */
-void
-sound_cluster_start (int cluster_no, GApplication * app)
+/* Associate a sound with a specified cluster.  */
+struct sound_info *
+sound_bind_to_cluster (gchar * sound_name, guint cluster_number,
+                       GApplication * app)
 {
   GList *sound_effect_list;
-  GtkWidget *cluster_widget = NULL;
-  struct sound_info *sound_effect = NULL;
+  GtkWidget *cluster_widget;
+  struct sound_info *sound_effect;
   gboolean sound_effect_found;
-  GList *children_list;
-  GtkButton *start_button = NULL;
-  const gchar *child_name;
 
-  /* Search through the sound effects for the one attached
-   * to this cluster. */
   sound_effect_list = sep_get_sound_list (app);
   sound_effect_found = FALSE;
   while (sound_effect_list != NULL)
     {
       sound_effect = sound_effect_list->data;
-      if ((sound_effect->cluster != NULL)
-          && (sound_effect->cluster_number == cluster_no))
+      if ((g_strcmp0 (sound_name, sound_effect->name)) == 0)
         {
           sound_effect_found = TRUE;
           break;
         }
       sound_effect_list = sound_effect_list->next;
     }
-  if (sound_effect_found)
-    {
-      cluster_widget = sound_effect->cluster;
-      /* Find the start button in the cluster. */
-      children_list =
-        gtk_container_get_children (GTK_CONTAINER (cluster_widget));
-      while (children_list != NULL)
-        {
-          child_name = gtk_widget_get_name (children_list->data);
-          if (g_ascii_strcasecmp (child_name, "start_button") == 0)
-            {
-              start_button = children_list->data;
-              break;
-            }
-          children_list = children_list->next;
-        }
-      g_list_free (children_list);
 
-      /* Invoke the start button, so the sound starts to play and
-       * and the button appearance is updated. */
-      button_start_clicked (start_button, cluster_widget);
-    }
+  if (!sound_effect_found)
+    return NULL;
 
-  return;
+  cluster_widget = sep_get_cluster_from_number (cluster_number, app);
+  sound_effect->cluster_number = cluster_number;
+  sound_effect->cluster_widget = cluster_widget;
+
+  return sound_effect;
+
 }
 
-/* Stop playing the sound in a specified cluster. */
+/* Disassociate a sound from its cluster.  */
 void
-sound_cluster_stop (int cluster_no, GApplication * app)
+sound_unbind_from_cluster (struct sound_info *sound_effect,
+                           GApplication * app)
 {
-  GList *sound_effect_list;
-  GtkWidget *cluster_widget = NULL;
-  struct sound_info *sound_effect = NULL;
-  gboolean sound_effect_found;
-  GList *children_list;
-  GtkButton *stop_button = NULL;
-  const gchar *child_name;
-
-  /* Search through the sound effects for the one attached
-   * to this cluster. */
-  sound_effect_list = sep_get_sound_list (app);
-  sound_effect_found = FALSE;
-  while (sound_effect_list != NULL)
-    {
-      sound_effect = sound_effect_list->data;
-      if ((sound_effect->cluster != NULL)
-          && (sound_effect->cluster_number == cluster_no))
-        {
-          sound_effect_found = TRUE;
-          break;
-        }
-      sound_effect_list = sound_effect_list->next;
-    }
-  if (sound_effect_found)
-    {
-      cluster_widget = sound_effect->cluster;
-      /* Find the stop button in the cluster. */
-      children_list =
-        gtk_container_get_children (GTK_CONTAINER (cluster_widget));
-      while (children_list != NULL)
-        {
-          child_name = gtk_widget_get_name (children_list->data);
-          if (g_ascii_strcasecmp (child_name, "stop_button") == 0)
-            {
-              stop_button = children_list->data;
-              break;
-            }
-          children_list = children_list->next;
-        }
-      g_list_free (children_list);
-
-      /* Invoke the stop button, so the sound stops playing and
-       * and the appearance of the start button is updated. */
-      button_stop_clicked (stop_button, cluster_widget);
-    }
+  sound_effect->cluster_number = 0;
+  sound_effect->cluster_widget = NULL;
 
   return;
 }
@@ -304,7 +252,6 @@ sound_completed (const gchar * sound_name, GApplication * app)
   GList *sound_effect_list;
   struct sound_info *sound_effect = NULL;
   gboolean sound_effect_found;
-  gchar *message_string;
 
   /* Search through the sound effects for the one with this name.  */
   sound_effect_list = sep_get_sound_list (app);
@@ -319,19 +266,13 @@ sound_completed (const gchar * sound_name, GApplication * app)
         }
       sound_effect_list = sound_effect_list->next;
     }
-  if (sound_effect_found)
-    {
-      /* Set the Playing label on the button back to Start.  */
-      button_reset_cluster (sound_effect, app);
-    }
 
-  /* FIXME: More code will be needed for the sequencer.  */
+  /* There isn't one--ignore the completion.  */
+  if (!sound_effect_found)
+    return;
 
-  /* Tell the user that the sound has completed.  */
-  message_string = g_strdup_printf ("sound %s completed.", sound_name);
-  display_show_message (message_string, app);
-  g_free (message_string);
-  message_string = NULL;
+  /* Let the internal sequencer handle it.  */
+  sequence_sound_completion (sound_effect, app);
 
   return;
 }
@@ -344,7 +285,6 @@ sound_terminated (const gchar * sound_name, GApplication * app)
   GList *sound_effect_list;
   struct sound_info *sound_effect = NULL;
   gboolean sound_effect_found;
-  gchar *message_string;
 
   /* Search through the sound effects for the one with this name.  */
   sound_effect_list = sep_get_sound_list (app);
@@ -359,19 +299,13 @@ sound_terminated (const gchar * sound_name, GApplication * app)
         }
       sound_effect_list = sound_effect_list->next;
     }
-  if (sound_effect_found)
-    {
-      /* Set the Playing label on the button back to Start.  */
-      button_reset_cluster (sound_effect, app);
-    }
 
-  /* FIXME: More code will be needed for the sequencer.  */
+  /* If there isn't one, ignore the termination message.  */
+  if (!sound_effect_found)
+    return;
 
-  /* Tell the user that the sound has terminated.  */
-  message_string = g_strdup_printf ("sound %s terminated.", sound_name);
-  display_show_message (message_string, app);
-  g_free (message_string);
-  message_string = NULL;
+  /* Let the internal sequencer handle it.  */
+  sequence_sound_termination (sound_effect, app);
 
   return;
 }
