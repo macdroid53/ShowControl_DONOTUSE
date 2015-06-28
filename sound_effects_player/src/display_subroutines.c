@@ -139,3 +139,33 @@ display_remove_message (guint message_id, GApplication * app)
 
   return;
 }
+
+/* Display a message to the operator.  */
+void
+display_set_operator_text (gchar * text_to_display, GApplication *app)
+{
+  GtkLabel *text_label;
+  
+  /* Find the GUI's operator text area.  */
+  text_label = sep_get_operator_text (app);
+
+  /* Set the text.  */
+  gtk_label_set_text (text_label, text_to_display);
+
+  return;
+}
+
+/* Erase any operator message.  */
+void
+display_clear_operator_text (GApplication *app)
+{
+  GtkLabel *text_label;
+
+  /*Find the GUI's operator text area.  */
+  text_label = sep_get_operator_text (app);
+
+  /* Clear the text.  */
+  gtk_label_set_text (text_label, (gchar *) "");
+
+  return;
+}

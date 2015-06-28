@@ -205,7 +205,7 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
    * the application is told that the sound completed.  
    * If it was caused by receiving a Release event,
    * the application is told that the sound was terminated.  */
-  if (self->release_started && !self->application_notified)
+  if (self->running && self->release_started && !self->application_notified)
     {
       if (self->external_release_seen)
         {
@@ -231,10 +231,6 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
                             "message");
         }
       self->application_notified = TRUE;
-      /* Having notified the application that the sound has terminated
-       * or completed, we will now pay attention to a new message starting
-       * the sound over again, as soon as the release is complete.  */
-      self->started = FALSE;
       g_value_unset (&sound_name_value);
     }
 
@@ -246,23 +242,37 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
    * restart it immediately after the release is complete.  */
   if (self->completed && !self->autostart)
     {
-      self->external_release_seen = FALSE;
-      self->external_completion_seen = FALSE;
+      GST_DEBUG_OBJECT (self,
+                        "recycling envelope, base time is %" GST_TIME_FORMAT
+                        ".", GST_TIME_ARGS (self->base_time));
       self->running = FALSE;
       self->completed = FALSE;
       self->release_started = FALSE;
       self->base_time = 0;
       self->last_volume = 0;
+      self->application_notified = FALSE;
+    }
+
+  if (self->running)
+    {
+      GST_DEBUG_OBJECT (self, "running, base time is %" GST_TIME_FORMAT ".",
+                        GST_TIME_ARGS (self->base_time));
+      GST_DEBUG_OBJECT (self, "envelope time is %" GST_TIME_FORMAT ".",
+                        GST_TIME_ARGS (timestamp - self->base_time));
     }
 
   /* If we have seen a start message, or if we are autostarted,
    * and the envelope is not yet running, start running it.  */
   if ((!self->running) && (self->started || self->autostart))
     {
+      self->external_release_seen = FALSE;
+      self->external_completion_seen = FALSE;
       self->running = TRUE;
       self->started = FALSE;
-      self->application_notified = FALSE;
       self->base_time = timestamp;
+      GST_DEBUG_OBJECT (self,
+                        "starting envelope, base time set to %"
+                        GST_TIME_FORMAT ".", GST_TIME_ARGS (self->base_time));
     }
 
   return;
@@ -305,6 +315,11 @@ envelope_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
   GST_DEBUG_OBJECT (self,
                     "transform in place timestamp: %" GST_TIME_FORMAT ".",
                     GST_TIME_ARGS (ts));
+  if (self->running)
+    {
+      GST_DEBUG_OBJECT (self, "envelope time: %" GST_TIME_FORMAT ".",
+                        GST_TIME_ARGS (ts - self->base_time));
+    }
   GST_DEBUG_OBJECT (self, "interval: %" GST_TIME_FORMAT ".",
                     GST_TIME_ARGS (interval));
   GST_DEBUG_OBJECT (self, "rate: %d, width: %d, channels: %d, frames: %d.",
@@ -387,6 +402,11 @@ envelope_transform (GstBaseTransform * base, GstBuffer * inbuf,
   ts = gst_segment_to_stream_time (&base->segment, GST_FORMAT_TIME, ts);
   GST_DEBUG_OBJECT (self, "transform timestamp: %" GST_TIME_FORMAT ".",
                     GST_TIME_ARGS (ts));
+  if (self->running)
+    {
+      GST_DEBUG_OBJECT (self, "envelope time: %" GST_TIME_FORMAT ".",
+                        GST_TIME_ARGS (ts - self->base_time));
+    }
   GST_DEBUG_OBJECT (self, "interval: %" GST_TIME_FORMAT ".",
                     GST_TIME_ARGS (interval));
   GST_DEBUG_OBJECT (self, "rate: %d, width: %d, channels: %d, frames: %d.",
@@ -538,11 +558,18 @@ compute_envelope_stage (GstEnvelope * self, GstClockTime ts)
                            GST_TIME_ARGS (self->release_started_time),
                            self->release_started_volume);
         }
-      /* If we are within the release duration, we are in the release
-       * part of the envelope.  If not, the envelope has completed.
+      /* If the release duration is infinite, then the receipt of the
+       * external signal ends the sound.  */
+      if (self->release_duration_infinite)
+        {
+          return completed;
+        }
+
+      /* Otherwise, if we are within the release duration, 
+       * we are in the release part of the envelope.  
+       * If not, the envelope has completed.
        */
-      if ((ts < (self->release_started_time + self->release_duration_time))
-          || self->release_duration_infinite)
+      if (ts < (self->release_started_time + self->release_duration_time))
         {
           return release;
         }
@@ -685,6 +712,13 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
       volume_val = 0.0;
       /* Note the envelope completion.  This is used to recycle the envelope.
        */
+      if (!self->completed)
+        {
+          GST_DEBUG_OBJECT (self,
+                            "envelope completed at envelope time %"
+                            GST_TIME_FORMAT ".", GST_TIME_ARGS (ts));
+        }
+
       self->completed = TRUE;
       break;
     }
@@ -1142,6 +1176,7 @@ envelope_src_event_handler (GstBaseTransform * trans, GstEvent * event)
 
     case GST_EVENT_EOS:
       /* We have reached the end of the incoming data stream.  */
+      GST_DEBUG_OBJECT (self, "envelope completion EOS");
       GST_OBJECT_LOCK (self);
       self->external_completion_seen = TRUE;
       GST_OBJECT_UNLOCK (self);
@@ -1210,6 +1245,7 @@ envelope_sink_event_handler (GstBaseTransform * trans, GstEvent * event)
           /* This is a complete event, which is sent by the looper when
            * it reaches the end of its buffer.  Set a flag that will
            * cause release processing to begin.  */
+          GST_DEBUG_OBJECT (self, "envelope completion message");
           GST_OBJECT_LOCK (self);
           self->external_completion_seen = TRUE;
           GST_OBJECT_UNLOCK (self);

@@ -535,9 +535,9 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
           sequence_item_data->cluster_number = 0;
           sequence_item_data->cluster_number_specified = FALSE;
           sequence_item_data->next_completion = NULL;
-          sequence_item_data->next_terminated = NULL;
+          sequence_item_data->next_termination = NULL;
           sequence_item_data->next_starts = NULL;
-          sequence_item_data->importance = 0;
+          sequence_item_data->importance = 1;
           sequence_item_data->Q_number = NULL;
           sequence_item_data->text_to_display = NULL;
 
@@ -557,7 +557,11 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
           sequence_item_data->macro_number = 0;
           sequence_item_data->function_key = NULL;
 
-          /* The Cease Offering Sounds, Operator Wait and Start Sequence
+          /* Fields used in the Operator Wait sequence item but not mentioned
+           * above.  */
+          sequence_item_data->next_play = NULL;
+
+          /* The Cease Offering Sounds and Start Sequence
            *  sequence items uses only fields already mentioned.  */
 
           /* Collect information from the XML file.  */
@@ -795,7 +799,7 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
                   name_data = NULL;
                 }
 
-              if (xmlStrEqual (name, (const xmlChar *) "next_terminated"))
+              if (xmlStrEqual (name, (const xmlChar *) "next_termination"))
                 {
                   /* The next sequence item to execute, when and if this
                    * sound terminates due to an external event, such as
@@ -805,7 +809,7 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
                     xmlNodeListGetString (sequence_file,
                                           sequence_item_loc->xmlChildrenNode,
                                           1);
-                  sequence_item_data->next_terminated =
+                  sequence_item_data->next_termination =
                     g_strdup ((gchar *) name_data);
                   xmlFree (name_data);
                   name_data = NULL;
@@ -1007,6 +1011,20 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
                                           sequence_item_loc->xmlChildrenNode,
                                           1);
                   sequence_item_data->function_key =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "next_play"))
+                {
+                  /* In the Operator Wait sequence item, the sequence item
+                   * to execute when the operator presses the Play button.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->next_play =
                     g_strdup ((gchar *) name_data);
                   xmlFree (name_data);
                   name_data = NULL;

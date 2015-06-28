@@ -17,6 +17,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef DISPLAY_SUBROUTINES_H
+#define DISPLAY_SUBROUTINES_H
+
 #include <gtk/gtk.h>
 
 /* Subroutines defined in display_subroutines.c */
@@ -24,6 +27,14 @@ void display_update_vu_meter (gpointer * user_data, gint channel,
                               gdouble new_value, gdouble peak_dB,
                               gdouble decay_dB);
 
-guint display_show_message (gchar *message_text, GApplication *app);
+guint display_show_message (gchar * message_text, GApplication * app);
 
-void display_remove_message (guint message_id, GApplication *app);
+void display_remove_message (guint message_id, GApplication * app);
+
+void display_set_operator_text (gchar * text_to_display, GApplication * app);
+
+void display_clear_operator_text (GApplication * app);
+
+#endif /* DISPLAY_SUBROUTINES_H */
+
+/* End of file display_subroutines.h */

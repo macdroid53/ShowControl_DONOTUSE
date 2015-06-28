@@ -55,6 +55,9 @@ struct _Sound_Effects_PlayerPrivate
   /* The common area, needed for updating the display asynchronously. */
   GtkWidget *common_area;
 
+  /* The place where messages to the operator are shown.  */
+  GtkLabel *operator_text;
+
   /* The status bar and context ID, used for showing messages.  */
   GtkStatusbar *status_bar;
   guint context_id;
@@ -94,6 +97,7 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
 {
   GtkWindow *top_window;
   GtkWidget *common_area;
+  GtkLabel *operator_text;
   GtkStatusbar *status_bar;
   guint context_id;
   GtkBuilder *builder;
@@ -134,12 +138,20 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
                   filename);
     }
 
-  /* Also get the common area and status bar. */
+  /* Also get the common area, operator text and status bar. */
   common_area = GTK_WIDGET (gtk_builder_get_object (builder, "common_area"));
   priv->common_area = common_area;
   if (common_area == NULL)
     {
       g_critical ("Widget \"common_area\" is missing in file %s.", filename);
+    }
+
+  operator_text =
+    GTK_LABEL (gtk_builder_get_object (builder, "operator_text"));
+  priv->operator_text = operator_text;
+  if (operator_text == NULL)
+    {
+      g_critical ("Operator text is missing in file %s.", filename);
     }
 
   status_bar = GTK_STATUSBAR (gtk_builder_get_object (builder, "status_bar"));
@@ -578,6 +590,19 @@ sep_get_top_window (GApplication * app)
 
   top_window = priv->top_window;
   return (top_window);
+}
+
+/* Find the operator text label widget, which is used to display
+ * text from the sequencer to the operator.  */
+GtkLabel *
+sep_get_operator_text (GApplication * app)
+{
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+  GtkLabel *operator_text;
+
+  operator_text = priv->operator_text;
+  return operator_text;
 }
 
 /* Find the status bar, which is used for messages.  */

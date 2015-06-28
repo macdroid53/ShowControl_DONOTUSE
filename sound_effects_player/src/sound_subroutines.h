@@ -54,4 +54,10 @@ void sound_completed (const gchar * sound_name, GApplication * app);
 /* Note that a sound has terminated.  */
 void sound_terminated (const gchar * sound_name, GApplication * app);
 
+/* The Pause button has been pushed.  */
+void sound_button_pause (GApplication * app);
+
+/* The Continue button has been pushed.  */
+void sound_button_continue (GApplication * app);
+
 /* End of file sound_subroutines.h */

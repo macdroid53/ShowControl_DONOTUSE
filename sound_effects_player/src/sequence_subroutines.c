@@ -29,7 +29,7 @@
 
 /* When debugging it can be useful to trace what is happening in the
  * internal sequencer.  */
-#define TRACE_SEQUENCER 0
+#define TRACE_SEQUENCER FALSE
 
 /* the persistent data used by the internal sequencer */
 struct sequence_info
@@ -37,13 +37,19 @@ struct sequence_info
   GList *item_list;             /* The sequence  */
   gchar *next_item_name;        /* The name of the next sequence item
                                  * to be executed.  */
-  GList *offered;               /* The list of Offer Sound items 
+  GList *offering;              /* The list of Offer Sound items 
                                  * that are still attached to a cluster  */
   GList *running;               /* The list of Start Sound items
                                  * that are still attached to a cluster  */
+  struct remember_info *current_operator_wait;  /* The Operator Wait sequence 
+                                                 * item that is currently 
+                                                 * displaying its text to the 
+                                                 * operator.  */
+  GList *operator_waiting;      /* The Operator Wait sequence items that are
+                                 * waiting for their turn at the operator.  */
 };
 
-/* an entry on the running and offered lists */
+/* an entry on the running, offering or operator waiting lists */
 struct remember_info
 {
   guint cluster_number;
@@ -77,6 +83,14 @@ static void execute_offer_sound (struct sequence_item_info *the_item,
                                  struct sequence_info *sequence_data,
                                  GApplication * app);
 
+static void execute_cease_offering_sound (struct sequence_item_info *the_item,
+                                          struct sequence_info *sequence_data,
+                                          GApplication * app);
+
+static void execute_operator_wait (struct sequence_item_info *the_item,
+                                   struct sequence_info *sequence_data,
+                                   GApplication * app);
+
 /* Subroutines for handling sequence items.  */
 
 /* Initialize the internal sequencer.  */
@@ -87,8 +101,10 @@ sequence_init (GApplication * app)
 
   sequence_data = g_malloc (sizeof (struct sequence_info));
   sequence_data->item_list = NULL;
-  sequence_data->offered = NULL;
+  sequence_data->offering = NULL;
   sequence_data->running = NULL;
+  sequence_data->current_operator_wait = NULL;
+  sequence_data->operator_waiting = NULL;
   return (sequence_data);
 }
 
@@ -232,13 +248,11 @@ execute_item (struct sequence_item_info *the_item,
       break;
 
     case cease_offering_sound:
-      display_show_message ("Cease offering sound", app);
-      sequence_data->next_item_name = NULL;
+      execute_cease_offering_sound (the_item, sequence_data, app);
       break;
 
     case operator_wait:
-      display_show_message ("Operator wait", app);
-      sequence_data->next_item_name = NULL;
+      execute_operator_wait (the_item, sequence_data, app);
       break;
 
     case start_sequence:
@@ -262,8 +276,10 @@ execute_start_sound (struct sequence_item_info *the_item,
 
   if (TRACE_SEQUENCER)
     {
-      g_print ("start sound, cluster = %d, sound name = %s.\n",
-               the_item->cluster_number, the_item->sound_name);
+      g_print ("start sound, cluster = %d, sound name = %s, next = %s, "
+               " complete = %s, terminate = %s.\n", the_item->cluster_number,
+               the_item->sound_name, the_item->next_starts,
+               the_item->next_completion, the_item->next_termination);
     }
 
   cluster_number = the_item->cluster_number;
@@ -335,7 +351,6 @@ execute_stop_sound (struct sequence_item_info *the_item,
   return;
 }
 
-
 /* Execute an Offer Sound sequence item.  */
 void
 execute_offer_sound (struct sequence_item_info *the_item,
@@ -361,8 +376,97 @@ execute_offer_sound (struct sequence_item_info *the_item,
   remember_data->cluster_number = cluster_number;
   remember_data->sound_effect = NULL;
   remember_data->sequence_item = the_item;
-  sequence_data->offered =
-    g_list_append (sequence_data->offered, remember_data);
+  sequence_data->offering =
+    g_list_append (sequence_data->offering, remember_data);
+
+  /* Advance to the next sequence item.  */
+  sequence_data->next_item_name = the_item->next;
+
+  return;
+}
+
+/* Execute a Cease Offering Sound sequence item.  */
+void
+execute_cease_offering_sound (struct sequence_item_info *the_item,
+                              struct sequence_info *sequence_data,
+                              GApplication * app)
+{
+  gint cluster_number;
+  struct remember_info *remember_data;
+  struct sequence_item_info *sequence_item;
+  GList *list_element, *next_list_element;
+
+  if (TRACE_SEQUENCER)
+    {
+      g_print ("Cease offering sound, name = %s, tag = %s, " "next = %s.\n",
+               the_item->name, the_item->tag, the_item->next);
+    }
+
+  /* Process every Offer Sound sequence item with the same tag.  */
+  list_element = sequence_data->offering;
+  while (list_element != NULL)
+    {
+      next_list_element = list_element->next;
+      remember_data = list_element->data;
+      sequence_item = remember_data->sequence_item;
+      if (g_strcmp0 (the_item->tag, sequence_item->tag) == 0)
+        {
+          /* We have a match.  Remove the Offer Sound from the cluster.  */
+          sequence_data->offering =
+            g_list_remove_link (sequence_data->offering, list_element);
+
+          /* Remove the Offer Sound's text from the cluster.  */
+          cluster_number = remember_data->cluster_number;
+          sound_cluster_set_name ((gchar *) "", cluster_number, app);
+
+          g_list_free (list_element);
+          g_free (remember_data);
+        }
+      list_element = next_list_element;
+    }
+
+  /* Advance to the next sequence item.  */
+  sequence_data->next_item_name = the_item->next;
+
+  return;
+}
+
+/* Execute an Operator Wait sequence item.  */
+void
+execute_operator_wait (struct sequence_item_info *the_item,
+                       struct sequence_info *sequence_data,
+                       GApplication * app)
+{
+  struct remember_info *remember_data;
+
+  if (TRACE_SEQUENCER)
+    {
+      g_print ("Operator Wait, name = %s, next play = %s, "
+               "operator text = %s, next = %s.\n", the_item->name,
+               the_item->next_play, the_item->text_to_display,
+               the_item->next);
+    }
+
+  /* Record information about the wait, since we will need it when
+   * the wait is over.  */
+  remember_data = g_malloc (sizeof (struct remember_info));
+  remember_data->cluster_number = 0;
+  remember_data->sound_effect = NULL;
+  remember_data->sequence_item = the_item;
+
+  if (sequence_data->current_operator_wait == NULL)
+    {
+      /* There are no prior operator wait commands running.  */
+      sequence_data->current_operator_wait = remember_data;
+      display_set_operator_text (the_item->text_to_display, app);
+    }
+  else
+    {
+      /* There is an Operator Wait already running; place this one
+       * on the list to be executed later.  */
+      sequence_data->operator_waiting =
+        g_list_append (sequence_data->operator_waiting, remember_data);
+    }
 
   /* Advance to the next sequence item.  */
   sequence_data->next_item_name = the_item->next;
@@ -391,7 +495,7 @@ sequence_MIDI_show_control_go (gchar * Q_number, GApplication * app)
   /* Find the cluster whose Offer Sound sequence item has the specified
    * Q_number.  */
   found_item = FALSE;
-  for (item_list = sequence_data->offered; item_list != NULL;
+  for (item_list = sequence_data->offering; item_list != NULL;
        item_list = item_list->next)
     {
       remember_data = item_list->data;
@@ -418,41 +522,32 @@ sequence_MIDI_show_control_go (gchar * Q_number, GApplication * app)
   return;
 }
 
-/* Execute the Stop command from an external sequencer issuing MIDI Show Control
- * commands.  */
+/* Execute the Go_off command from an external sequencer issuing MIDI Show 
+ * Control commands.  */
 void
-sequence_MIDI_show_control_stop (gchar * Q_number, GApplication * app)
+sequence_MIDI_show_control_go_off (gchar * Q_number, GApplication * app)
 {
   struct sequence_info *sequence_data;
   struct remember_info *remember_data;
   struct sequence_item_info *sequence_item;
-  gboolean item_found;
   GList *item_list;
 
   sequence_data = sep_get_sequence_data (app);
 
-  /* Find the running sound whose Start Sound sequence item has the specified
-   * Q_number.  */
-  item_found = FALSE;
+  /* Stop the running sounds whose Start Sound sequence item has the specified
+   * Q_number.  If there is no Q number, stop all sounds.  */
   for (item_list = sequence_data->running; item_list != NULL;
        item_list = item_list->next)
     {
       remember_data = item_list->data;
       sequence_item = remember_data->sequence_item;
-      if (g_strcmp0 (Q_number, sequence_item->Q_number) == 0)
+      if ((Q_number == NULL) || (g_strcmp0 (Q_number, (gchar *) ""))
+          || (g_strcmp0 (Q_number, sequence_item->Q_number) == 0))
         {
-          item_found = TRUE;
-          break;
+          /* Stop the sound.  When the sound terminates we will clean up.  */
+          sound_stop_playing (remember_data->sound_effect, app);
         }
     }
-  if (!item_found)
-    {
-      display_show_message ("No matching Q_number.", app);
-      return;
-    }
-
-  /* Stop the sound.  When the sound terminates we will clean up.  */
-  sound_stop_playing (remember_data->sound_effect, app);
 
   return;
 }
@@ -477,7 +572,7 @@ sequence_cluster_start (guint cluster_number, GApplication * app)
   /* See if there is an Offer Sound sequence item outstanding which names
    * this cluster.  */
   found_item = FALSE;
-  for (item_list = sequence_data->offered; item_list != NULL;
+  for (item_list = sequence_data->offering; item_list != NULL;
        item_list = item_list->next)
     {
       remember_data = item_list->data;
@@ -489,7 +584,7 @@ sequence_cluster_start (guint cluster_number, GApplication * app)
     }
   if (!found_item)
     {
-      display_show_message ("No sound offered on this cluster.", app);
+      display_show_message ("No sound offering on this cluster.", app);
       return;
     }
 
@@ -541,6 +636,56 @@ sequence_cluster_stop (guint cluster_number, GApplication * app)
   return;
 }
 
+/* Process the Play button.  */
+void
+sequence_button_play (GApplication * app)
+{
+  struct sequence_info *sequence_data;
+  struct remember_info *remember_data;
+  struct sequence_item_info *current_sequence_item;
+  struct sequence_item_info *next_sequence_item;
+
+  sequence_data = sep_get_sequence_data (app);
+  remember_data = sequence_data->current_operator_wait;
+  GList *list_element;
+
+  /* If we are not waiting for the operator to press the key,
+   * do nothing.  */
+  if (remember_data == NULL)
+    return;
+
+  current_sequence_item = remember_data->sequence_item;
+
+  /* This Operator Wait sequence item is no longer waiting.  */
+  sequence_data->current_operator_wait = NULL;
+  g_free (remember_data);
+  remember_data = NULL;
+
+  /* See if there is another one ready to wait.  */
+  list_element = g_list_first (sequence_data->operator_waiting);
+  if (list_element != NULL)
+    {
+      /* There is, give it its chance to display for the opeaator.  */
+      sequence_data->operator_waiting =
+        g_list_remove_link (sequence_data->operator_waiting, list_element);
+      remember_data = list_element->data;
+      next_sequence_item = remember_data->sequence_item;
+      display_set_operator_text (next_sequence_item->text_to_display, app);
+      sequence_data->current_operator_wait = remember_data;
+      g_list_free (list_element);
+    }
+  else
+    {
+      display_clear_operator_text (app);
+    }
+
+  /* Run the sequencer starting from the Operator Wait's specified label.  */
+  sequence_data->next_item_name = current_sequence_item->next_play;
+  execute_items (sequence_data, app);
+
+  return;
+}
+
 /* Process the completion of a sound.  */
 void
 sequence_sound_completion (struct sound_info *sound_effect,
@@ -561,7 +706,7 @@ sequence_sound_completion (struct sound_info *sound_effect,
     }
 
   /* See if there is a Start Sound sequence item outstanding which names
-   * this cluster.  */
+   * this sound.  */
   item_found = FALSE;
   for (item_list = sequence_data->running; item_list != NULL;
        item_list = item_list->next)
@@ -598,7 +743,7 @@ sequence_sound_completion (struct sound_info *sound_effect,
   /* See if there is an Offer Sound sequence item outstanding which names
    * this cluster.  */
   item_found = FALSE;
-  for (item_list = sequence_data->offered; item_list != NULL;
+  for (item_list = sequence_data->offering; item_list != NULL;
        item_list = item_list->next)
     {
       remember_data = item_list->data;
@@ -661,7 +806,7 @@ sequence_sound_termination (struct sound_info *sound_effect,
 
   if (!item_found)
     {
-      /* There isn't.  Ignore the completion.  */
+      /* There isn't.  Ignore the termination.  */
       display_show_message ("Termination but sound not running.", app);
       return;
     }
@@ -682,7 +827,7 @@ sequence_sound_termination (struct sound_info *sound_effect,
   /* See if there is an Offer Sound sequence item outstanding which names
    * this cluster.  */
   item_found = FALSE;
-  for (item_list = sequence_data->offered; item_list != NULL;
+  for (item_list = sequence_data->offering; item_list != NULL;
        item_list = item_list->next)
     {
       remember_data = item_list->data;
@@ -703,7 +848,7 @@ sequence_sound_termination (struct sound_info *sound_effect,
 
   /* Now that the Start Sound has terminated, run the sequencer
    * from its termination label.  */
-  sequence_data->next_item_name = start_sound_sequence_item->next_terminated;
+  sequence_data->next_item_name = start_sound_sequence_item->next_termination;
   execute_items (sequence_data, app);
 
   return;

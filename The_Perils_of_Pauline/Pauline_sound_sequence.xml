@@ -11,58 +11,70 @@
     <sequence_item>
       <name>start_of_sequence</name>
       <type>start_sequence</type>
-      <next>offer_tone</next>
+      <next>ring_1</next>
     </sequence_item>
 
     <sequence_item>
-      <name>offer_tone</name>
-      <type>offer_sound</type>
-      <next_to_start>play_tone</next_to_start>
-      <Q_number>1</Q_number>
-      <cluster_number>0</cluster_number>
-      <text_to_display>play 440Hz tone</text_to_display>
-      <next>offer_to_stop</next>      
-    </sequence_item>
-
-    <sequence_item>
-      <name>offer_to_stop</name>
-      <type>offer_sound</type>
-      <next_to_start>stop_tone</next_to_start>
-      <Q_number>2</Q_number>
-      <cluster_number>1</cluster_number>
-      <text_to_display>stop playing 440Hz tone</text_to_display>
+      <name>ring_1</name>
+      <type>operator_wait</type>
+      <text_to_display>telephone rings</text_to_display>
+      <next_play>ring_2</next_play>
     </sequence_item>
     
     <sequence_item>
-      <name>play_tone</name>
+      <name>ring_2</name>
       <type>start_sound</type>
-      <sound_name>440Hz</sound_name>
+      <sound_name>ring</sound_name>
       <cluster>0</cluster>
-      <text_to_display>playing 440HZ tone</text_to_display>
-      <tag>tone</tag>
+      <tag>ring</tag>
+      <text_to_display>ring</text_to_display>      
+      <next_starts>ring_3</next_starts>
+      <next_completion>ring_5</next_completion>
+      <next_termination>ring_7</next_termination>
     </sequence_item>
 
     <sequence_item>
-      <name>stop_tone</name>
+      <name>ring_3</name>
+      <type>operator_wait</type>
+      <text_to_display>stop telephone ring</text_to_display>
+      <next_play>ring_4</next_play>
+      </sequence_item>
+    
+    <sequence_item>
+      <name>ring_4</name>
       <type>stop</type>
-      <tag>tone</tag>
+      <tag>ring</tag>
+      <next>ring_1</next>
+    </sequence_item>
+
+    <sequence_item>
+      <name>ring_5</name>
+      <type>start_sound</type>
+      <sound_name>ringout</sound_name>
+      <cluster>0</cluster>
+      <tag>ring</tag>
+      <text_to_display>ring</text_to_display>
+      <next_completion>ring_6</next_completion>
     </sequence_item>
     
     <sequence_item>
-      <name>train</name>
+      <name>ring_6</name>
       <type>start_sound</type>
-      <sound_name>train</sound_name>
-      <velocity>127</velocity>
-      <designer_pan>0.00</designer_pan>
-      <program>0</program>
-      <bank>0</bank>
+      <sound_name>ring</sound_name>
       <cluster>0</cluster>
-      <next_when_complete></next_when_complete>
-      <next_when_terminated></next_when_terminated>
-      <next_when_started></next_when_started>
-      <importance>1</importance>
-      <Q_number>2.0</Q_number>
-      <display>train</display>
+      <tag>ring</tag>
+      <text_to_display>ring</text_to_display>      
+      <next_completion>ring_5</next_completion>
+      <next_termination>ring_7</next_termination>
+    </sequence_item>
+
+    <sequence_item>
+      <name>ring_7</name>
+      <type>start_sound</type>
+      <sound_name>ringout</sound_name>
+      <cluster>0</cluster>
+      <tag>ring</tag>
+      <text_to_display>ring</text_to_display>      
     </sequence_item>
 
   </sound_sequence>

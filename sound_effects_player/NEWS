@@ -1,3 +1,6 @@
+Version 0.47, June 28, 2015
+  Enough of the sequencer works to do a telephone ring.
+  
 Version 0.46, June 27, 2015
   The Offer Sound, Start Sound and Stop sequence items are implemented.
   Using the Pauline project, sending cue 1 from CuePlayer starts a

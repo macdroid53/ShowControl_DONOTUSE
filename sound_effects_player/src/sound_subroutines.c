@@ -309,3 +309,21 @@ sound_terminated (const gchar * sound_name, GApplication * app)
 
   return;
 }
+
+/* The Pause button was pushed.  */
+void
+sound_button_pause (GApplication * app)
+{
+  /* FIXME: code this.  */
+
+  return;
+}
+
+/* The Continue button was pushed.  */
+void
+sound_button_continue (GApplication * app)
+{
+  /* FIXME: code this.  */
+
+  return;
+}

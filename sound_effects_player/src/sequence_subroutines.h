@@ -37,14 +37,17 @@ void sequence_start (GApplication * app);
 /* Execute the MIDI Show Control command Go.  */
 void sequence_MIDI_show_control_go (gchar * Q_number, GApplication * app);
 
-/* Execute the MIDI Show Control command Stop.  */
-void sequence_MIDI_show_control_stop (gchar * Q_number, GApplication * app);
+/* Execute the MIDI Show Control command Go_off.  */
+void sequence_MIDI_show_control_go_off (gchar * Q_number, GApplication * app);
 
 /* Start the sound offered on a cluster.  */
 void sequence_cluster_start (guint cluster_number, GApplication * app);
 
 /* Stop the sound offered on a cluster.  */
 void sequence_cluster_stop (guint cluster_number, GApplication * app);
+
+/* Operator pushed the Play button.  */
+void sequence_button_play (GApplication * app);
 
 /* A sound has completed.  */
 void sequence_sound_completion (struct sound_info *sound_effect,

@@ -57,7 +57,7 @@ struct sequence_item_info
   gboolean cluster_number_specified;    /* If a cluster is not specified, 
                                          * one as chosen at run time.  */
   gchar *next_completion;       /* Sequence item to execute on completion.  */
-  gchar *next_terminated;       /* sequence item to execute on termination.  */
+  gchar *next_termination;      /* sequence item to execute on termination.  */
   gchar *next_starts;           /* sequence item to execute when this sound 
                                  * starts.  */
   guint importance;             /* importance of this sound, 
@@ -70,6 +70,8 @@ struct sequence_item_info
   gchar *next_to_start;         /* The sequence item to execute when
                                  * the operator presses the cluster's Start
                                  * button.  */
+  gchar *next_play;             /* The sequence item to execute when
+                                 * the operator presses the Play button.  */
   gint MIDI_program_number;     /* The MIDI program number and */
   gint MIDI_note_number;        /* note number which trigger this cluster */
   gboolean MIDI_note_number_specified;  /* They may be omitted.  */

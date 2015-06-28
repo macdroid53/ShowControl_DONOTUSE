@@ -23,7 +23,44 @@
 #include "sound_structure.h"
 #include "sequence_subroutines.h"
 
-/* The Start button has been pushed.  */
+/* The Pause button has been pushed.  */
+void
+button_pause_clicked (GtkButton * button, gpointer user_data)
+{
+  GApplication *app;
+
+  app = sep_get_application_from_widget (user_data);
+  sound_button_pause (app);
+
+  return;
+}
+
+/* The Continue button has been pushed.  */
+void
+button_continue_clicked (GtkButton * button, gpointer user_data)
+{
+  GApplication *app;
+
+  app = sep_get_application_from_widget (user_data);
+  sound_button_continue (app);
+
+  return;
+}
+
+/* The Play button has been pushed.  */
+void
+button_play_clicked (GtkButton * button, gpointer user_data)
+{
+  GApplication *app;
+
+  /* Let the internal sequencer handle it.  */
+  app = sep_get_application_from_widget (user_data);
+  sequence_button_play (app);
+
+  return;
+}
+
+/* The Start button in a cluster has been pushed.  */
 void
 button_start_clicked (GtkButton * button, gpointer user_data)
 {
@@ -40,7 +77,7 @@ button_start_clicked (GtkButton * button, gpointer user_data)
   return;
 }
 
-/* The stop button has been pushed.  */
+/* The Stop button in a cluster has been pushed.  */
 void
 button_stop_clicked (GtkButton * button, gpointer user_data)
 {

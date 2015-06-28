@@ -92,6 +92,9 @@ void *sep_get_parse_net_data (GApplication * app);
 /* Find the top-level window. */
 GtkWindow *sep_get_top_window (GApplication * app);
 
+/* Find the operator text label widget.  */
+GtkLabel *sep_get_operator_text (GApplication *app);
+
 /* Find the status bar.  */
 GtkStatusbar *sep_get_status_bar (GApplication * app);
 
