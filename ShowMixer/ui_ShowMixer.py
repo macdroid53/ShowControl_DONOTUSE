@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ShowMixer_tabbed.ui'
 #
-# Created: Sat May  2 09:58:19 2015
+# Created: Sun Jun 21 15:03:55 2015
 #      by: PyQt5 UI code generator 5.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -83,9 +83,12 @@ class Ui_MainWindow(object):
         self.actionClose_Show.setObjectName("actionClose_Show")
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
+        self.actionSave_Show = QtWidgets.QAction(MainWindow)
+        self.actionSave_Show.setObjectName("actionSave_Show")
         self.menuFile.addAction(self.actionOpen_Show)
-        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionSave_Show)
         self.menuFile.addAction(self.actionClose_Show)
+        self.menuFile.addSeparator()
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
         self.menubar.addAction(self.menuFile.menuAction())
@@ -107,4 +110,5 @@ class Ui_MainWindow(object):
         self.actionOpen_Show.setText(_translate("MainWindow", "Open Show"))
         self.actionClose_Show.setText(_translate("MainWindow", "Close Show"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
+        self.actionSave_Show.setText(_translate("MainWindow", "Save Show"))
 

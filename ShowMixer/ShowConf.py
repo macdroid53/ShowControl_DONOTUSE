@@ -56,12 +56,12 @@ class ShowConf:
         #Get mixer chan to actor/char map file name
         mxrmap = doc.find('mixermap')
         attribs = mxrmap.attrib
-        self.settings["mxrmapfile"] = attribs['file']
+        self.settings["mxrmap"] = attribs['file']
 
         #Get mixer chan to actor/char map file name
         mxrcues = doc.find('mixercues')
         attribs = mxrcues.attrib
-        self.settings["mxrcuefile"] = attribs['file']
+        self.settings["mxrcue"] = attribs['file']
         
         print(self.settings)
         self.name = doc.find('name')

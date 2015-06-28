@@ -23,11 +23,16 @@ import ui_ShowMixer
 from pythonosc import osc_message_builder
 from pythonosc import udp_client
 
+import configuration as cfg
+
 import styles
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5005
 
+
+cfgdict = cfg.toDict()
+#print(cfgdict['Show']['folder'])
 
 def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
@@ -54,16 +59,63 @@ class Show:
     '''
 
 
-    def __init__(self, show_confpath):
+    def __init__(self):
         '''
         Constructor
         '''
-        self.show_conf = ShowConf(show_confpath + 'ShowConf.xml')
-        self.mixer = MixerConf(show_confpath + 'MixerDefs-r2.xml',self.show_conf.settings['mxrmfr'],self.show_conf.settings['mxrmodel'])
-        self.chrchnmap = MixerCharMap(show_confpath + 'MixerMap.xml')
-        self.cues = CueList(show_confpath + 'Scrooge Moves.xml', self.mixer.input_count)
+        self.show_confpath = cfgdict['Show']['folder'] + '/'
+        self.show_conf = ShowConf(self.show_confpath + cfgdict['Show']['file'])
+        self.mixer = MixerConf(path.abspath(path.join(path.dirname(__file__), '../ShowControl/', cfgdict['Mixer']['file'])),self.show_conf.settings['mxrmfr'],self.show_conf.settings['mxrmodel'])
+        self.chrchnmap = MixerCharMap(self.show_confpath + self.show_conf.settings['mxrmap'])
+        self.cues = CueList(self.show_confpath + self.show_conf.settings['mxrcue'], self.mixer.input_count)
         self.cues.currentcueindex = 0
         self.cues.setcurrentcuestate(self.cues.currentcueindex)
+
+    def loadNewShow(self, newpath):
+        '''
+            :param sho_configpath: path to new ShowConf.xml
+            :return:
+        '''
+        self.show_confpath = path.dirname(newpath)
+        self.show_confpath = self.show_confpath + '/'
+        self.show_conf = ShowConf(self.show_confpath + cfgdict['Show']['file'])
+        self.mixer = MixerConf(path.abspath(path.join(path.dirname(__file__), '../ShowControl/', cfgdict['Mixer']['file'])),self.show_conf.settings['mxrmfr'],self.show_conf.settings['mxrmodel'])
+        self.chrchnmap = MixerCharMap(self.show_confpath + self.show_conf.settings['mxrmap'])
+        self.cues = CueList(self.show_confpath + self.show_conf.settings['mxrcue'], self.mixer.input_count)
+        self.cues.currentcueindex = 0
+        self.cues.setcurrentcuestate(self.cues.currentcueindex)
+        self.displayShow()
+
+    def displayShow(self):
+        '''
+        Update the state of the mixer display to reflect the newly loaded show
+        '''
+        print(path.join(path.dirname(__file__)))
+        print(path.abspath(path.join(path.dirname(__file__))) + '/')
+        #print('Show Object:',The_Show)
+        #print(The_Show.show_conf.settings['mxrmapfile'])
+        insliders = self.mixer.inputsliders
+        #print('Input Slider Count: ' + str(len(insliders)))
+        for x in range(1, len(insliders)+1):
+            sliderconf = insliders['Ch' + '{0:02}'.format(x)]
+            #print('level: ' + str(sliderconf.level))
+            #print('scribble: ' + sliderconf.scribble_text)
+        outsliders = self.mixer.outputsliders
+        #print('Output Slider Count: ' + str(len(outsliders)))
+        for x in range(1, len(outsliders)+1):
+            sliderconf = outsliders['Ch' + '{0:02}'.format(x)]
+            #print('level: ' + str(sliderconf.level))
+            #print('scribble: ' + sliderconf.scribble_text)
+
+        #print(The_Show.cues)
+        qs = self.cues.cuelist.findall('cue')
+        for q in qs:
+             print(q.attrib)
+
+        #print(The_Show.chrchnmap)
+        chs = self.chrchnmap.maplist.findall('input')
+        # for ch in chs:
+        #     print(ch.attrib)
 
 
 class ChanStripDlg(QtWidgets.QMainWindow, ui_ShowMixer.Ui_MainWindow):
@@ -82,9 +134,13 @@ class ChanStripDlg(QtWidgets.QMainWindow, ui_ShowMixer.Ui_MainWindow):
 
         self.UDPsignal = UDPSignals()
         self.UDPsignal.UDPCue_rcvd.connect(self.on_UDPCue_rcvd)
-
         self.setupUi(self)
+        self.tabWidget.setCurrentIndex(0)
         self.nextButton.clicked.connect(self.on_buttonNext_clicked)
+        self.actionOpen_Show.triggered.connect(self.openShow)
+        self.actionSave_Show.triggered.connect(self.saveShow)
+        self.actionClose_Show.triggered.connect(self.closeShow)
+
 
     def addChanStrip(self):
         #layout = self.stripgridLayout
@@ -275,6 +331,30 @@ class ChanStripDlg(QtWidgets.QMainWindow, ui_ShowMixer.Ui_MainWindow):
         msg = msg.build()
         client.send(msg)
 
+    def openShow(self):
+        '''
+        Present file dialog to select new ShowConf.xml file
+        :return:
+        '''
+        fdlg = QtWidgets.QFileDialog()
+        fname = fdlg.getOpenFileName(self, 'Open file', '/home')
+        #fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', '/home')
+        fdlg.close()
+
+        print(fname[0])
+        The_Show.loadNewShow(fname[0])
+        self.set_scribble(The_Show.chrchnmap.maplist)
+        self.initmutes()
+        self.disptext()
+
+    def saveShow(self):
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', '/home')
+        print(fname)
+
+    def closeShow(self):
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', '/home')
+        print(fname)
+
     def set_scribble(self, mxrmap):
         chans = mxrmap.findall('input')
         for chan in chans:
@@ -331,7 +411,7 @@ class ChanStripDlg(QtWidgets.QMainWindow, ui_ShowMixer.Ui_MainWindow):
             sleep(0.1)
 
     def closeEvent(self, e):
-        print('My application is ending!')
+        print('ShowMixer is ending!')
         self.rcvrthread.should_close = True
         self.rcvrthread.wait()
 
@@ -383,31 +463,9 @@ class MyTableModel(QtCore.QAbstractTableModel):
 
 
 
-The_Show = Show(path.abspath(path.join(path.dirname(__file__))) + '/')
-#print('Show Object:',The_Show)
-#print(The_Show.show_conf.settings['mxrmapfile'])
-insliders = The_Show.mixer.inputsliders
-#print('Input Slider Count: ' + str(len(insliders)))
-for x in range(1, len(insliders)+1):
-    sliderconf = insliders['Ch' + '{0:02}'.format(x)]
-    #print('level: ' + str(sliderconf.level))
-    #print('scribble: ' + sliderconf.scribble_text)
-outsliders = The_Show.mixer.outputsliders
-#print('Output Slider Count: ' + str(len(outsliders)))
-for x in range(1, len(outsliders)+1):
-    sliderconf = outsliders['Ch' + '{0:02}'.format(x)]
-    #print('level: ' + str(sliderconf.level))
-    #print('scribble: ' + sliderconf.scribble_text)
-    
-#print(The_Show.cues)
-qs = The_Show.cues.cuelist.findall('cue')
-for q in qs:
-     print(q.attrib)
-
-#print(The_Show.chrchnmap)
-chs = The_Show.chrchnmap.maplist.findall('input')
-# for ch in chs:
-#     print(ch.attrib)
+#The_Show = Show(path.abspath(path.join(path.dirname(__file__))) + '/')
+The_Show = Show()
+The_Show.displayShow()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
@@ -418,7 +476,8 @@ if __name__ == "__main__":
     #app.setStyleSheet("QPushButton {pressed-color: red }")
     app.setStyleSheet(styles.QLiSPTheme_Dark)
     chans = len(The_Show.mixer.inputsliders)
-    ui = ChanStripDlg(path.abspath(path.join(path.dirname(__file__))) + '/Scrooge Moves.xml')
+    #ui = ChanStripDlg(path.abspath(path.join(path.dirname(__file__))) + '/Scrooge Moves.xml')
+    ui = ChanStripDlg(path.abspath(path.join(path.dirname(cfgdict['Show']['folder']))))
     ui.resize(chans*ui.ChanStrip_MinWidth,800)
     ui.addChanStrip()
     ui.disptext()
@@ -428,7 +487,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     client = udp_client.UDPClient(args.ip, args.port)
-    #ui.set_scribble(The_Show.chrchnmap.maplist)
+    ui.set_scribble(The_Show.chrchnmap.maplist)
     ui.initmutes()
     #tblvw = ui.findChild(QtWidgets.QTableView)
     #tblvw.selectRow(The_Show.cues.currentcueindex)
