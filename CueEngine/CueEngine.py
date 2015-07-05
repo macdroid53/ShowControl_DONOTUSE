@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 __author__ = 'mac'
 
-import sys
+import os, sys, inspect
 import types
 import argparse
 
@@ -9,8 +9,18 @@ from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 import xml.etree.ElementTree as ET
 from os import path
 
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+print(currentdir)
+syblingdir =  os.path.dirname(currentdir) + '/ShowControl/utils'
+print(syblingdir)
+parentdir = os.path.dirname(currentdir)
+print(parentdir)
+sys.path.insert(0,syblingdir)
+print(sys.path)
+
 from ShowConf import ShowConf
 from Cues import CueList
+#from MixerConf import MixerConf
 from UDPClient import *
 
 import CueEngine_ui
@@ -18,20 +28,54 @@ import CueEngine_ui
 from pythonosc import osc_message_builder
 #from pythonosc import udp_client
 
+import configuration as cfg
+
 import styles
+
+cfgdict = cfg.toDict()
 
 class Show:
     '''
     The Show class contains the information and object that constitute a show
     '''
-    def __init__(self, show_confpath):
+    def __init__(self):
         '''
         Constructor
         '''
-        self.show_conf = ShowConf(show_confpath + 'ShowConf.xml')
-        self.cues = CueList(show_confpath + 'Scrooge Moves.xml')
+        self.show_confpath = cfgdict['Show']['folder'] + '/'
+        self.show_conf = ShowConf(self.show_confpath + cfgdict['Show']['file'])
+        self.cues = CueList(self.show_confpath + self.show_conf.settings['mxrcue'])
         self.cues.currentcueindex = 0
         self.cues.setcurrentcuestate(self.cues.currentcueindex)
+
+    def loadNewShow(self, newpath):
+        '''
+            :param sho_configpath: path to new ShowConf.xml
+            :return:
+        '''
+        print(cfgdict)
+        self.show_confpath, showfile = path.split(newpath)
+        #self.show_confpath = path.dirname(newpath)
+        self.show_confpath = self.show_confpath + '/'
+        cfgdict['Show']['folder'] = self.show_confpath
+        cfgdict['Show']['file'] = showfile
+        cfg.updateFromDict(cfgdict)
+        cfg.write()
+        self.show_conf = ShowConf(self.show_confpath + cfgdict['Show']['file'])
+        self.cues = CueList(self.show_confpath + self.show_conf.settings['mxrcue'])
+        self.cues.currentcueindex = 0
+        self.cues.setcurrentcuestate(self.cues.currentcueindex)
+        self.displayShow()
+
+    def displayShow(self):
+        '''
+        Update the state of the mixer display to reflect the newly loaded show
+        '''
+        #print(self.cues)
+        qs = self.cues.cuelist.findall('cue')
+        for q in qs:
+             print(q.attrib)
+
 
 class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
 
@@ -41,8 +85,11 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
         QtGui.QIcon.setThemeName(styles.QLiSPIconsThemeName)
         self.__index = 0
         self.setupUi(self)
+        self.setWindowTitle(The_Show.show_conf.settings['name'])
         self.nextButton.clicked.connect(self.on_buttonNext_clicked)
         self.prevButton.clicked.connect(self.on_buttonPrev_clicked)
+        self.actionOpen_Show.triggered.connect(self.openShow)
+
 
     def on_buttonNext_clicked(self):
         print('Next')
@@ -56,10 +103,6 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
 
         print('/cue ' + ascii(The_Show.cues.currentcueindex))
         msg = '/cue ' + ascii(The_Show.cues.currentcueindex)
-        #msg = osc_message_builder.OscMessageBuilder(address='/cue')
-        #msg.add_arg('{0:03}'.format(The_Show.cues.currentcueindex))
-        #msg = msg.build()
-
         sender.send(msg)
 
     def on_buttonPrev_clicked(self):
@@ -72,11 +115,11 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
             The_Show.cues.setcurrentcuestate(The_Show.cues.currentcueindex)
         else:
             The_Show.cues.currentcueindex = 0
+        print('/cue ' + ascii(The_Show.cues.currentcueindex))
+        msg = '/cue ' + ascii(The_Show.cues.currentcueindex)
         tblvw = self.findChild(QtWidgets.QTableView)
         tblvw.selectRow(The_Show.cues.currentcueindex)
-
-#            msg = msg.build()
-#            client.send(msg)
+        sender.send(msg)
 
     def setfirstcue(self):
         tblvw = self.findChild(QtWidgets.QTableView)
@@ -103,6 +146,25 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
                      q.find('Title').text,
                      q.find('Cue').text])
         #print(self.tabledata)
+
+    def openShow(self):
+        '''
+        Present file dialog to select new ShowConf.xml file
+        :return:
+        '''
+        fdlg = QtWidgets.QFileDialog()
+        fname = fdlg.getOpenFileName(self, 'Open file', '/home')
+        #fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', '/home')
+        fdlg.close()
+
+        print(fname[0])
+        The_Show.loadNewShow(fname[0])
+        self.setWindowTitle(The_Show.show_conf.settings['name'])
+        self.disptext()
+        self.setfirstcue()
+        self.setWindowTitle(self.show_conf.settings('name'))
+
+
 
 class MyTableModel(QtCore.QAbstractTableModel):
     def __init__(self, datain, headerdata, parent=None):
@@ -151,7 +213,9 @@ class MyTableModel(QtCore.QAbstractTableModel):
 
 
 
-The_Show = Show(path.abspath(path.join(path.dirname(__file__))) + '/')
+#The_Show = Show(path.abspath(path.join(path.dirname(__file__))) + '/')
+The_Show = Show()
+The_Show.displayShow()
 
 
 if __name__ == "__main__":

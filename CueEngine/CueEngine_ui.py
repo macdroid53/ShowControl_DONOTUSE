@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'CueEngine.ui'
 #
-# Created: Sun Jun  7 08:51:08 2015
+# Created: Fri Jul  3 15:09:16 2015
 #      by: PyQt5 UI code generator 5.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -83,7 +83,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "LiConS Cue Engine"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Cue Engine"))
         self.nextButton.setText(_translate("MainWindow", "Next"))
         self.prevButton.setText(_translate("MainWindow", "Previous"))
         self.quitButton.setText(_translate("MainWindow", "Quit"))

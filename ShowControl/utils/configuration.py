@@ -1,12 +1,4 @@
-##########################################
-## Copyright 2012-2013 Ceruti Francesco & contributors
-##
-## This file is part of LiSP (Linux Show Player).
-##########################################
-
-#***See: /home/mac/workspace/mylisp/lisp/main.py
-#see lines 16-24 how the modules are loaded from folders relative to the module
-
+#!/usr/bin/env python3
 
 from configparser import ConfigParser
 from shutil import copyfile
@@ -14,7 +6,7 @@ import os
 
 HOME = os.path.expanduser("~")
 
-DEFAULT_CFG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../default.cfg'))
+DEFAULT_CFG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils/default.cfg'))
 
 CFG_DIR = HOME + '/.showcontrol'
 CFG_PATH = CFG_DIR + '/config.cfg'
@@ -46,6 +38,7 @@ checkUserConf()
 
 config = ConfigParser()
 config.read(CFG_PATH)
+config.keys()
 
 
 def toDict():

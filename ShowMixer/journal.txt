@@ -2,3 +2,25 @@ Sun Jun 28 09:17:45 EDT 2015
 
 Not sure ChanStripDlg.closeShow method required?
 
+What to work on next?
+- Add open show to CueEngine
+- Add cue modification?
+    Probably want this to be a dialog that be called from CueEngine and ShowMixer
+
+**** For now: Make it all work for the X32, then think about something for Yamaha and MIDI ****
+
+
+Mon Jun 29 19:11:54 EDT 2015
+
+Check out Show object in CueEngine.py to confirm adds did last session.
+I set channel count in CueList call in Show to 0 since CueEngine should know nothing about the mixer. ????
+
+
+Fri Jul  3 11:37:41 EDT 2015
+
+Modified ShowMixer to get configuration.py from common folder ShowControl
+
+
+Now that we can read files
+
+

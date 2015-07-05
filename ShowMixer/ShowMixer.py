@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import sys
+__author__ = 'mac'
+
+import os, sys, inspect
 import types
 import argparse
 import socket
@@ -8,10 +10,23 @@ from time import sleep
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from pythonosc import osc_message_builder
+from pythonosc import udp_client
 
 
 import xml.etree.ElementTree as ET
 from os import path
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+print(currentdir)
+syblingdir =  os.path.dirname(currentdir) + '/ShowControl/utils'
+print(syblingdir)
+parentdir = os.path.dirname(currentdir)
+print(parentdir)
+sys.path.insert(0,syblingdir)
+print(sys.path)
+
+
 
 from ShowConf import ShowConf
 from MixerConf import MixerConf
@@ -19,9 +34,7 @@ from MixerMap import MixerCharMap
 from Cues import CueList
 
 import ui_ShowMixer
-#import mainwindow
-from pythonosc import osc_message_builder
-from pythonosc import udp_client
+
 
 import configuration as cfg
 
@@ -76,8 +89,14 @@ class Show:
             :param sho_configpath: path to new ShowConf.xml
             :return:
         '''
-        self.show_confpath = path.dirname(newpath)
+        print(cfgdict)
+        self.show_confpath, showfile = path.split(newpath)
+        #self.show_confpath = path.dirname(newpath)
         self.show_confpath = self.show_confpath + '/'
+        cfgdict['Show']['folder'] = self.show_confpath
+        cfgdict['Show']['file'] = showfile
+        cfg.updateFromDict(cfgdict)
+        cfg.write()
         self.show_conf = ShowConf(self.show_confpath + cfgdict['Show']['file'])
         self.mixer = MixerConf(path.abspath(path.join(path.dirname(__file__), '../ShowControl/', cfgdict['Mixer']['file'])),self.show_conf.settings['mxrmfr'],self.show_conf.settings['mxrmodel'])
         self.chrchnmap = MixerCharMap(self.show_confpath + self.show_conf.settings['mxrmap'])
@@ -135,6 +154,7 @@ class ChanStripDlg(QtWidgets.QMainWindow, ui_ShowMixer.Ui_MainWindow):
         self.UDPsignal = UDPSignals()
         self.UDPsignal.UDPCue_rcvd.connect(self.on_UDPCue_rcvd)
         self.setupUi(self)
+        self.setWindowTitle(The_Show.show_conf.settings['name'])
         self.tabWidget.setCurrentIndex(0)
         self.nextButton.clicked.connect(self.on_buttonNext_clicked)
         self.actionOpen_Show.triggered.connect(self.openShow)
@@ -331,6 +351,11 @@ class ChanStripDlg(QtWidgets.QMainWindow, ui_ShowMixer.Ui_MainWindow):
         msg = msg.build()
         client.send(msg)
 
+    def setfirstcue(self):
+        tblvw = self.findChild(QtWidgets.QTableView)
+        tblvw.selectRow(The_Show.cues.currentcueindex)
+
+
     def openShow(self):
         '''
         Present file dialog to select new ShowConf.xml file
@@ -344,8 +369,10 @@ class ChanStripDlg(QtWidgets.QMainWindow, ui_ShowMixer.Ui_MainWindow):
         print(fname[0])
         The_Show.loadNewShow(fname[0])
         self.set_scribble(The_Show.chrchnmap.maplist)
+        self.setWindowTitle(The_Show.show_conf.settings['name'])
         self.initmutes()
         self.disptext()
+        self.setfirstcue()
 
     def saveShow(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', '/home')
@@ -481,6 +508,7 @@ if __name__ == "__main__":
     ui.resize(chans*ui.ChanStrip_MinWidth,800)
     ui.addChanStrip()
     ui.disptext()
+    ui.setfirstcue()
     parser = argparse.ArgumentParser()
     parser.add_argument("--ip", default="192.168.53.40", help="The ip of the OSC server")
     parser.add_argument("--port", type=int, default=10023, help="The port the OSC server is listening on")
