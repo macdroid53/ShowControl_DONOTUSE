@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<mixers>
+<mixer mfr="Behringer" model="X32">
+  <protocol>osc</protocol>
+  <mutestyle>illuminated</mutestyle>
+  <port type="input" cnt="32" name="CH">
+    <fader cmd="/ch/##/mix/fader" cmdtyp="level" range="0.0,1.0,1024" val="0"/>
+    <mute cmd="/ch/##/mix/on" cmdtyp="enum" val="0"/>
+    <scribble cmd="/ch/##/config/name" cmdtyp="string" text=""/>
+  </port>
+   <port type="auxin" cnt="6" name="AUX">
+   </port>
+   <port type="output" cnt="16" name="OUT">
+    <mute cmd="/outputs/main/##/mix/on" cmdtyp="enum" val="0"/>
+    <fader cmd="/ch/##/mix/fader" cmdtyp="level" range="0.0,1.0,1024" val="0"/>
+   </port>
+</mixer>
+<mixer mfr="Yamaha" model="01V">
+  <protocol>midi</protocol>
+  <mutestyle>illuminated</mutestyle>
+  <port type="input" cnt="16" name="CH">
+    <fader cmd="B#,01,XX" cmdtyp="level" range="0,127" val="0"/>
+    <mute cmd="B#.1C,XX" cmdtyp="enum" val="0"/>
+    <scribble cmd="" cmdtyp="string" text=""/>
+  </port>
+   <port type="auxmaster" cnt="4" name="AUX">
+    <mute cmd="B#,2D,XX" cmdtyp="enum" val="0"/>
+    <fader cmd="B#,11,XX" cmdtyp="level" range="0,127" val="0"/>
+   </port>
+   <port type="output" cnt="2" name="OUT">
+    <mute cmd="B#,37,XX" cmdtyp="enum" val="0"/>
+    <fader cmd="B#,1B,XX" cmdtyp="level" range="0,127" val="0"/>
+   </port>
+</mixer>
+<mixer mfr="Default" model="">
+  <protocol>midi</protocol>
+  <port type="input" cnt="16" name="CH">
+    <fader cmd="B#,01,XX" cmdtyp="level" range="0,127" val="0"/>
+    <mute cmd="B#.1C,XX" cmdtyp="enum" val="0"/>
+    <scribble cmd="" cmdtyp="string" text=""/>
+  </port>
+   <port type="output" cnt="2" name="OUT">
+    <mute cmd="B#,37,XX" cmdtyp="enum" val="0"/>
+    <fader cmd="B#,1B,XX" cmdtyp="level" range="0,127" val="0"/>
+   </port>
+</mixer>
+</mixers>

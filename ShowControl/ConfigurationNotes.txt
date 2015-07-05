@@ -1,0 +1,46 @@
+
+The top level configuration for ShowControl is stored in:
+
+<home>/.showcontrol/config.cfg
+
+Note: config.cfg is sourced from <installation dir>/ShowControl/default.cfg
+
+Example config.cfg:
+----------------------------------------------------
+#Show Control configuration file
+
+#Do not modified this section values
+[Version]
+Number = -0                                 #obvious
+
+[Show]                                      #this section stores the last show that was selected/loaded
+folder = /home/mac/Shows/Scrooge            #folder it was loaded from
+file = ShowConf.xml                         #show configuration file
+
+[Mixer]                                     #mixer related info section
+file = MixerDefs-r2.xml                     #file is always found in <installation dir>/ShowControl/
+------------------------------------------------------
+
+This info is loaded into cfgdict by configuration.py
+
+Things that change config.cfg:
+
+Show.loadNewShow
+	- sets cfgdict['Show']['folder'] = new path for ShowConf.xml
+	- sets cfgdict['Show']['file'] = new show config file (typically named ShowConf.xml)
+	- saves the new config.cfg
+
+
+
+<shows>/<show name>/ShowConf.xml stores show specific configuration
+Example ShowConf.xml:
+------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<showconf>
+<name>Scrooge</name>                        #show name
+<mixer mfr="Behringer" model="X32"/>        #mixer used for show
+<mixermap file="MixerMap.xml"/>             #xml file tht maps characters/actors to mixer channel
+<mixercues file="Scrooge Moves.xml"/>       #xml file defining cues/entrances/exits
+</showconf>
+
+
