@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<showconf>
-<name>Scrooge</name>
-<mixer mfr="Behringer" model="X32"/>
-<mixermap file="MixerMap.xml"/>
-<mixercues file="Scrooge Moves.xml"/>
-</showconf>
