@@ -20,7 +20,16 @@ Fri Jul  3 11:37:41 EDT 2015
 
 Modified ShowMixer to get configuration.py from common folder ShowControl
 
-
 Now that we can read files
+
+Mon Jul  6 19:17:45 EDT 2015
+
+Added code for Edit>Preferences menu
+launch dialog, get value, save value to cfg
+
+
+
+
+
 
 

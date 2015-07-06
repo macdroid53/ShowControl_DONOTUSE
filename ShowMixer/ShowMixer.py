@@ -33,8 +33,9 @@ from MixerConf import MixerConf
 from MixerMap import MixerCharMap
 from Cues import CueList
 
-import ui_ShowMixer
 
+import ui_ShowMixer
+from ui_preferences import Ui_Preferences
 
 import configuration as cfg
 
@@ -65,6 +66,25 @@ class UDPSignals(QObject):
     #updatesignal = pyqtSignal(object, str)
     UDPCue_rcvd = pyqtSignal(object, str)
 
+class ShowPreferences(QDialog, Ui_Preferences):
+    def __init__(self, parent=None):
+        QDialog.__init__(self, parent)
+        #super(object, self).__init__(self)
+        self.setupUi(self)
+
+    def accept(self):
+        x = self.cbxExitwCueEngine.checkState()
+        print(x)
+        if x == Qt.Checked:
+            cfgdict['Prefs']['exitwithce'] = 'true'
+        else:
+            cfgdict['Prefs']['exitwithce'] = 'false'
+        cfg.updateFromDict(cfgdict)
+        cfg.write()
+        super(ShowPreferences, self).accept()
+
+    def reject(self):
+        super(ShowPreferences, self).reject()
 
 class Show:
     '''
@@ -160,6 +180,8 @@ class ChanStripDlg(QtWidgets.QMainWindow, ui_ShowMixer.Ui_MainWindow):
         self.actionOpen_Show.triggered.connect(self.openShow)
         self.actionSave_Show.triggered.connect(self.saveShow)
         self.actionClose_Show.triggered.connect(self.closeShow)
+        self.actionPreferences.triggered.connect(self.editpreferences)
+        self.pref_dlg=ShowPreferences()
 
 
     def addChanStrip(self):
@@ -381,6 +403,17 @@ class ChanStripDlg(QtWidgets.QMainWindow, ui_ShowMixer.Ui_MainWindow):
     def closeShow(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', '/home')
         print(fname)
+
+    def editpreferences(self):
+        if cfgdict['Prefs']['exitwithce'] == 'true':
+            self.pref_dlg.cbxExitwCueEngine.setCheckState(Qt.Checked)
+        else:
+            self.pref_dlg.cbxExitwCueEngine.setCheckState(Qt.Unchecked)
+        self.pref_dlg.show()
+        #self.itb = QDialog()
+        #self.ui_prefdlg = Ui_Preferences()
+        #self.ui_prefdlg.setupUi(self.itb)
+        #self.itb.show()
 
     def set_scribble(self, mxrmap):
         chans = mxrmap.findall('input')
