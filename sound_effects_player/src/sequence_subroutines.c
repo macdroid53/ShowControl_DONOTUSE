@@ -755,11 +755,17 @@ sequence_sound_completion (struct sound_info *sound_effect,
         }
     }
 
-  /* If there is, restore its text to the cluster.  */
+  /* If there is, restore its text to the cluster.  If there isn't, clear
+   * the text field.  */
   if (item_found)
     {
       sound_cluster_set_name (offer_sound_sequence_item->text_to_display,
                               remember_data->cluster_number, app);
+    }
+  else
+    {
+      sound_cluster_set_name ((gchar *) "", sound_effect->cluster_number,
+                              app);
     }
 
   /* Now that the Start Sound has completed, run the sequencer
@@ -839,11 +845,17 @@ sequence_sound_termination (struct sound_info *sound_effect,
         }
     }
 
-  /* If there is, restore its text to the cluster.  */
+  /* If there is, restore its text to the cluster.  If there isn't, erase
+   * the text field.  */
   if (item_found)
     {
       sound_cluster_set_name (offer_sound_sequence_item->text_to_display,
                               remember_data->cluster_number, app);
+    }
+  else
+    {
+      sound_cluster_set_name ((gchar *) "", sound_effect->cluster_number,
+                              app);
     }
 
   /* Now that the Start Sound has terminated, run the sequencer

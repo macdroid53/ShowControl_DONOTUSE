@@ -536,10 +536,14 @@ compute_envelope_stage (GstEnvelope * self, GstClockTime ts)
 
   if (self->external_release_seen || self->external_completion_seen)
     {
-      /* We have seen an external signal initiating the release process.  */
+      /* We have seen an external signal initiating the release process,
+       * so the envelope is in either its release or completed stage.  */
+
+      /* If this is the first time we have been in the release stage,
+       * remember the time and volume since we will need them to ramp the
+       * volume down to zero.  */
       if (!self->release_started)
         {
-          /* This is the beginning of the release process.  */
           self->release_started = TRUE;
           self->release_started_volume = self->last_volume;
           self->release_started_time = ts;
@@ -558,28 +562,26 @@ compute_envelope_stage (GstEnvelope * self, GstClockTime ts)
                            GST_TIME_ARGS (self->release_started_time),
                            self->release_started_volume);
         }
-      /* If the release duration is infinite, then the receipt of the
-       * external signal ends the sound.  */
-      if (self->release_duration_infinite)
-        {
-          return completed;
-        }
+      /* An external completion message means we have reached the end of
+       * the sound from upstream.  No matter where we were in the envelope,
+       * we are now done.  */
+      if (self->external_completion_seen)
+        return completed;
 
-      /* Otherwise, if we are within the release duration, 
-       * we are in the release part of the envelope.  
-       * If not, the envelope has completed.
+      /* Otherwise, if we are within the release duration, we are in the 
+       * release stage of the envelope.  Note that if the release duration
+       * is infinite, the volume stays at the value it held when the
+       * release message arrived until the sound coming from upstream
+       * is complete.
        */
-      if (ts < (self->release_started_time + self->release_duration_time))
-        {
-          return release;
-        }
+      if ((ts < (self->release_started_time + self->release_duration_time))
+          || (self->release_duration_infinite))
+        return release;
       else
-        {
-          return completed;
-        }
+        return completed;
     }
 
-  /* We have not seen a release event, so the envelope proceeds
+  /* We have not seen a release or completion event, so the envelope proceeds
    * along its normal path.  */
   if (ts < self->attack_duration_time)
     {
@@ -588,6 +590,7 @@ compute_envelope_stage (GstEnvelope * self, GstClockTime ts)
     }
 
   /* The attack is complete.  */
+
   if (ts < self->attack_duration_time + self->decay_duration_time)
     {
       /* The decay is not yet complete.  */
@@ -595,6 +598,7 @@ compute_envelope_stage (GstEnvelope * self, GstClockTime ts)
     }
 
   /* The decay is complete.  */
+
   if ((ts < self->release_start_time) || (self->release_start_time == 0))
     {
       /* The decay is complete but we have not yet started 
@@ -602,13 +606,18 @@ compute_envelope_stage (GstEnvelope * self, GstClockTime ts)
       return sustain;
     }
 
+  /* A non-infinite, non-zero release time was specified for the envelope.
+   */
+
   if (self->release_duration_infinite
       || ts < (self->release_start_time + self->release_duration_time))
     {
-      /* The release section of the envelope is running.  */
+      /* The release section of the envelope is running.
+       * If this is the first time we have been in the release stage,
+       * remember the time and volume since we will need them to ramp the
+       * volume down to zero.  */
       if (!self->release_started)
         {
-          /* This is the beginning of the release.  */
           self->release_started = TRUE;
           self->release_started_volume = self->last_volume;
           self->release_started_time = ts;
@@ -620,7 +629,9 @@ compute_envelope_stage (GstEnvelope * self, GstClockTime ts)
         }
       return release;
     }
-  /* The release is complete.  */
+
+  /* We have passed the specified release time, and in addition the specified
+   * release duration.  The envelope is complete.  */
   return completed;
 }
 
@@ -1175,7 +1186,8 @@ envelope_src_event_handler (GstBaseTransform * trans, GstEvent * event)
       break;
 
     case GST_EVENT_EOS:
-      /* We have reached the end of the incoming data stream.  */
+      /* We have reached the end of the incoming data stream.  
+       * Set a flag that will cause the sound to stop.  */
       GST_DEBUG_OBJECT (self, "envelope completion EOS");
       GST_OBJECT_LOCK (self);
       self->external_completion_seen = TRUE;
@@ -1244,7 +1256,7 @@ envelope_sink_event_handler (GstBaseTransform * trans, GstEvent * event)
         {
           /* This is a complete event, which is sent by the looper when
            * it reaches the end of its buffer.  Set a flag that will
-           * cause release processing to begin.  */
+           * cause the sound to stop.  */
           GST_DEBUG_OBJECT (self, "envelope completion message");
           GST_OBJECT_LOCK (self);
           self->external_completion_seen = TRUE;

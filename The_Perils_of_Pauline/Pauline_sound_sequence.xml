@@ -8,73 +8,15 @@
   <sound_sequence>
     <version>1.0</version>
 
+    <!-- There isn't enough of the internal sequencer implemented to make
+	 the telephone ring in Amato_sound_sequence.xml be independent of
+	 the main sound sequence.  Just run it; it loops.
+    -->
+    
     <sequence_item>
       <name>start_of_sequence</name>
       <type>start_sequence</type>
-      <next>ring_1</next>
-    </sequence_item>
-
-    <sequence_item>
-      <name>ring_1</name>
-      <type>operator_wait</type>
-      <text_to_display>telephone rings</text_to_display>
-      <next_play>ring_2</next_play>
-    </sequence_item>
-    
-    <sequence_item>
-      <name>ring_2</name>
-      <type>start_sound</type>
-      <sound_name>ring</sound_name>
-      <cluster>0</cluster>
-      <tag>ring</tag>
-      <text_to_display>ring</text_to_display>      
-      <next_starts>ring_3</next_starts>
-      <next_completion>ring_5</next_completion>
-      <next_termination>ring_7</next_termination>
-    </sequence_item>
-
-    <sequence_item>
-      <name>ring_3</name>
-      <type>operator_wait</type>
-      <text_to_display>stop telephone ring</text_to_display>
-      <next_play>ring_4</next_play>
-      </sequence_item>
-    
-    <sequence_item>
-      <name>ring_4</name>
-      <type>stop</type>
-      <tag>ring</tag>
-      <next>ring_1</next>
-    </sequence_item>
-
-    <sequence_item>
-      <name>ring_5</name>
-      <type>start_sound</type>
-      <sound_name>ringout</sound_name>
-      <cluster>0</cluster>
-      <tag>ring</tag>
-      <text_to_display>ring</text_to_display>
-      <next_completion>ring_6</next_completion>
-    </sequence_item>
-    
-    <sequence_item>
-      <name>ring_6</name>
-      <type>start_sound</type>
-      <sound_name>ring</sound_name>
-      <cluster>0</cluster>
-      <tag>ring</tag>
-      <text_to_display>ring</text_to_display>      
-      <next_completion>ring_5</next_completion>
-      <next_termination>ring_7</next_termination>
-    </sequence_item>
-
-    <sequence_item>
-      <name>ring_7</name>
-      <type>start_sound</type>
-      <sound_name>ringout</sound_name>
-      <cluster>0</cluster>
-      <tag>ring</tag>
-      <text_to_display>ring</text_to_display>      
+      <next>telephone-ring</next>
     </sequence_item>
 
   </sound_sequence>
