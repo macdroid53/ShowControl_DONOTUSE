@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'CueEngine.ui'
 #
-# Created: Fri Jul  3 15:09:16 2015
+# Created: Sun Jul  5 13:53:07 2015
 #      by: PyQt5 UI code generator 5.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -59,6 +59,8 @@ class Ui_MainWindow(object):
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
+        self.menuEdit = QtWidgets.QMenu(self.menubar)
+        self.menuEdit.setObjectName("menuEdit")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -69,12 +71,16 @@ class Ui_MainWindow(object):
         self.actionClose_Show.setObjectName("actionClose_Show")
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
+        self.actionPreferences = QtWidgets.QAction(MainWindow)
+        self.actionPreferences.setObjectName("actionPreferences")
         self.menuFile.addAction(self.actionOpen_Show)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionClose_Show)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
+        self.menuEdit.addAction(self.actionPreferences)
         self.menubar.addAction(self.menuFile.menuAction())
+        self.menubar.addAction(self.menuEdit.menuAction())
 
         self.retranslateUi(MainWindow)
         self.actionExit.triggered.connect(MainWindow.close)
@@ -88,7 +94,9 @@ class Ui_MainWindow(object):
         self.prevButton.setText(_translate("MainWindow", "Previous"))
         self.quitButton.setText(_translate("MainWindow", "Quit"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
+        self.menuEdit.setTitle(_translate("MainWindow", "Edit"))
         self.actionOpen_Show.setText(_translate("MainWindow", "Open Show"))
         self.actionClose_Show.setText(_translate("MainWindow", "Close Show"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
+        self.actionPreferences.setText(_translate("MainWindow", "Preferences"))
 

@@ -6,6 +6,9 @@ import types
 import argparse
 
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+
 import xml.etree.ElementTree as ET
 from os import path
 
@@ -24,6 +27,7 @@ from Cues import CueList
 from UDPClient import *
 
 import CueEngine_ui
+from CueEdit_ui import Ui_dlgEditCue
 #import mainwindow
 from pythonosc import osc_message_builder
 #from pythonosc import udp_client
@@ -33,6 +37,61 @@ import configuration as cfg
 import styles
 
 cfgdict = cfg.toDict()
+
+columndict = {'Number': 0, 'Act':1, 'Scene':2, 'Page':3, 'ID':4, 'Title':5,'Dialog/Prompt':6}
+
+class EditCue(QDialog, Ui_dlgEditCue):
+    def __init__(self, index, parent=None):
+        QDialog.__init__(self, parent)
+        #super(object, self).__init__(self)
+        self.editidx = index
+        self.setupUi(self)
+        self.chgdict = {}
+        #self.changeflag = False
+        #self.plainTextEditAct.textChanged.connect(self.setChangeFlag)
+
+    def accept(self):
+        somethingchanged = False
+        for dobj in self.findChildren(QtWidgets.QPlainTextEdit):
+            tobj = dobj.document()
+            if tobj.isModified():
+                somethingchanged = True
+            #print(dobj)
+        if somethingchanged:
+            print('editidx',self.editidx)
+            for dobj in self.findChildren(QtWidgets.QPlainTextEdit):
+                objnam = dobj.objectName()
+                flddoc = dobj.documentTitle()
+                print('documentTitle: ', flddoc)
+                print('object name: ', objnam)
+                fldtxt = dobj.toPlainText()
+                self.chgdict.update({flddoc:fldtxt})
+
+        print('Something changed: ', somethingchanged)
+        docobj = self.plainTextEditTitle.document()
+        print('Window modded:',self.isWindowModified())
+        #print(docobj.isModified())
+        # if docobj.isModified():
+        #     print(self.plainTextEditTitle.toPlainText())
+        #     self.chgdict.update()
+        #     #save changes
+        #     #save to cue file
+        #     #redisplay
+        # self.chglist.append('ddd')
+        # #rowlist = self.sender().tableview #.tabledata[self.editidx]
+        # #print('rowlist', rowlist)
+        super(EditCue, self).accept()
+
+    def reject(self):
+        super(EditCue, self).reject()
+
+    def getchange(self):
+        return self.chglist
+
+    #def setChangeFlag(self):
+    #    print('textchanged')
+    #    self.changeflag = True
+
 
 class Show:
     '''
@@ -88,7 +147,9 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
         self.setWindowTitle(The_Show.show_conf.settings['name'])
         self.nextButton.clicked.connect(self.on_buttonNext_clicked)
         self.prevButton.clicked.connect(self.on_buttonPrev_clicked)
+        self.tableView.doubleClicked.connect(self.on_table_click)
         self.actionOpen_Show.triggered.connect(self.openShow)
+        self.editcuedlg = EditCue('0')
 
 
     def on_buttonNext_clicked(self):
@@ -121,6 +182,53 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
         tblvw.selectRow(The_Show.cues.currentcueindex)
         sender.send(msg)
 
+    def on_table_click(self,index):
+        print(index.row())
+        self.editcuedlg.editidx = index.row()
+        print(self.tabledata[index.row()])
+        rowlist = self.tabledata[index.row()]
+        self.editcuedlg.plainTextEditCueNum.setPlainText(rowlist[0])
+        self.editcuedlg.plainTextEditCueNum.setDocumentTitle('Cue Number')
+
+        self.editcuedlg.plainTextEditAct.setPlainText(rowlist[1])
+        self.editcuedlg.plainTextEditAct.setDocumentTitle('Act')
+
+        self.editcuedlg.plainTextEditScene.setPlainText(rowlist[2])
+        self.editcuedlg.plainTextEditScene.setDocumentTitle('Scene')
+
+        self.editcuedlg.plainTextEditPage.setPlainText(rowlist[3])
+        self.editcuedlg.plainTextEditPage.setDocumentTitle('Page')
+
+        self.editcuedlg.plainTextEditId.setPlainText(rowlist[4])
+        self.editcuedlg.plainTextEditId.setDocumentTitle('ID')
+
+        self.editcuedlg.plainTextEditTitle.setPlainText(rowlist[5])
+        self.editcuedlg.plainTextEditTitle.setDocumentTitle('Title')
+
+        self.editcuedlg.plainTextEditPrompt.setPlainText(rowlist[6])
+        self.editcuedlg.plainTextEditPrompt.setDocumentTitle('Dialog/Prompt')
+
+        #self.editcuedlg.show()
+        self.editcuedlg.exec_()
+        changedict = self.editcuedlg.chgdict
+        print('returned list:',self.editcuedlg.chgdict)
+        if changedict:
+            print('Updating table.')
+            for key, newdata in changedict.items():
+                print('--------------',key,newdata)
+                for coltxt, colidx in columndict.items():
+                    if coltxt in key:
+                        print('colidx: ', colidx, ' row: ', index.row())
+                        print('coltxt: ',coltxt, ' newdata: ',newdata)
+                        self.tabledata[index.row()][colidx] = newdata
+
+                        break
+        else:
+            print('No table changes')
+        print(self.tabledata[index.row()])
+        The_Show.cues.updatecue(index.row(),self.tabledata[index.row()])
+        The_Show.cues.savecuelist()
+
     def setfirstcue(self):
         tblvw = self.findChild(QtWidgets.QTableView)
         tblvw.selectRow(The_Show.cues.currentcueindex)
@@ -128,7 +236,7 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
     def disptext(self):
         self.get_table_data()
         # set the table model
-        header = ['Cue', 'Id', 'Act', 'Scene', 'Page','Title','Dialog/Prompt']
+        header = ['Cue Number', 'Act', 'Scene', 'Page', 'ID', 'Title','Dialog/Prompt']
         tablemodel = MyTableModel(self.tabledata, header, self)
         self.tableView.setModel(tablemodel)
         self.tableView.resizeColumnsToContents()
@@ -139,12 +247,14 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
         for q in qs:
             #print(q.attrib)
             #print(q.find('Move').text)
-            self.tabledata.append([q.find('Move').text,
-                     q.find('Id').text,
-                     q.find('Scene').text,
-                     q.find('Page').text,
-                     q.find('Title').text,
-                     q.find('Cue').text])
+            self.tabledata.append(
+                    [q.find('Move').text,
+                    q.find('Act').text,
+                    q.find('Scene').text,
+                    q.find('Page').text,
+                    q.find('Id').text,
+                    q.find('Title').text,
+                    q.find('Cue').text])
         #print(self.tabledata)
 
     def openShow(self):

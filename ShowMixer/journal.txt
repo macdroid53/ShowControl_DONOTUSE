@@ -28,6 +28,11 @@ Added code for Edit>Preferences menu
 launch dialog, get value, save value to cfg
 
 
+Sun Jul 19 14:45:55 EDT 2015
+
+finished Edit>Preferences
+Added double click on tabel to edit a cue
+
 
 
 

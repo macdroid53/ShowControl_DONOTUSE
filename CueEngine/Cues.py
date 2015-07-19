@@ -37,5 +37,28 @@ class CueList:
         '''
         Constructor
         '''
-        
-        
+
+    def updatecue(self, cueindex, newcuelist):
+        '''
+                newcuelist = ['Cue Number', 'Act', 'Scene', 'Page', 'ID', 'Title','Dialog/Prompt']
+                xml tag      ['Move',       'Act', 'Scene', 'Page', 'Id', 'Title','Cue']
+        '''
+        print('Begin---------updatecue---------')
+        cuenum = '{0:03}'.format(cueindex)
+        cuetomod = self.cuelist.find("cue[@num='"+cuenum+"']")
+
+        print(cuetomod.find("Move").text)
+        print(cuetomod.find("Id").text)
+
+        cuetomod.find("Move").text =newcuelist[0]
+        cuetomod.find("Act").text =newcuelist[1]
+        cuetomod.find("Scene").text =newcuelist[2]
+        cuetomod.find("Page").text =newcuelist[3]
+        cuetomod.find("Id").text =newcuelist[4]
+        cuetomod.find("Title").text =newcuelist[5]
+        cuetomod.find("Cue").text =newcuelist[6]
+
+        print('End---------updatecue---------')
+
+    def savecuelist(self):
+        self.cuelist.write('/home/mac/Shows/Scrooge/Scrooge Moves Update.xml')

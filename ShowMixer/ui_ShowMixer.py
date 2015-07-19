@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ShowMixer_tabbed.ui'
 #
-# Created: Sun Jun 21 15:03:55 2015
+# Created: Sun Jul  5 13:52:39 2015
 #      by: PyQt5 UI code generator 5.2.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -73,6 +73,8 @@ class Ui_MainWindow(object):
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
+        self.menuEdit = QtWidgets.QMenu(self.menubar)
+        self.menuEdit.setObjectName("menuEdit")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -85,13 +87,17 @@ class Ui_MainWindow(object):
         self.actionExit.setObjectName("actionExit")
         self.actionSave_Show = QtWidgets.QAction(MainWindow)
         self.actionSave_Show.setObjectName("actionSave_Show")
+        self.actionPreferences = QtWidgets.QAction(MainWindow)
+        self.actionPreferences.setObjectName("actionPreferences")
         self.menuFile.addAction(self.actionOpen_Show)
         self.menuFile.addAction(self.actionSave_Show)
         self.menuFile.addAction(self.actionClose_Show)
         self.menuFile.addSeparator()
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
+        self.menuEdit.addAction(self.actionPreferences)
         self.menubar.addAction(self.menuFile.menuAction())
+        self.menubar.addAction(self.menuEdit.menuAction())
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(1)
@@ -107,8 +113,10 @@ class Ui_MainWindow(object):
         self.nextButton.setText(_translate("MainWindow", "PushButton"))
         self.quitButton.setText(_translate("MainWindow", "Quit"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
+        self.menuEdit.setTitle(_translate("MainWindow", "Edit"))
         self.actionOpen_Show.setText(_translate("MainWindow", "Open Show"))
         self.actionClose_Show.setText(_translate("MainWindow", "Close Show"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
         self.actionSave_Show.setText(_translate("MainWindow", "Save Show"))
+        self.actionPreferences.setText(_translate("MainWindow", "Preferences"))
 
