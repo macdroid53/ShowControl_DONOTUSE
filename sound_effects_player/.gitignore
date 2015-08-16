@@ -5,3 +5,8 @@ config.status
 libtool
 Makefile
 stamp-h1
+sound_effects_player.anjuta
+.anjuta/*
+.anjuta_sym_db.db
+Debug/*
+gstreamer_trace.txt

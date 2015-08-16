@@ -613,7 +613,7 @@ gst_looper_push_data_downstream (GstPad * pad)
       exiting = TRUE;
     }
 
-  /* If we either sent an EOS, or completed a stage change, or both,
+  /* If we either sent an EOS, or completed a state change, or both,
    * exit now.  */
   if (exiting)
     {
@@ -670,9 +670,10 @@ gst_looper_push_data_downstream (GstPad * pad)
   if (send_silence)
     {
       GST_DEBUG_OBJECT (self, "sending silence downstream");
-      /* Compute the number of bytes required to hold eight milliseconds
+      /* Compute the number of bytes required to hold 40 milliseconds
        * of silence.  */
-      data_size = self->width * self->data_rate * self->channel_count / 1000;
+      data_size = self->width * self->data_rate * self->channel_count
+	/ (8000 / 40);
       /* Allocate that much memory, and place it in our output buffer.  */
       memory_out = gst_allocator_alloc (NULL, data_size, NULL);
       buffer = gst_buffer_new ();
@@ -714,10 +715,11 @@ gst_looper_push_data_downstream (GstPad * pad)
   /* There is more data to send.  Allocate a new buffer to send downstream, 
    * and copy data from our local buffer to it.  */
   buffer = gst_buffer_new ();
-  /* We send 8 milliseconds of buffer data at a time, but not more than
+  /* We send 40 milliseconds of buffer data at a time, but not more than
    * is left in our local buffer, and not more than we need to reach the
    * end of the loop, if we are looping.  */
-  data_size = self->width * self->data_rate * self->channel_count / 1000;
+  data_size = self->width * self->data_rate * self->channel_count
+    / (8000 / 40);
   if (data_size > self->local_buffer_size - self->local_buffer_drain_level)
     {
       data_size = self->local_buffer_size - self->local_buffer_drain_level;

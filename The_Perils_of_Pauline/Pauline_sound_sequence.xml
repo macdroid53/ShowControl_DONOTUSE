@@ -8,15 +8,31 @@
   <sound_sequence>
     <version>1.0</version>
 
-    <!-- There isn't enough of the internal sequencer implemented to make
-	 the telephone ring in Amato_sound_sequence.xml be independent of
-	 the main sound sequence.  Just run it; it loops.
-    -->
-    
     <sequence_item>
       <name>start_of_sequence</name>
       <type>start_sequence</type>
-      <next>telephone-ring</next>
+      <next>background_sound</next>
+    </sequence_item>
+
+    <sequence_item>
+      <name>background_sound</name>
+      <type>start_sound</type>
+      <sound_name>DTMF notes</sound_name>
+      <designer_volume>0.1</designer_volume>
+      <cluster_number>1</cluster_number>
+      <text_to_display>background music</text_to_display>
+      <next_starts>telephone-ring</next_starts>
+      <next_completion>continue_background_sound</next_completion>
+    </sequence_item>
+
+    <sequence_item>
+      <name>continue_background_sound</name>
+      <type>start_sound</type>
+      <sound_name>DTMF notes</sound_name>
+      <designer_volume>0.1</designer_volume>
+      <cluster_number>1</cluster_number>
+      <text_to_display>background music</text_to_display>
+      <next_completion>continue_background_sound</next_completion>
     </sequence_item>
 
   </sound_sequence>

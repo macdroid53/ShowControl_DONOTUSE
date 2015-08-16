@@ -32,7 +32,7 @@
 
 /* When debugging, it is sometimes useful to have printouts of the
  * messages as they happen. */
-#define TRACE_MESSAGES 0
+#define TRACE_MESSAGES FALSE
 
 /* Process a message from the pipeline. User_data is the 
  * application, so we can reach the display.  */
@@ -107,7 +107,7 @@ message_handler (GstBus * bus_element, GstMessage * message,
                                NULL);
             if (GST_MESSAGE_TYPE (forward_msg) == GST_MESSAGE_EOS)
               {
-                if (TRACE_MESSAGES != 0)
+                if (TRACE_MESSAGES)
                   {
                     g_print ("Forwarded EOS from element %s.\n",
                              GST_OBJECT_NAME (GST_MESSAGE_SRC (forward_msg)));
@@ -141,7 +141,7 @@ message_handler (GstBus * bus_element, GstMessage * message,
           }
 
         /* Catchall for unrecognized messages */
-        if (TRACE_MESSAGES != 0)
+        if (TRACE_MESSAGES)
           {
             g_print (" Message element: %s from %s.\n",
                      gst_structure_get_name (s),
@@ -152,7 +152,7 @@ message_handler (GstBus * bus_element, GstMessage * message,
 
     case GST_MESSAGE_EOS:
       {
-        if (TRACE_MESSAGES != 0)
+        if (TRACE_MESSAGES)
           {
             g_print ("EOS from %s.\n", GST_OBJECT_NAME (message->src));
           }
@@ -186,7 +186,7 @@ message_handler (GstBus * bus_element, GstMessage * message,
 
         gst_message_parse_state_changed (message, &old_state, &new_state,
                                          &pending_state);
-        if (TRACE_MESSAGES != 0)
+        if (TRACE_MESSAGES)
           {
             g_print ("Element %s has changed state from %s to %s, "
                      "pending %s.\n", GST_OBJECT_NAME (message->src),
@@ -204,7 +204,7 @@ message_handler (GstBus * bus_element, GstMessage * message,
 
         gst_message_parse_reset_time (message, &running_time);
         source = GST_OBJECT_NAME (message->src);
-        if (TRACE_MESSAGES != 0)
+        if (TRACE_MESSAGES)
           {
             g_print ("Reset time to %ld by %s.\n", running_time, source);
           }
@@ -245,7 +245,7 @@ message_handler (GstBus * bus_element, GstMessage * message,
             status_text = (gchar *) "unknown";
             break;
           }
-        if (TRACE_MESSAGES != 0)
+        if (TRACE_MESSAGES)
           {
             g_print ("Stream status of %s from %s.\n", status_text,
                      GST_OBJECT_NAME (owner));
@@ -255,7 +255,7 @@ message_handler (GstBus * bus_element, GstMessage * message,
 
     case GST_MESSAGE_ASYNC_DONE:
       {
-        if (TRACE_MESSAGES != 0)
+        if (TRACE_MESSAGES)
           {
             g_print ("Async-done from %s.\n", GST_OBJECT_NAME (message->src));
           }
@@ -267,7 +267,7 @@ message_handler (GstBus * bus_element, GstMessage * message,
 
     default:
       {
-        if (TRACE_MESSAGES != 0)
+        if (TRACE_MESSAGES)
           {
             g_print ("Message: %s from %s.\n",
                      gst_message_type_get_name (GST_MESSAGE_TYPE (message)),
