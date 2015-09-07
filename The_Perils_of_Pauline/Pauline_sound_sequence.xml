@@ -28,7 +28,7 @@
     <sequence_item>
       <name>continue_background_sound</name>
       <type>start_sound</type>
-      <sound_name>DTMF notes</sound_name>
+      <sound_name>background music</sound_name>
       <designer_volume>0.1</designer_volume>
       <cluster_number>1</cluster_number>
       <text_to_display>background music</text_to_display>

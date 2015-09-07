@@ -6,6 +6,15 @@
 /* GETTEXT package name */
 #undef GETTEXT_PACKAGE
 
+/* Gstreamer license */
+#undef GST_LICENSE
+
+/* Gstreamer package name */
+#undef GST_PACKAGE_NAME
+
+/* Gstreamer package origin */
+#undef GST_PACKAGE_ORIGIN
+
 /* Define to 1 if you have the `bind_textdomain_codeset' function. */
 #undef HAVE_BIND_TEXTDOMAIN_CODESET
 

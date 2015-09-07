@@ -5,14 +5,12 @@
   <sounds>
     <version>1.0</version>
 
-    <!--
     <sound>
-      <name>Pachelbel Canon in D</name>
-      <wav_file_name>pachelbel_canon.wav</wav_file_name>
-      <designer_volume_level>0.50</designer_volume_level>
+      <name>background music</name>
+      <wav_file_name>background_music.wav</wav_file_name>
+      <designer_volume_level>0.10</designer_volume_level>
       <designer_pan>0.00</designer_pan>
     </sound>
-    -->
     
     <sound>
       <name>DTMF notes</name>

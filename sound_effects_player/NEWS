@@ -1,3 +1,9 @@
+Version 0.51, September 7, 2015
+  Improve the startup time by having the looper read the WAV file directly.
+  
+Version 0.50, August 16, 2015
+  Add a background sound to the telephone ringing demo.
+  
 Version 0.49, July 12, 2015
   Improve the telephone ringing demo.
   

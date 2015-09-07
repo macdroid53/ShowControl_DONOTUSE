@@ -153,6 +153,8 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
   g_object_set (source_element, "location", sound_data->wav_file_name_full,
                 NULL);
 
+  g_object_set (looper_element, "file-location",
+                sound_data->wav_file_name_full, NULL);
   g_object_set (looper_element, "loop-to", sound_data->loop_to_time, NULL);
   g_object_set (looper_element, "loop-from", sound_data->loop_from_time,
                 NULL);

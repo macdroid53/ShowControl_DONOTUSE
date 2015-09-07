@@ -54,9 +54,10 @@ EXTRA_DIST = $(ui_DATA)
 
 # Note: plugindir is set in configure
 
+# These are application-specific Gstreamer plugins
 plugin_LTLIBRARIES = libgstenvelope.la libgstlooper.la
 
-# sources used to compile these plug-ins
+# sources used to compile the application-specific plugins
 libgstenvelope_la_SOURCES = gstenvelope.c gstenvelope.h
 libgstlooper_la_SOURCES = gstlooper.c gstlooper.h
 

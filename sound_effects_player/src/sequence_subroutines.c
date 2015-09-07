@@ -290,20 +290,24 @@ execute_start_sound (struct sequence_item_info *the_item,
   sound_effect =
     sound_bind_to_cluster (the_item->sound_name, cluster_number, app);
 
-  /* Start that sound.  */
-  sound_start_playing (sound_effect, app);
+  /* If the sound does not exist, don't try to start it.  */
+  if (sound_effect != NULL)
+    {
+      /* Start that sound.  */
+      sound_start_playing (sound_effect, app);
 
-  /* Show the operator that a sound is playing on this cluster.  */
-  button_set_cluster_playing (sound_effect, app);
+      /* Show the operator that a sound is playing on this cluster.  */
+      button_set_cluster_playing (sound_effect, app);
 
-  /* Remember that the sound is running.  */
-  remember_data = g_malloc (sizeof (struct remember_info));
-  remember_data->cluster_number = cluster_number;
-  remember_data->sequence_item = the_item;
-  remember_data->sound_effect = sound_effect;
-  remember_data->active = TRUE;
-  sequence_data->running =
-    g_list_append (sequence_data->running, remember_data);
+      /* Remember that the sound is running.  */
+      remember_data = g_malloc (sizeof (struct remember_info));
+      remember_data->cluster_number = cluster_number;
+      remember_data->sequence_item = the_item;
+      remember_data->sound_effect = sound_effect;
+      remember_data->active = TRUE;
+      sequence_data->running =
+        g_list_append (sequence_data->running, remember_data);
+    }
 
   /* Advance to the next sequence item.  */
   sequence_data->next_item_name = the_item->next_starts;

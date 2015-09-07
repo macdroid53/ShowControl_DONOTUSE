@@ -53,6 +53,7 @@ struct _GstLooper
   guint64 loop_to;
   guint64 max_duration;
   guint64 start_time;
+  gchar *file_location;
   guint loop_limit;
   gboolean autostart;
 
@@ -66,6 +67,7 @@ struct _GstLooper
   guint64 local_buffer_fill_level;
   guint64 local_buffer_drain_level;
   guint64 local_buffer_size;    /* number of bytes in the local buffer */
+  guint64 pull_level;           /* how much data we have pulled from upstream */
   guint64 timestamp_offset;
   guint64 local_clock;          /* The current time, in nanoseconds.  
                                  * This counts continuously through loops.  */
@@ -88,6 +90,9 @@ struct _GstLooper
   gboolean paused;              /* We have received a Pause signal, and it has 
                                  * not yet been canceled by a Continue signal.
                                  */
+  gboolean continued;           /* We have received a Continue signal.  If both
+                                 * paused and continued are set, we will resume
+                                 * sending sound, and clear both.  */
   gboolean released;            /* We have received a Release signal.  */
   gboolean data_buffered;       /* We have received all the data we need into 
                                  * our sink pad.  */
@@ -96,9 +101,15 @@ struct _GstLooper
   gboolean sink_pad_flushing;
   gboolean src_pad_flushing;
   gboolean src_pad_task_running;
+  gboolean sink_pad_task_running;
   gboolean send_EOS;
   gboolean state_change_pending;
+  gboolean file_location_specified;
+  gboolean seen_incoming_data;
 };
+
+/* The number of bytes of data requested from upstream in each pull */
+#define BUFFER_SIZE 4096
 
 struct _GstLooperClass
 {
