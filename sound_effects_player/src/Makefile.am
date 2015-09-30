@@ -1,10 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 ## Originally created by Anjuta
 
-
 uidir = $(pkgdatadir)/ui
 ui_DATA = sound_effects_player.ui app-menu.ui preferences.ui
-
 
 AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
@@ -14,7 +12,8 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS =\
 	 -Wall\
-	 -g
+	-pthread\
+	-g
 
 bin_PROGRAMS = sound_effects_player
 
@@ -28,6 +27,8 @@ sound_effects_player_SOURCES = \
 	sequence_structure.h \
 	sequence_subroutines.c \
 	sequence_subroutines.h \
+	signal_subroutines.c \
+	signal_subroutines.h \
 	network_subroutines.c \
 	network_subroutines.h \
 	parse_net_subroutines.c \

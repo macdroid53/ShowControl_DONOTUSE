@@ -1,3 +1,11 @@
+Version 0.52, September 30, 2015
+  Add signal handling, so the editor can shut down the player.  When starting
+  the player, use --process-id-file to name a file where the process ID is
+  written, and place the project file on the command line.  Then the editor
+  can do the equivalent of kill -s term `cat process-id-file.txt` to send
+  SIGTERM to the player, causing it to shut down.  Planned for the future is
+  SIGHUP, to make the player re-read its project file.
+  
 Version 0.51, September 7, 2015
   Improve the startup time by having the looper read the WAV file directly.
   

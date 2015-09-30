@@ -23,7 +23,7 @@
 
 /* The entry point for the sound_effects_player application.  
  * This is a GTK application, so much of what is done here is standard 
- * biolerplate.  See sound_effects_player.c for the beginning of actual 
+ * boilerplate.  See sound_effects_player.c for the beginning of actual 
  * application-specific code.
  */
 int
@@ -32,8 +32,13 @@ main (int argc, char *argv[])
   Sound_Effects_Player *app;
   int status;
   gchar **filenames = NULL;
+  gchar *pid_file_name = NULL;
+  gboolean pid_file_written = FALSE;
+  FILE *pid_file = NULL;
   const GOptionEntry entries[] = {
-    /* you can add your own command line options here */
+    {"process-id-file", 'p', 0, G_OPTION_ARG_FILENAME, &pid_file_name,
+     "name of the file written with the process id, for signaling"},
+    /* add more command line options here */
     {G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames,
      "Special option that collects any remaining arguments for us"},
     {NULL,}
@@ -59,6 +64,8 @@ main (int argc, char *argv[])
 
   /* Initialize gtk and Gstreamer. */
   gtk_init (&argc, &argv);
+
+  /* Parse the command line.  */
   ctx = g_option_context_new ("[project_file]");
   g_option_context_add_group (ctx, gtk_get_option_group (TRUE));
   g_option_context_add_group (ctx, gst_init_get_option_group ());
@@ -71,6 +78,25 @@ main (int argc, char *argv[])
       return -1;
     }
   g_option_context_free (ctx);
+
+  /* If a process ID file was specified, write our process ID to it.  */
+  if (pid_file_name != NULL)
+    {
+      errno = 0;
+      pid_file = fopen (pid_file_name, "w");
+      if (pid_file != NULL)
+        {
+          fprintf (pid_file, "%d\n", getpid ());
+          fclose (pid_file);
+          pid_file_written = TRUE;
+        }
+      else
+        {
+          g_print ("Cannot create process ID file %s: %s", pid_file_name,
+                   strerror (errno));
+          return 1;
+        }
+    }
 
   /* Print the version of glib that we are linked against. */
   g_print ("This program is linked against glib %d.%d.%d ages %d and %d.\n",
@@ -124,6 +150,11 @@ main (int argc, char *argv[])
 
   /* We are done. */
   g_object_unref (app);
+
+  /* If we wrote a file with the process ID, delete it.  */
+  if (pid_file_written)
+    remove (pid_file_name);
+  free (pid_file_name);
 
   return status;
 }

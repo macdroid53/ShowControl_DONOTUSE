@@ -27,6 +27,7 @@
 #include "parse_net_subroutines.h"
 #include "sound_subroutines.h"
 #include "sequence_subroutines.h"
+#include "signal_subroutines.h"
 #include "display_subroutines.h"
 
 G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player,
@@ -68,6 +69,9 @@ struct _Sound_Effects_PlayerPrivate
 
   /* The persistent information for the internal sequencer.  */
   void *sequence_data;
+
+  /* The persistent information for the signal handler.  */
+  void *signal_data;
 
   /* The list of clusters that might contain sound effects. */
   GList *clusters;
@@ -111,6 +115,9 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
 
   Sound_Effects_PlayerPrivate *priv =
     SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+
+  /* Initialize the signal handler.  */
+  priv->signal_data = signal_init (app);
 
   /* Remember the path to the user interface files. */
   priv->ui_path = g_strdup (PACKAGE_DATA_DIR "/ui/");
@@ -733,4 +740,16 @@ sep_get_sequence_data (GApplication * app)
 
   sequence_data = priv->sequence_data;
   return (sequence_data);
+}
+
+/* Find the persistent data for the signal handler.  */
+void *
+sep_get_signal_data (GApplication * app)
+{
+  void *signal_data;
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+
+  signal_data = priv->signal_data;
+  return (signal_data);
 }

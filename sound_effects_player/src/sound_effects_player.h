@@ -125,5 +125,8 @@ void sep_set_sound_list (GList *sound_list, GApplication *app);
 /* Find the sequence information.  */
 void *sep_get_sequence_data (GApplication *app);
 
+/* Find the signal information.  */
+void *sep_get_signal_data (GApplication *app);
+
 G_END_DECLS
 #endif /* _SOUND_EFFECTS_PLAYER_H_ */
