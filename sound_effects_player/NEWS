@@ -1,3 +1,6 @@
+Version 0.53, no date yet
+  Implement Wait sequence item.
+  
 Version 0.52, September 30, 2015
   Add signal handling, so the editor can shut down the player.  When starting
   the player, use --process-id-file to name a file where the process ID is

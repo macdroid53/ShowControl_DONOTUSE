@@ -28,6 +28,7 @@
 #include "sound_subroutines.h"
 #include "sequence_subroutines.h"
 #include "signal_subroutines.h"
+#include "timer_subroutines.h"
 #include "display_subroutines.h"
 
 G_DEFINE_TYPE (Sound_Effects_Player, sound_effects_player,
@@ -72,6 +73,9 @@ struct _Sound_Effects_PlayerPrivate
 
   /* The persistent information for the signal handler.  */
   void *signal_data;
+
+  /* The persistent information for the timer.  */
+  void *timer_data;
 
   /* The list of clusters that might contain sound effects. */
   GList *clusters;
@@ -118,6 +122,9 @@ sound_effects_player_new_window (GApplication * app, GFile * file)
 
   /* Initialize the signal handler.  */
   priv->signal_data = signal_init (app);
+
+  /* Initialize the timer.  */
+  priv->timer_data = timer_init (app);
 
   /* Remember the path to the user interface files. */
   priv->ui_path = g_strdup (PACKAGE_DATA_DIR "/ui/");
@@ -752,4 +759,16 @@ sep_get_signal_data (GApplication * app)
 
   signal_data = priv->signal_data;
   return (signal_data);
+}
+
+/* Find the persistent data for the timer.  */
+void *
+sep_get_timer_data (GApplication * app)
+{
+  void *timer_data;
+  Sound_Effects_PlayerPrivate *priv =
+    SOUND_EFFECTS_PLAYER_APPLICATION (app)->priv;
+
+  timer_data = priv->timer_data;
+  return (timer_data);
 }

@@ -29,6 +29,8 @@ sound_effects_player_SOURCES = \
 	sequence_subroutines.h \
 	signal_subroutines.c \
 	signal_subroutines.h \
+	timer_subroutines.c \
+	timer_subroutines.h \
 	network_subroutines.c \
 	network_subroutines.h \
 	parse_net_subroutines.c \
