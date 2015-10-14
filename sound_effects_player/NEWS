@@ -1,5 +1,5 @@
-Version 0.53, no date yet
-  Implement Wait sequence item.
+Version 0.53, October 14, 2015
+  Implement the Wait sequence item.
   
 Version 0.52, September 30, 2015
   Add signal handling, so the editor can shut down the player.  When starting

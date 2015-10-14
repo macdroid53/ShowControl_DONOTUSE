@@ -66,7 +66,8 @@ struct sequence_item_info
                                  * Control.  */
   gchar *text_to_display;       /* What to show the operator */
   gchar *next;                  /* The next sequence item to execute.  */
-  guint time_to_wait;           /* Time to wait in the Wait sequence item.  */
+  guint64 time_to_wait;         /* Nanoseconds to wait in the Wait sequence 
+                                 * item.  */
   gchar *next_to_start;         /* The sequence item to execute when
                                  * the operator presses the cluster's Start
                                  * button.  */

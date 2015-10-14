@@ -787,8 +787,10 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
 
               if (xmlStrEqual (name, (const xmlChar *) "next_completion"))
                 {
-                  /* The next sequence item to execute, when and if this
-                   * sound completes normally.  */
+                  /* In the Start Sound sequence item, the next sequence item 
+                   * to execute, when and if this sound completes normally.
+                   * In the Wait sequence item, the sequence item to execute
+                   * when the wait has completed.  */
                   name_data =
                     xmlNodeListGetString (sequence_file,
                                           sequence_item_loc->xmlChildrenNode,

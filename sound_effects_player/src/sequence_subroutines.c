@@ -26,6 +26,7 @@
 #include "sound_structure.h"
 #include "sound_subroutines.h"
 #include "button_subroutines.h"
+#include "timer_subroutines.h"
 
 /* When debugging it can be useful to trace what is happening in the
  * internal sequencer.  */
@@ -47,6 +48,7 @@ struct sequence_info
                                                  * operator.  */
   GList *operator_waiting;      /* The Operator Wait sequence items that are
                                  * waiting for their turn at the operator.  */
+  GList *waiting;               /* The Wait sequence items that are still pending.  */
 };
 
 /* an entry on the running, offering or operator waiting lists */
@@ -80,6 +82,12 @@ static void execute_stop_sound (struct sequence_item_info *the_item,
                                 struct sequence_info *sequence_data,
                                 GApplication * app);
 
+static void execute_wait (struct sequence_item_info *the_item,
+                          struct sequence_info *sequence_data,
+                          GApplication * app);
+
+static void wait_completed (void *remember_data, GApplication * app);
+
 static void execute_offer_sound (struct sequence_item_info *the_item,
                                  struct sequence_info *sequence_data,
                                  GApplication * app);
@@ -106,6 +114,7 @@ sequence_init (GApplication * app)
   sequence_data->running = NULL;
   sequence_data->current_operator_wait = NULL;
   sequence_data->operator_waiting = NULL;
+  sequence_data->waiting = NULL;
   return (sequence_data);
 }
 
@@ -240,7 +249,7 @@ execute_item (struct sequence_item_info *the_item,
       break;
 
     case wait:
-      display_show_message ("Wait", app);
+      execute_wait (the_item, sequence_data, app);
       break;
 
     case offer_sound:
@@ -370,6 +379,111 @@ execute_stop_sound (struct sequence_item_info *the_item,
   return;
 }
 
+/* Execute a Wait sequence item.  */
+void
+execute_wait (struct sequence_item_info *the_item,
+              struct sequence_info *sequence_data, GApplication * app)
+{
+  struct remember_info *remember_data;
+
+  if (TRACE_SEQUENCER)
+    {
+      g_print ("Wait, name = %s, time = %" G_GUINT64_FORMAT ","
+               " when complete = %s, operator text = %s, next = %s.\n",
+               the_item->name, the_item->time_to_wait,
+               the_item->next_completion, the_item->text_to_display,
+               the_item->next);
+    }
+
+  /* Record information about the wait, since we will need it when
+   * the wait is over.  */
+  remember_data = g_malloc (sizeof (struct remember_info));
+  remember_data->cluster_number = 0;
+  remember_data->sound_effect = NULL;
+  remember_data->sequence_item = the_item;
+
+  if ((sequence_data->waiting == NULL)
+      && (sequence_data->current_operator_wait == NULL))
+    {
+      /* There are no prior Wait or Operator Wait commands running.  */
+      /* TODO: display the Wait that will end soonest.  */
+      remember_data->active = TRUE;
+      display_set_operator_text (the_item->text_to_display, app);
+    }
+  else
+    {
+      remember_data->active = FALSE;
+    }
+
+  /* Place this item on the wait list.  */
+  sequence_data->waiting =
+    g_list_append (sequence_data->waiting, remember_data);
+
+  /* Arrange to call wait_completed when the wait is over.  */
+  timer_create_entry (wait_completed, (the_item->time_to_wait / 1e9),
+                      remember_data, app);
+
+  /* Advance to the next sequence item.  */
+  sequence_data->next_item_name = the_item->next;
+
+  return;
+}
+
+/* Call here from the timer when a wait is completed.  */
+void
+wait_completed (void *user_data, GApplication * app)
+{
+  struct remember_info *remember_data = user_data;
+  struct sequence_info *sequence_data;
+  struct sequence_item_info *current_sequence_item;
+  GList *list_element, *next_list_element;
+
+  sequence_data = sep_get_sequence_data (app);
+  current_sequence_item = NULL;
+
+  /* Find this item on the wait list so we can remove it.  */
+  list_element = sequence_data->waiting;
+  while (list_element != NULL)
+    {
+      next_list_element = list_element->next;
+      if (remember_data == list_element->data)
+        {
+          /* This is the item on the list.  Remove it.  */
+          remember_data->active = FALSE;
+          current_sequence_item = remember_data->sequence_item;
+
+          g_list_free (list_element);
+          g_free (remember_data);
+        }
+      list_element = next_list_element;
+    }
+
+  /* If we didn't find the item on the list, do nothing.  */
+  if (current_sequence_item == NULL)
+    {
+      return;
+    }
+
+  if (TRACE_SEQUENCER)
+    {
+      g_print ("Wait completed, name = %s, time = %" G_GUINT64_FORMAT ","
+               " when complete = %s, operator text = %s, next = %s.\n",
+               current_sequence_item->name,
+               current_sequence_item->time_to_wait,
+               current_sequence_item->next_completion,
+               current_sequence_item->text_to_display,
+               current_sequence_item->next);
+    }
+  /* TODO: display the wait list item that will end soonest,
+   * or the current operator wait if there is one.  */
+
+  /* Tell the sequencer to proceed from the specified item.  */
+  sequence_data->next_item_name = current_sequence_item->next_completion;
+  execute_items (sequence_data, app);
+
+  return;
+}
+
 /* Execute an Offer Sound sequence item.  */
 void
 execute_offer_sound (struct sequence_item_info *the_item,
@@ -471,8 +585,8 @@ execute_operator_wait (struct sequence_item_info *the_item,
                the_item->next);
     }
 
-  /* Record information about the wait, since we will need it when
-   * the wait is over.  */
+  /* Record information about the operator wait, since we will need it when
+   * the operator wait is over.  */
   remember_data = g_malloc (sizeof (struct remember_info));
   remember_data->cluster_number = 0;
   remember_data->sound_effect = NULL;
