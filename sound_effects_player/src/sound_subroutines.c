@@ -314,8 +314,32 @@ sound_terminated (const gchar * sound_name, GApplication * app)
 void
 sound_button_pause (GApplication * app)
 {
-  /* FIXME: code this.  */
+  GList *sound_list;
+  GList *l;
+  struct sound_info *sound_data;
+  GstBin *bin_element;
+  GstEvent *event;
+  GstStructure *structure;
 
+  sound_list = sep_get_sound_list (app);
+
+  /* Go through the non-disabled sounds, sending each a pause command.  */
+  for (l = sound_list; l != NULL; l = l->next)
+    {
+      sound_data = l->data;
+      if (!sound_data->disabled)
+        {
+          bin_element = sound_data->sound_control;
+
+          /* Send a pause message to the bin.  The looper element will stop
+           * advancing its pointer, sending silence instead, and the envelope
+           * element will stop advancing through its timeline.  */
+          structure = gst_structure_new_empty ((gchar *) "pause");
+          event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
+          gst_element_send_event (GST_ELEMENT (bin_element), event);
+        }
+
+    }
   return;
 }
 
@@ -323,7 +347,32 @@ sound_button_pause (GApplication * app)
 void
 sound_button_continue (GApplication * app)
 {
-  /* FIXME: code this.  */
+  GList *sound_list;
+  GList *l;
+  struct sound_info *sound_data;
+  GstBin *bin_element;
+  GstEvent *event;
+  GstStructure *structure;
+
+  sound_list = sep_get_sound_list (app);
+
+  /* Go through the non-disabled sounds, sending each a continue command.  */
+  for (l = sound_list; l != NULL; l = l->next)
+    {
+      sound_data = l->data;
+      if (!sound_data->disabled)
+        {
+          bin_element = sound_data->sound_control;
+
+          /* Send a continue message to the bin.  The looper element will 
+           * return to advancing its pointer, and the envelope element will 
+           * return to advancing through its timeline.  */
+          structure = gst_structure_new_empty ((gchar *) "continue");
+          event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
+          gst_element_send_event (GST_ELEMENT (bin_element), event);
+        }
+
+    }
 
   return;
 }

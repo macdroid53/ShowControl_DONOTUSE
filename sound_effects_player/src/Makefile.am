@@ -18,35 +18,35 @@ AM_CFLAGS =\
 bin_PROGRAMS = sound_effects_player
 
 sound_effects_player_SOURCES = \
+	button_subroutines.c \
+	button_subroutines.h \
+	display_subroutines.c \
+	display_subroutines.h \
+	gstreamer_subroutines.c \
+	gstreamer_subroutines.h \
 	main.c \
-	sound_effects_player.h \
-	sound_effects_player.c \
-	sound_structure.h \
-	sound_subroutines.c \
-	sound_subroutines.h \
-	sequence_structure.h \
-	sequence_subroutines.c \
-	sequence_subroutines.h \
-	signal_subroutines.c \
-	signal_subroutines.h \
-	timer_subroutines.c \
-	timer_subroutines.h \
+	menu_subroutines.c \
+	menu_subroutines.h \
+	message_subroutines.c \
+	message_subroutines.h \
 	network_subroutines.c \
 	network_subroutines.h \
 	parse_net_subroutines.c \
 	parse_net_subroutines.h \
 	parse_xml_subroutines.c \
 	parse_xml_subroutines.h \
-	button_subroutines.c \
-	button_subroutines.h \
-	gstreamer_subroutines.c \
-	gstreamer_subroutines.h \
-	menu_subroutines.c \
-	menu_subroutines.h \
-	message_subroutines.c \
-	message_subroutines.h \
-	display_subroutines.c \
-	display_subroutines.h	
+	sequence_structure.h \
+	sequence_subroutines.c \
+	sequence_subroutines.h \
+	signal_subroutines.c \
+	signal_subroutines.h \
+	sound_effects_player.c \
+	sound_effects_player.h \
+	sound_structure.h \
+	sound_subroutines.c \
+	sound_subroutines.h \
+	timer_subroutines.c \
+	timer_subroutines.h
 
 sound_effects_player_LDFLAGS = \
 	-Wl,--export-dynamic

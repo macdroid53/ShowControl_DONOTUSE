@@ -139,7 +139,7 @@ sequence_start (GApplication * app)
 
   sequence_data = sep_get_sequence_data (app);
 
-  /* Find the sequence start item in the sequence.  */
+  /* Find the Sequence Start item in the sequence.  */
   start_item = NULL;
   for (item_list = sequence_data->item_list; item_list != NULL;
        item_list = item_list->next)
@@ -153,15 +153,15 @@ sequence_start (GApplication * app)
     }
   if (start_item == NULL)
     {
-      display_show_message ("No sequence start item.", app);
+      display_show_message ("No Sequence Start item.", app);
       return;
     }
 
-  /* We have a sequence which contains a start sequence item.  Proceed to
+  /* We have a sequence which contains a Start sequence item.  Proceed to
    * the specified next item.  */
   if (start_item->next == NULL)
     {
-      display_show_message ("Sequence start has no next item.", app);
+      display_show_message ("Sequence Start has no next item.", app);
       return;
     }
 
@@ -273,7 +273,7 @@ execute_item (struct sequence_item_info *the_item,
   return;
 }
 
-/* Execute a start sound sequence item.  */
+/* Execute a Start Sound sequence item.  */
 void
 execute_start_sound (struct sequence_item_info *the_item,
                      struct sequence_info *sequence_data, GApplication * app)
@@ -284,7 +284,7 @@ execute_start_sound (struct sequence_item_info *the_item,
 
   if (TRACE_SEQUENCER)
     {
-      g_print ("start sound, cluster = %d, sound name = %s, next = %s, "
+      g_print ("Start Sound, cluster = %d, sound name = %s, next = %s, "
                " complete = %s, terminate = %s.\n", the_item->cluster_number,
                the_item->sound_name, the_item->next_starts,
                the_item->next_completion, the_item->next_termination);

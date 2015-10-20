@@ -269,7 +269,11 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
       self->external_completion_seen = FALSE;
       self->running = TRUE;
       self->started = FALSE;
+      self->pause_seen = FALSE;
+      self->continue_seen = FALSE;
+      self->pausing = FALSE;
       self->base_time = timestamp;
+      self->pause_time = 0;
       GST_DEBUG_OBJECT (self,
                         "starting envelope, base time set to %"
                         GST_TIME_FORMAT ".", GST_TIME_ARGS (self->base_time));
@@ -296,6 +300,7 @@ envelope_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
   gdouble *src64;
   gfloat *src32;
   GstClockTimeDiff interval = gst_util_uint64_scale_int (1, GST_SECOND, rate);
+  GstClockTimeDiff pause_duration;
 
   /* Don't process data with GAP.  */
   if (GST_BUFFER_FLAG_IS_SET (outbuf, GST_BUFFER_FLAG_GAP))
@@ -315,6 +320,34 @@ envelope_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
   GST_DEBUG_OBJECT (self,
                     "transform in place timestamp: %" GST_TIME_FORMAT ".",
                     GST_TIME_ARGS (ts));
+
+  /* Handle pause and continue events.  */
+  if ((self->pause_seen) && (!self->pausing))
+    {
+      /* We are starting a pause.  Record the current time so we can
+       * determine the pause duration when the pause ends.  */
+      self->pause_start_time = ts;
+      self->pausing = TRUE;
+      GST_DEBUG_OBJECT (self, "pause starts at %" GST_TIME_FORMAT ".",
+                        GST_TIME_ARGS (ts));
+    }
+  if ((self->pause_seen) && (self->continue_seen))
+    {
+      /* This is the end of the pause.  */
+      self->pause_seen = FALSE;
+      self->pausing = FALSE;
+      self->continue_seen = FALSE;
+      /* Accumulate the time spend pausing, so the envelope can continue
+       * through its progression.  */
+      pause_duration = ts - self->pause_start_time;
+      self->pause_time = self->pause_time + pause_duration;
+      GST_DEBUG_OBJECT (self,
+                        "pause is completed, duration: %" GST_TIME_FORMAT ".",
+                        GST_TIME_ARGS (pause_duration));
+    }
+  GST_DEBUG_OBJECT (self, "pause time is: %" GST_TIME_FORMAT ".",
+                    GST_TIME_ARGS (self->pause_time));
+
   if (self->running)
     {
       GST_DEBUG_OBJECT (self, "envelope time: %" GST_TIME_FORMAT ".",
@@ -333,7 +366,8 @@ envelope_transform_ip (GstBaseTransform * base, GstBuffer * outbuf)
   for (frame_counter = 0; frame_counter < frame_count; frame_counter++)
     {
       /* Compute the volume at this time step.  */
-      volume_val = compute_volume (self, ts - self->base_time);
+      volume_val =
+        compute_volume (self, ts - self->base_time - self->pause_time);
 
       /* Apply that volume to each channel.  */
       for (channel_counter = 0; channel_counter < channel_count;
@@ -393,6 +427,7 @@ envelope_transform (GstBaseTransform * base, GstBuffer * inbuf,
   gint width = GST_AUDIO_FORMAT_INFO_WIDTH (filter->info.finfo);
   gint channel_count = GST_AUDIO_INFO_CHANNELS (&filter->info);
   GstClockTimeDiff interval = gst_util_uint64_scale_int (1, GST_SECOND, rate);
+  GstClockTimeDiff pause_duration;
 
   /* Get the number of frames to process.  Each frame has a sample for
    * each channel, and each sample contains "width" bits.  */
@@ -402,6 +437,32 @@ envelope_transform (GstBaseTransform * base, GstBuffer * inbuf,
   ts = gst_segment_to_stream_time (&base->segment, GST_FORMAT_TIME, ts);
   GST_DEBUG_OBJECT (self, "transform timestamp: %" GST_TIME_FORMAT ".",
                     GST_TIME_ARGS (ts));
+  /* Handle pause and continue events.  */
+  if ((self->pause_seen) && (!self->pausing))
+    {
+      /* We are starting a pause.  Record the current time so we can
+       * determine the pause duration when the pause ends.  */
+      self->pause_start_time = ts;
+      self->pausing = TRUE;
+      GST_DEBUG_OBJECT (self, "pause starts at %" GST_TIME_FORMAT ".",
+                        GST_TIME_ARGS (ts));
+    }
+  if ((self->pause_seen) && (self->continue_seen))
+    {
+      /* This is the end of the pause.  */
+      self->pause_seen = FALSE;
+      self->pausing = FALSE;
+      self->continue_seen = FALSE;
+      /* Accumulate the time spend pausing, so the envelope can continue
+       * through its progression.  */
+      pause_duration = ts - self->pause_start_time;
+      self->pause_time = self->pause_time + pause_duration;
+      GST_DEBUG_OBJECT (self,
+                        "pause is completed, duration: %" GST_TIME_FORMAT ".",
+                        GST_TIME_ARGS (pause_duration));
+    }
+  GST_DEBUG_OBJECT (self, "pause time is: %" GST_TIME_FORMAT ".",
+                    GST_TIME_ARGS (self->pause_time));
   if (self->running)
     {
       GST_DEBUG_OBJECT (self, "envelope time: %" GST_TIME_FORMAT ".",
@@ -469,7 +530,8 @@ envelope_transform (GstBaseTransform * base, GstBuffer * inbuf,
     {
 
       /* Compute the volume at this time step.  */
-      volume_val = compute_volume (self, ts - self->base_time);
+      volume_val =
+        compute_volume (self, ts - self->base_time - self->pause_time);
 
       /* Apply that volume to each channel.  */
       for (channel_counter = 0; channel_counter < channel_count;
@@ -513,10 +575,10 @@ envelope_transform (GstBaseTransform * base, GstBuffer * inbuf,
 
 /* This enumeration type indicates a stage of envelope processing.  */
 enum envelope_stage
-{ not_started, attack, decay, sustain, release, completed };
+{ not_started, attack, decay, sustain, release, completed, pausing };
 
 /* Determine the stage of envelope processing, given the time since
- * the envelope started.  */
+ * the envelope started, minus the time spent paused.  */
 static enum envelope_stage
 compute_envelope_stage (GstEnvelope * self, GstClockTime ts)
 {
@@ -526,12 +588,18 @@ compute_envelope_stage (GstEnvelope * self, GstClockTime ts)
    * after the note has started is attack, decay, sustain, release, completed.
    * However, a release event can arrive at at any time.  If the decay 
    * duration time is 0 we go straight from attack to sustain, so sustain 
-   * level should equal attack level.  */
+   * level should equal attack level in this case.  Also, a pause event
+   * can arrive at any time, and will delay the envelope progression.  */
 
   /* if the envelope is not running, it is not yet started.  */
   if (!self->running)
     {
       return not_started;
+    }
+
+  if (self->pausing)
+    {
+      return pausing;
     }
 
   if (self->external_release_seen || self->external_completion_seen)
@@ -644,15 +712,17 @@ compute_volume (GstEnvelope * self, GstClockTime ts)
   GstClockTime decay_end_time;
   gdouble attack_fraction, decay_fraction, release_fraction;
 
-  /* Decide where we are in the amplitude envelope.  The normal progression
-   * after the note has started is attack, decay, sustain, release, completed.
-   * However, a release event can arrive at at any time.  If the decay 
-   * duration time is 0 we go straight from attack to sustain, so sustain 
-   * level should equal attack level.  */
+  /* Decide where we are in the amplitude envelope.  */
   envelope_position = compute_envelope_stage (self, ts);
 
   switch (envelope_position)
     {
+    case pausing:
+      /* The note is paused.  */
+      GST_LOG_OBJECT (self, "envelope position: pausing");
+      volume_val = 0.0;
+      break;
+
     case not_started:
       /* If the note has not yet started, the volume is 0.  */
       GST_LOG_OBJECT (self, "envelope position: not started");
@@ -926,9 +996,14 @@ gst_envelope_init (GstEnvelope * self)
   self->running = FALSE;
   self->started = FALSE;
   self->completed = FALSE;
+  self->pause_seen = FALSE;
+  self->continue_seen = FALSE;
+  self->pausing = FALSE;
   self->last_message = NULL;
   self->application_notified = FALSE;
   self->base_time = 0;
+  self->pause_time = 0;
+  self->pause_start_time = 0;
   self->last_volume = 0;
 }
 
@@ -1115,8 +1190,6 @@ gst_envelope_get_property (GObject * object, guint prop_id, GValue * value,
 
 /* This event handler is called when an event is sent to the source pad.
  * We care only about custom events: start, pause, continue and release.
- * These are mostly processed by the looper, which is upstream of the
- * envelope element.  The envelope element only cares about start and release.
  */
 static gboolean
 envelope_src_event_handler (GstBaseTransform * trans, GstEvent * event)
@@ -1181,6 +1254,25 @@ envelope_src_event_handler (GstBaseTransform * trans, GstEvent * event)
            * as soon as the previous release is complete.  */
           GST_OBJECT_LOCK (self);
           self->started = TRUE;
+          GST_OBJECT_UNLOCK (self);
+        }
+      if (g_strcmp0 (structure_name, (gchar *) "pause") == 0)
+        {
+          /* This is a pause event, caused by an operator pushing the
+           * pause button.  Flag that we have seen the message; we will not
+           * advance through the envelope until we see a continue event.  */
+          GST_OBJECT_LOCK (self);
+          self->pause_seen = TRUE;
+          GST_OBJECT_UNLOCK (self);
+        }
+      if (g_strcmp0 (structure_name, (gchar *) "continue") == 0)
+        {
+          /* This is a continue event, caused by an operator pushing the
+           * continue button to cancel a previous pause.  Flag that we
+           * have seen the message.  We don't simply clear the pause flag
+           * because we want to notice the transition.  */
+          GST_OBJECT_LOCK (self);
+          self->continue_seen = TRUE;
           GST_OBJECT_UNLOCK (self);
         }
       break;

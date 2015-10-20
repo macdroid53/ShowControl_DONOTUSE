@@ -59,7 +59,7 @@ struct _GstEnvelope
   gdouble volume;
   gboolean autostart;
   gchar *sound_name;
-  
+
   /* Locals */
   GstClockTimeDiff release_duration_time;
   gboolean release_duration_infinite;
@@ -74,7 +74,12 @@ struct _GstEnvelope
   gboolean completed;
   gboolean running;
   gboolean started;
+  gboolean pause_seen;
+  gboolean continue_seen;
+  gboolean pausing;
   GstClockTime base_time;
+  GstClockTimeDiff pause_time;
+  GstClockTime pause_start_time;
 };
 
 struct _GstEnvelopeClass

@@ -4,7 +4,7 @@ dnl Created originally by the Anjuta application wizard.
 dnl required version of autoconf
 AC_PREREQ([2.53])
 
-AC_INIT(sound_effects_player, 0.53, [John_Sauter@systemeyescomputerstore.com], sound_effects_player)
+AC_INIT(sound_effects_player, 0.54, [John_Sauter@systemeyescomputerstore.com], sound_effects_player)
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([1.11])
 AM_SILENT_RULES([yes])

@@ -89,7 +89,7 @@ timer_finalize (GApplication * app)
       GList *timer_entry_next = timer_entry_list->next;
       timer_entry_data = timer_entry_list->data;
       g_free (timer_entry_data);
-      timer_entry_list =
+      timer_data->timer_entry_list =
         g_list_delete_link (timer_data->timer_entry_list, timer_entry_list);
       timer_entry_list = timer_entry_next;
     }
