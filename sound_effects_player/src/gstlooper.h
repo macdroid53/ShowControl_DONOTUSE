@@ -96,16 +96,28 @@ struct _GstLooper
   gboolean released;            /* We have received a Release signal.  */
   gboolean data_buffered;       /* We have received all the data we need into 
                                  * our sink pad.  */
-  gboolean src_pad_active;
-  gboolean sink_pad_active;
-  gboolean sink_pad_flushing;
-  gboolean src_pad_flushing;
-  gboolean src_pad_task_running;
-  gboolean sink_pad_task_running;
-  gboolean send_EOS;
-  gboolean state_change_pending;
-  gboolean file_location_specified;
-  gboolean seen_incoming_data;
+  gboolean src_pad_active;      /* The source pad is active.  */
+  gboolean sink_pad_active;     /* The sink pad is active.  */
+  gboolean sink_pad_flushing;   /* The sink pad is flushing.  */
+  gboolean src_pad_flushing;    /* The source pad is flushing.  */
+  gboolean src_pad_task_running;        /* The task which pushes data downstream
+                                         * on the source pad is active.  */
+  gboolean sink_pad_task_running;       /* The task which pulls data from 
+                                         * upstream on the sink pad is active.  
+                                         */
+  gboolean send_EOS;            /* The main task wants the pushing downstream 
+                                 * task to send an end-of-stream message and 
+                                 * terminate.  */
+  gboolean state_change_pending;        /* The main task wants the pushing 
+                                         * downstream task to complete a state 
+                                         * change.  */
+  gboolean file_location_specified;     /* The location of the wave file that
+                                         * heads this bin has been specified.  
+                                         */
+  gboolean seen_incoming_data;  /* Sound data has been seen on the source pad.  
+                                 */
+  guint8 silence_byte;          /* The byte value of silence for this format.
+                                 */
 };
 
 /* The number of bytes of data requested from upstream in each pull */

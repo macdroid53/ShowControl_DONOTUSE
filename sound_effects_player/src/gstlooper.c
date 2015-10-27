@@ -83,11 +83,13 @@
 #include "gstlooper.h"
 
 #define STATIC_CAPS \
-  GST_STATIC_CAPS (GST_AUDIO_CAPS_MAKE (GST_AUDIO_FORMATS_ALL) \
+  GST_STATIC_CAPS (GST_AUDIO_CAPS_MAKE \
+		   (" { S8, U8, " GST_AUDIO_NE (S16) "," GST_AUDIO_NE (S32) \
+		    "," GST_AUDIO_NE (F32) "," GST_AUDIO_NE (F64)" } ") \
 		   ", layout = (string) interleaved")
 #define SINK_TEMPLATE \
   GST_STATIC_PAD_TEMPLATE ("sink", GST_PAD_SINK, GST_PAD_ALWAYS, STATIC_CAPS)
-#define SRC_TEMPLATE \
+#define SRC_TEMPLATE							\
   GST_STATIC_PAD_TEMPLATE ("src", GST_PAD_SRC, GST_PAD_ALWAYS, STATIC_CAPS)
 
 static GstStaticPadTemplate sinktemplate = SINK_TEMPLATE;
@@ -316,6 +318,7 @@ gst_looper_init (GstLooper * self)
   self->file_location_specified = FALSE;
   self->seen_incoming_data = FALSE;
   g_rec_mutex_init (&self->interlock);
+  self->silence_byte = 0;
 
   /* create the pads */
   self->sinkpad = gst_pad_new_from_static_template (&sinktemplate, "sink");
@@ -723,7 +726,7 @@ gst_looper_push_data_downstream (GstPad * pad)
       return;
     }
 
-  /* If we were paused but have sence received a continue message,
+  /* If we were paused but have since received a continue message,
    * stop pausing.  */
   if (self->paused && self->continued)
     {
@@ -785,9 +788,9 @@ gst_looper_push_data_downstream (GstPad * pad)
       memory_out = gst_allocator_alloc (NULL, data_size, NULL);
       buffer = gst_buffer_new ();
       gst_buffer_append_memory (buffer, memory_out);
-      /* Fill the buffer with binary 0, which is silence in all formats.  */
+      /* Fill the buffer with the silence byte.  */
       gst_buffer_map (buffer, &memory_out_info, GST_MAP_WRITE);
-      gst_buffer_memset (buffer, 0, 0, memory_out_info.size);
+      gst_buffer_memset (buffer, 0, self->silence_byte, memory_out_info.size);
       /* Set the time stamps in the buffer.  */
       GST_BUFFER_PTS (buffer) = self->local_clock;
       GST_BUFFER_DTS (buffer) = self->local_clock;
@@ -867,17 +870,17 @@ gst_looper_push_data_downstream (GstPad * pad)
     }
   /* now that we know how much memory we need, allocate it */
   memory_out = gst_allocator_alloc (NULL, data_size, NULL);
-  /* place the memory in our buffer and mark it for writing */
+  /* place the memory in the output buffer and mark it for writing */
   gst_buffer_append_memory (buffer, memory_out);
   gst_buffer_map (buffer, &memory_out_info, GST_MAP_WRITE);
   /* mark our local buffer for reading */
   gst_buffer_map (self->local_buffer, &memory_in_info, GST_MAP_READ);
-  /* copy data from our local buffer to the newly-allocated buffer */
+  /* copy data from our local buffer to the output buffer */
   gst_buffer_fill (buffer, 0,
                    memory_in_info.data + self->local_buffer_drain_level,
                    memory_out_info.size);
 
-  /* Set the time stamps in the buffer.  */
+  /* Set the time stamps in the output buffer.  */
   GST_BUFFER_PTS (buffer) = self->local_clock;
   GST_BUFFER_DTS (buffer) = self->local_clock;
   GST_BUFFER_DURATION (buffer) = memory_out_info.size / self->bytes_per_ns;
@@ -888,13 +891,15 @@ gst_looper_push_data_downstream (GstPad * pad)
   GST_BUFFER_OFFSET (buffer) = self->local_buffer_drain_level;
   GST_BUFFER_OFFSET_END (buffer) =
     self->local_buffer_drain_level + memory_out_info.size;
-  /* Remember where we are in our local buffer.  */
-  self->local_buffer_drain_level =
-    self->local_buffer_drain_level + memory_out_info.size;
 
   GST_DEBUG_OBJECT (self,
-                    "sending %" G_GUINT64_FORMAT " bytes of data downstream.",
-                    memory_out_info.size);
+                    "sending %" G_GUINT64_FORMAT " bytes of data downstream"
+                    " from buffer position %" G_GUINT64_FORMAT ".",
+                    memory_out_info.size, self->local_buffer_drain_level);
+
+  /* Update the current position in our local buffer.  */
+  self->local_buffer_drain_level =
+    self->local_buffer_drain_level + memory_out_info.size;
 
   /* we are finished with the new buffer and our local buffer */
   gst_buffer_unmap (buffer, &memory_out_info);
@@ -1232,6 +1237,8 @@ gst_looper_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
       /* Discard the buffer from upstream.  */
       gst_buffer_unref (buffer);
 
+      GST_DEBUG_OBJECT (self, "buffer discarded.");
+
       g_rec_mutex_unlock (&self->interlock);
       return GST_FLOW_OK;
     }
@@ -1431,7 +1438,7 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
   GstCaps *in_caps, *out_caps;
   GstStructure *caps_structure;
   gchar *format_code_pointer;
-  gchar format_code;
+  gchar format_code_0, format_code_1;
   gdouble bits_per_second, bits_per_nanosecond;
   guint64 start_position;
   gint data_rate, channel_count;
@@ -1549,8 +1556,9 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
        * sample in bits, for example, F32LE.  The second character of
        * the format can be used to determine the width.  */
       format_code_pointer = self->format;
-      format_code = format_code_pointer[1];
-      switch (format_code)
+      format_code_0 = format_code_pointer[0];
+      format_code_1 = format_code_pointer[1];
+      switch (format_code_1)
         {
         case '8':
           self->width = 8;
@@ -1571,9 +1579,27 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
           self->width = 32;
           break;
         }
-      GST_LOG_OBJECT (self, "second character of format is %c.", format_code);
+      GST_LOG_OBJECT (self, "second character of format is %c.",
+                      format_code_1);
       GST_DEBUG_OBJECT (self, "each sample has %" G_GUINT64_FORMAT " bits.",
                         self->width);
+
+      /* Compute the silence value.  For signed and floating formats, it is 0.
+       * for unsigned it is 128 for U8, the only unsigned format we support.  */
+      switch (format_code_0)
+        {
+        case 'S':
+        case 'F':
+          self->silence_byte = 0;
+          break;
+        case 'U':
+          self->silence_byte = 128;
+          break;
+        default:
+          self->silence_byte = 0;
+          break;
+        }
+      GST_DEBUG_OBJECT (self, "silence value is %hhd.", self->silence_byte);
 
       /* Compute the data rate in bytes per nanosecond.
        * data_rate times width times channel_count is bits per second.
@@ -1994,8 +2020,8 @@ round_up_to_position (GstLooper * self, guint64 specified_time)
     }
   GST_DEBUG_OBJECT (self,
                     "time %" GST_TIME_FORMAT " rounded up to %"
-                    GST_TIME_FORMAT " for buffer position %" G_GUINT64_FORMAT
-                    ".", GST_TIME_ARGS (specified_time),
+                    GST_TIME_FORMAT " yielding buffer position %"
+                    G_GUINT64_FORMAT ".", GST_TIME_ARGS (specified_time),
                     GST_TIME_ARGS (byte_position / self->bytes_per_ns),
                     byte_position);
   return byte_position;
@@ -2116,12 +2142,21 @@ read_wav_file_data (GstLooper * self, guint64 max_position)
        * It doesn't hurt to read a little more data than is required, so
        * we need only check at chunk boundaries.  */
       if ((max_position != 0) && (local_buffer_fill_level > max_position))
-        break;
+        {
+          GST_DEBUG_OBJECT (self,
+                            "reached max duration at %" G_GUINT64_FORMAT ".",
+                            max_position);
+          break;
+        }
 
       /* Read the first 8 bytes of the chunk to learn its type and size.  */
       amount_read = fread (&header, 1, 8, file_stream);
       if (amount_read != 8)
-        break;
+        {
+          GST_DEBUG_OBJECT (self, "unable to read another eight bytes.");
+          break;
+        }
+
       chunk_size = header[1];
       if (memcmp (&header[0], "data", 4) != 0)
         {
@@ -2141,7 +2176,7 @@ read_wav_file_data (GstLooper * self, guint64 max_position)
           continue;
         }
 
-      /* Copy the data into our local buffer.  */
+      /* Copy the data chunk into our local buffer.  */
       GST_DEBUG_OBJECT (self, "reading %d bytes of data from file \"%s\".",
                         chunk_size, self->file_location);
       memory_allocated = gst_allocator_alloc (NULL, chunk_size, NULL);
@@ -2190,8 +2225,11 @@ read_wav_file_data (GstLooper * self, guint64 max_position)
         }
     }
 
+
   /* We failed to read a new chunk header.  Take this to mean end of file.  */
   self->local_buffer_fill_level = local_buffer_fill_level;
+  GST_DEBUG_OBJECT (self, "Loaded %" G_GUINT64_FORMAT " bytes from file %s.",
+                    local_buffer_fill_level, self->file_location);
   return_value = TRUE;
 
 common_exit:

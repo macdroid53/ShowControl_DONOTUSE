@@ -25,10 +25,25 @@
 #include "display_subroutines.h"
 #include <math.h>
 
+/* If 0, audio output only.  If 1, monitor output only.  If 2, both.  */
+/* create a monitor.wav output file that records what was played. */
+#define GSTREAMER_MONITOR 0
+/* FIXME: selecting both causes filesink to not transition from ready
+ * to paused.  */
+
+/* If true, provide more flexibility for WAV files.  */
+#define GSTREAMER_FLEXIBILITY TRUE
+
+/* If true, print trace information as we proceed.  */
+#define GSTREAMER_TRACE FALSE
+
 /* Set up the Gstreamer pipeline. */
 GstPipeline *
 gstreamer_init (int sound_count, GApplication * app)
 {
+  GstElement *tee_element;
+  GstElement *wavenc_element;
+  GstElement *filesink_element;
   GstElement *sink_element;
   GstElement *adder_element;
   GstElement *convert_element;
@@ -51,31 +66,94 @@ gstreamer_init (int sound_count, GApplication * app)
   /* Create the final bin, to collect the output of the sound effects bins
    * and play them. */
   final_bin_element = gst_bin_new ("final");
-  sink_element = gst_element_factory_make ("alsasink", "final/sink");
   adder_element = gst_element_factory_make ("adder", "final/adder");
   level_element = gst_element_factory_make ("level", "final/master_level");
   convert_element =
     gst_element_factory_make ("audioconvert", "final/convert");
   resample_element =
     gst_element_factory_make ("audioresample", "final/resample");
-  if ((final_bin_element == NULL) || (sink_element == NULL)
-      || (adder_element == NULL) || (level_element == NULL)
-      || (convert_element == NULL) || (resample_element == NULL))
+  if ((final_bin_element == NULL) || (adder_element == NULL)
+      || (level_element == NULL) || (convert_element == NULL)
+      || (resample_element == NULL))
     {
       GST_ERROR ("Unable to create the final gstreamer elements.\n");
       return NULL;
     }
+  switch (GSTREAMER_MONITOR)
+    {
+    case 0:                    /* audio only */
+      tee_element = NULL;
+      sink_element = gst_element_factory_make ("alsasink", "final/sink");
+      wavenc_element = NULL;
+      filesink_element = NULL;
+      if (sink_element == NULL)
+        {
+          GST_ERROR ("Unable to create the final sink gstreamer element.\n");
+        }
+      break;
+    case 1:                    /* file output only */
+      tee_element = NULL;
+      sink_element = NULL;
+      wavenc_element = gst_element_factory_make ("wavenc", "final/wavenc");
+      filesink_element =
+        gst_element_factory_make ("filesink", "final/filesink");
+      if ((wavenc_element == NULL) || (filesink_element == NULL))
+        {
+          GST_ERROR ("Unable to create the final sink gstreamer elements.\n");
+        }
+      break;
+    case 2:                    /* both */
+      tee_element = gst_element_factory_make ("tee", "final/tee");
+      sink_element = gst_element_factory_make ("alsasink", "final/sink");
+      wavenc_element = gst_element_factory_make ("wavenc", "final/wavenc");
+      filesink_element =
+        gst_element_factory_make ("filesink", "final/filesink");
+      if ((tee_element == NULL) || (sink_element == NULL)
+          || (wavenc_element == NULL) || (filesink_element == NULL))
+        {
+          GST_ERROR ("Unable to create the final sink gstreamer elements.\n");
+        }
+      break;
+    }
 
-  /* Put the adder, level, converter, resampler and sink into the final bin. */
+  /* Put the adder, level, converter, resampler, tee, wave encoder, filesink
+   * and ALSA sink into the final bin. */
   gst_bin_add_many (GST_BIN (final_bin_element), adder_element, level_element,
-                    convert_element, resample_element, sink_element, NULL);
+                    convert_element, resample_element, NULL);
+  switch (GSTREAMER_MONITOR)
+    {
+    case 0:                    /* Just audio output */
+      gst_bin_add_many (GST_BIN (final_bin_element), sink_element, NULL);
+      break;
+    case 1:                    /* just file output */
+      gst_bin_add_many (GST_BIN (final_bin_element), wavenc_element,
+                        filesink_element, NULL);
+      break;
+    case 2:                    /* both audio and file output */
+      gst_bin_add_many (GST_BIN (final_bin_element), tee_element,
+                        sink_element, wavenc_element, filesink_element, NULL);
+      break;
+    }
 
   /* Make sure we will get level messages. */
   g_object_set (level_element, "post-messages", TRUE, NULL);
 
+  if (GSTREAMER_MONITOR != 0)
+    {
+      /* Set the file name for monitoring the output.  */
+      g_object_set (filesink_element, "location", "monitor.wav", NULL);
+    }
+
   /* Watch for messages from the pipeline.  */
   bus = gst_element_get_bus (GST_ELEMENT (pipeline_element));
   gst_bus_add_watch (bus, message_handler, app);
+
+  /* If we have both audio output and file output, put the file output
+   * in sync mode.  */
+  if (GSTREAMER_MONITOR == 2)
+    {
+      g_object_set (filesink_element, "sync", TRUE, NULL);
+    }
 
   /* The inputs to the final bin are the inputs to the adder.  Create enough
    * sinks for each sound effect.  */
@@ -92,7 +170,22 @@ gstreamer_init (int sound_count, GApplication * app)
   gst_element_link (adder_element, level_element);
   gst_element_link (level_element, convert_element);
   gst_element_link (convert_element, resample_element);
-  gst_element_link (resample_element, sink_element);
+  switch (GSTREAMER_MONITOR)
+    {
+    case 0:                    /* audio output only */
+      gst_element_link (resample_element, sink_element);
+      break;
+    case 1:                    /* monitor only */
+      gst_element_link (resample_element, wavenc_element);
+      gst_element_link (wavenc_element, filesink_element);
+      break;
+    case 2:                    /* both */
+      gst_element_link (resample_element, tee_element);
+      gst_element_link (tee_element, sink_element);
+      gst_element_link (tee_element, wavenc_element);
+      gst_element_link (wavenc_element, filesink_element);
+      break;
+    }
 
   /* Place the final bin in the pipeline. */
   gst_bin_add (GST_BIN (pipeline_element), final_bin_element);
@@ -105,7 +198,8 @@ GstBin *
 gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
                       GstPipeline * pipeline_element, GApplication * app)
 {
-  GstElement *source_element, *parse_element, *looper_element;
+  GstElement *source_element, *parse_element, *convert_element;
+  GstElement *resample_element, *looper_element;
   GstElement *envelope_element, *pan_element, *volume_element;
   GstElement *bin_element, *final_bin_element;
   gchar *sound_name, *pad_name, *element_name;
@@ -127,6 +221,22 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
   element_name = g_strconcat (sound_name, (gchar *) "/looper", NULL);
   looper_element = gst_element_factory_make ("looper", element_name);
   g_free (element_name);
+  if (GSTREAMER_FLEXIBILITY)
+    {
+      element_name = g_strconcat (sound_name, (gchar *) "/convert", NULL);
+      convert_element =
+        gst_element_factory_make ("audioconvert", element_name);
+      g_free (element_name);
+      element_name = g_strconcat (sound_name, (gchar *) "/resample", NULL);
+      resample_element =
+        gst_element_factory_make ("audioresample", element_name);
+      g_free (element_name);
+    }
+  else
+    {
+      convert_element = NULL;
+      resample_element = NULL;
+    }
   element_name = g_strconcat (sound_name, (gchar *) "/envelope", NULL);
   envelope_element = gst_element_factory_make ("envelope", element_name);
   g_free (element_name);
@@ -143,6 +253,13 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
       || (parse_element == NULL) || (looper_element == NULL)
       || (envelope_element == NULL) || (pan_element == NULL)
       || (volume_element == NULL))
+    {
+      GST_ERROR
+        ("Unable to create all the gstreamer sound effect elements.\n");
+      return NULL;
+    }
+  if (GSTREAMER_FLEXIBILITY
+      && ((convert_element == NULL) || (resample_element == NULL)))
     {
       GST_ERROR
         ("Unable to create all the gstreamer sound effect elements.\n");
@@ -185,6 +302,9 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
       g_object_set (envelope_element, "release-duration-time", string_buffer,
                     NULL);
     }
+  /* We don't need another volume element because the envelope element
+   * can also take a volume parameter which makes a global adjustment
+   * to the envelope, thus adjusting the volume.  */
   g_object_set (envelope_element, "volume", sound_data->designer_volume_level,
                 NULL);
   g_object_set (envelope_element, "sound-name", sound_data->name, NULL);
@@ -195,12 +315,29 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
   gst_bin_add_many (GST_BIN (bin_element), source_element, parse_element,
                     looper_element, envelope_element, pan_element,
                     volume_element, NULL);
+  if (GSTREAMER_FLEXIBILITY)
+    {
+      gst_bin_add_many (GST_BIN (bin_element), convert_element,
+                        resample_element, NULL);
+    }
 
-  /* Link them together in this order: source->parse->looper->envelope->pan->
-   * volume. */
+  /* Link them together in this order: 
+   * source->parse->looper->convert->resample->envelope->pan->volume.
+   * Note that because the looper reads the wave file directly, as well
+   * as getting it through the pipeline, the audio converter must be
+   * after it.  */
   gst_element_link (source_element, parse_element);
   gst_element_link (parse_element, looper_element);
-  gst_element_link (looper_element, envelope_element);
+  if (GSTREAMER_FLEXIBILITY)
+    {
+      gst_element_link (looper_element, convert_element);
+      gst_element_link (convert_element, resample_element);
+      gst_element_link (resample_element, envelope_element);
+    }
+  else
+    {
+      gst_element_link (looper_element, envelope_element);
+    }
   gst_element_link (envelope_element, pan_element);
   gst_element_link (pan_element, volume_element);
 
@@ -231,6 +368,10 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
     }
   g_free (pad_name);
 
+  if (GSTREAMER_TRACE)
+    {
+      g_print ("created gstreamer bin for %s.\n", sound_data->name);
+    }
   return (GST_BIN (bin_element));
 }
 
@@ -243,6 +384,9 @@ gstreamer_complete_pipeline (GstPipeline * pipeline_element,
   GstBus *bus;
   GstMessage *msg;
   GError *err = NULL;
+
+  /* For debugging, write out a graphical representation of the pipeline. */
+  gstreamer_dump_pipeline (pipeline_element);
 
   /* Now that the pipeline is constructed, start it running.  There will be no
    * sound until a sound effect bin receives a start message.  */
@@ -264,6 +408,10 @@ gstreamer_complete_pipeline (GstPipeline * pipeline_element,
         }
     }
 
+  if (GSTREAMER_TRACE)
+    {
+      g_print ("started the gstreamer pipeline.\n");
+    }
   return;
 }
 

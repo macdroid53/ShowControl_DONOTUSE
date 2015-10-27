@@ -29,6 +29,7 @@
 #include "display_subroutines.h"
 #include "sound_subroutines.h"
 #include "gstreamer_subroutines.h"
+#include "sound_effects_player.h"
 
 /* When debugging, it is sometimes useful to have printouts of the
  * messages as they happen. */
@@ -40,6 +41,16 @@ gboolean
 message_handler (GstBus * bus_element, GstMessage * message,
                  gpointer user_data)
 {
+  GstPipeline *pipeline_element;
+
+  pipeline_element = sep_get_pipeline_from_app (user_data);
+
+  if (TRACE_MESSAGES && FALSE)
+    {
+      /* For debugging, write out a graphical representation of the pipeline.  
+       */
+      gstreamer_dump_pipeline (pipeline_element);
+    }
 
   switch (GST_MESSAGE_TYPE (message))
     {
