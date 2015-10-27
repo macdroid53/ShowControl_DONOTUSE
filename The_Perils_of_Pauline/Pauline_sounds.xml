@@ -8,7 +8,7 @@
     <sound>
       <name>background music</name>
       <wav_file_name>background_music.wav</wav_file_name>
-      <designer_volume_level>0.10</designer_volume_level>
+      <designer_volume_level>0.33</designer_volume_level>
       <designer_pan>0.00</designer_pan>
     </sound>
     
@@ -16,6 +16,13 @@
       <name>DTMF notes</name>
       <wav_file_name>dtmf_notes.wav</wav_file_name>
       <designer_volume_level>0.10</designer_volume_level>
+      <designer_pan>0.00</designer_pan>
+    </sound>
+
+    <sound>
+      <name>loud DTMF notes</name>
+      <wav_file_name>dtmf_notes.wav</wav_file_name>
+      <designer_volume_level>1</designer_volume_level>
       <designer_pan>0.00</designer_pan>
     </sound>
 

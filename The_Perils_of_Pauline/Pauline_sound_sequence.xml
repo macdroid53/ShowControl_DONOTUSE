@@ -11,16 +11,32 @@
     <sequence_item>
       <name>start_of_sequence</name>
       <type>start_sequence</type>
-      <next>background_sound</next>
+      <next>wait_a_while</next>
     </sequence_item>
 
+    <sequence_item>
+      <name>wait_a_while</name>
+      <type>wait</type>
+      <next>special_sound</next>
+      <time_to_wait>5000000000</time_to_wait>
+      <text_to_display>wait five seconds</text_to_display>
+      <next_completion>background_sound</next_completion>
+    </sequence_item>
+
+    <sequence_item>
+      <name>special_sound</name>
+      <type>start_sound</type>
+      <sound_name>loud DTMF notes</sound_name>
+      <cluster_number>2</cluster_number>
+      <text_to_display>loud DTMF tones</text_to_display>
+    </sequence_item>
+    
     <sequence_item>
       <name>background_sound</name>
       <type>start_sound</type>
       <sound_name>DTMF notes</sound_name>
-      <designer_volume>0.1</designer_volume>
       <cluster_number>1</cluster_number>
-      <text_to_display>background music</text_to_display>
+      <text_to_display>DTMF tones</text_to_display>
       <next_starts>telephone-ring</next_starts>
       <next_completion>continue_background_sound</next_completion>
     </sequence_item>
@@ -29,10 +45,9 @@
       <name>continue_background_sound</name>
       <type>start_sound</type>
       <sound_name>background music</sound_name>
-      <designer_volume>0.1</designer_volume>
       <cluster_number>1</cluster_number>
       <text_to_display>background music</text_to_display>
-      <next_completion>continue_background_sound</next_completion>
+      <next_completion>wait_a_while</next_completion>
     </sequence_item>
 
   </sound_sequence>
