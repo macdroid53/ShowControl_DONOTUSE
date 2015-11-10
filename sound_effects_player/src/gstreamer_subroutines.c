@@ -23,13 +23,8 @@
 #include "sound_subroutines.h"
 #include "button_subroutines.h"
 #include "display_subroutines.h"
+#include "main.h"
 #include <math.h>
-
-/* If 0, audio output only.  If 1, monitor output only.  If 2, both.  */
-/* create a monitor.wav output file that records what was played. */
-#define GSTREAMER_MONITOR 0
-/* FIXME: selecting both causes filesink to not transition from ready
- * to paused.  */
 
 /* If true, provide more flexibility for WAV files.  */
 #define GSTREAMER_FLEXIBILITY TRUE
@@ -42,6 +37,8 @@ GstPipeline *
 gstreamer_init (int sound_count, GApplication * app)
 {
   GstElement *tee_element;
+  GstElement *queue_file_element;
+  GstElement *queue_output_element;
   GstElement *wavenc_element;
   GstElement *filesink_element;
   GstElement *sink_element;
@@ -55,7 +52,22 @@ gstreamer_init (int sound_count, GApplication * app)
   gchar *pad_name;
   gint i;
   GstPad *sink_pad;
+  gchar *monitor_file_name;
+  gboolean monitor_enabled;
+  gboolean output_enabled;
 
+  /* Check to see if --monitor-file-name was specified on the command
+   * line.  */
+  monitor_file_name = main_get_monitor_file_name ();
+  monitor_enabled = FALSE;
+  if (monitor_file_name != NULL)
+    {
+      monitor_enabled = TRUE;
+    }
+  /* We always do output.  */
+  output_enabled = TRUE;
+
+  /* Create the top-level pipeline.  */
   pipeline_element = GST_PIPELINE (gst_pipeline_new ("sound_effects"));
   if (pipeline_element == NULL)
     {
@@ -79,10 +91,12 @@ gstreamer_init (int sound_count, GApplication * app)
       GST_ERROR ("Unable to create the final gstreamer elements.\n");
       return NULL;
     }
-  switch (GSTREAMER_MONITOR)
-    {
-    case 0:                    /* audio only */
+
+  if ((monitor_enabled == FALSE) && (output_enabled == TRUE))
+    {                           /* audio only */
       tee_element = NULL;
+      queue_file_element = NULL;
+      queue_output_element = NULL;
       sink_element = gst_element_factory_make ("alsasink", "final/sink");
       wavenc_element = NULL;
       filesink_element = NULL;
@@ -90,9 +104,12 @@ gstreamer_init (int sound_count, GApplication * app)
         {
           GST_ERROR ("Unable to create the final sink gstreamer element.\n");
         }
-      break;
-    case 1:                    /* file output only */
+    }
+  if ((monitor_enabled == TRUE) && (output_enabled == FALSE))
+    {                           /* file output only */
       tee_element = NULL;
+      queue_file_element = NULL;
+      queue_output_element = NULL;
       sink_element = NULL;
       wavenc_element = gst_element_factory_make ("wavenc", "final/wavenc");
       filesink_element =
@@ -101,59 +118,56 @@ gstreamer_init (int sound_count, GApplication * app)
         {
           GST_ERROR ("Unable to create the final sink gstreamer elements.\n");
         }
-      break;
-    case 2:                    /* both */
+    }
+  if ((monitor_enabled == TRUE) && (output_enabled == TRUE))
+    {                           /* both */
       tee_element = gst_element_factory_make ("tee", "final/tee");
+      queue_file_element =
+        gst_element_factory_make ("queue", "final/queue_file");
+      queue_output_element =
+        gst_element_factory_make ("queue", "final/queue_output");
       sink_element = gst_element_factory_make ("alsasink", "final/sink");
       wavenc_element = gst_element_factory_make ("wavenc", "final/wavenc");
       filesink_element =
         gst_element_factory_make ("filesink", "final/filesink");
-      if ((tee_element == NULL) || (sink_element == NULL)
+      if ((tee_element == NULL) || (queue_file_element == NULL)
+          || (queue_output_element == NULL) || (sink_element == NULL)
           || (wavenc_element == NULL) || (filesink_element == NULL))
         {
           GST_ERROR ("Unable to create the final sink gstreamer elements.\n");
         }
-      break;
     }
 
-  /* Put the adder, level, converter, resampler, tee, wave encoder, filesink
-   * and ALSA sink into the final bin. */
+  /* Put the needed elements into the final bin.  */
   gst_bin_add_many (GST_BIN (final_bin_element), adder_element, level_element,
                     convert_element, resample_element, NULL);
-  switch (GSTREAMER_MONITOR)
+  if (output_enabled == TRUE)
     {
-    case 0:                    /* Just audio output */
       gst_bin_add_many (GST_BIN (final_bin_element), sink_element, NULL);
-      break;
-    case 1:                    /* just file output */
+    }
+  if (monitor_enabled == TRUE)
+    {
       gst_bin_add_many (GST_BIN (final_bin_element), wavenc_element,
                         filesink_element, NULL);
-      break;
-    case 2:                    /* both audio and file output */
+    }
+  if ((output_enabled == TRUE) && (monitor_enabled == TRUE))
+    {
       gst_bin_add_many (GST_BIN (final_bin_element), tee_element,
-                        sink_element, wavenc_element, filesink_element, NULL);
-      break;
+                        queue_file_element, queue_output_element, NULL);
     }
 
   /* Make sure we will get level messages. */
   g_object_set (level_element, "post-messages", TRUE, NULL);
 
-  if (GSTREAMER_MONITOR != 0)
+  if (monitor_enabled == TRUE)
     {
       /* Set the file name for monitoring the output.  */
-      g_object_set (filesink_element, "location", "monitor.wav", NULL);
+      g_object_set (filesink_element, "location", monitor_file_name, NULL);
     }
 
   /* Watch for messages from the pipeline.  */
   bus = gst_element_get_bus (GST_ELEMENT (pipeline_element));
   gst_bus_add_watch (bus, message_handler, app);
-
-  /* If we have both audio output and file output, put the file output
-   * in sync mode.  */
-  if (GSTREAMER_MONITOR == 2)
-    {
-      g_object_set (filesink_element, "sync", TRUE, NULL);
-    }
 
   /* The inputs to the final bin are the inputs to the adder.  Create enough
    * sinks for each sound effect.  */
@@ -170,21 +184,23 @@ gstreamer_init (int sound_count, GApplication * app)
   gst_element_link (adder_element, level_element);
   gst_element_link (level_element, convert_element);
   gst_element_link (convert_element, resample_element);
-  switch (GSTREAMER_MONITOR)
+  if ((output_enabled == TRUE) && (monitor_enabled == FALSE))
     {
-    case 0:                    /* audio output only */
       gst_element_link (resample_element, sink_element);
-      break;
-    case 1:                    /* monitor only */
+    }
+  if ((output_enabled == FALSE) && (monitor_enabled == TRUE))
+    {
       gst_element_link (resample_element, wavenc_element);
       gst_element_link (wavenc_element, filesink_element);
-      break;
-    case 2:                    /* both */
+    }
+  if ((output_enabled == TRUE) && (monitor_enabled == TRUE))
+    {
       gst_element_link (resample_element, tee_element);
-      gst_element_link (tee_element, sink_element);
-      gst_element_link (tee_element, wavenc_element);
+      gst_element_link (tee_element, queue_file_element);
+      gst_element_link (tee_element, queue_output_element);
+      gst_element_link (queue_output_element, sink_element);
+      gst_element_link (queue_file_element, wavenc_element);
       gst_element_link (wavenc_element, filesink_element);
-      break;
     }
 
   /* Place the final bin in the pipeline. */

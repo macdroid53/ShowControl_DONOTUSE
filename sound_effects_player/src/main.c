@@ -17,9 +17,13 @@
  */
 
 #include "config.h"
+#include "main.h"
 #include "sound_effects_player.h"
 
 #include <glib/gi18n.h>
+
+/* Persistent data.  */
+gchar *monitor_file_name = NULL;
 
 /* The entry point for the sound_effects_player application.  
  * This is a GTK application, so much of what is done here is standard 
@@ -38,6 +42,8 @@ main (int argc, char *argv[])
   const GOptionEntry entries[] = {
     {"process-id-file", 'p', 0, G_OPTION_ARG_FILENAME, &pid_file_name,
      "name of the file written with the process id, for signaling"},
+    {"monitor-file", 'p', 0, G_OPTION_ARG_FILENAME, &monitor_file_name,
+     "name of the file which monitors output"},
     /* add more command line options here */
     {G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames,
      "Special option that collects any remaining arguments for us"},
@@ -155,6 +161,17 @@ main (int argc, char *argv[])
   if (pid_file_written)
     remove (pid_file_name);
   free (pid_file_name);
-
+  pid_file_name = NULL;
+  
+  free(monitor_file_name);
+  monitor_file_name = NULL;
+  
   return status;
+}
+
+/* Fetch the name of the monitor file.  */
+gchar *
+main_get_monitor_file_name ()
+{
+  return monitor_file_name;
 }

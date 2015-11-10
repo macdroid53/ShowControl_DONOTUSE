@@ -414,6 +414,7 @@ sound_effects_player_SOURCES = \
 	gstreamer_subroutines.c \
 	gstreamer_subroutines.h \
 	main.c \
+	main.h \
 	menu_subroutines.c \
 	menu_subroutines.h \
 	message_subroutines.c \

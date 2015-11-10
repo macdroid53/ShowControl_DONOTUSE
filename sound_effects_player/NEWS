@@ -1,3 +1,7 @@
+Version 0.56, November 10, 2015
+  Allow writing a copy of the sound output on a file by specifying
+  --monitor-file on the command line.
+  
 Version 0.55, October 27, 2015
   Allow more flexibility in the format of wave files.
   
