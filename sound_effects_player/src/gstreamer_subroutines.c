@@ -56,8 +56,7 @@ gstreamer_init (int sound_count, GApplication * app)
   gboolean monitor_enabled;
   gboolean output_enabled;
 
-  /* Check to see if --monitor-file-name was specified on the command
-   * line.  */
+  /* Check to see if --monitor-file was specified on the command line.  */
   monitor_file_name = main_get_monitor_file_name ();
   monitor_enabled = FALSE;
   if (monitor_file_name != NULL)
