@@ -1,3 +1,6 @@
+Version 0.57, December 22, 2015
+  Display text for the operator when called for in the sequence.
+  
 Version 0.56, November 10, 2015
   Allow writing a copy of the sound output on a file by specifying
   --monitor-file on the command line.

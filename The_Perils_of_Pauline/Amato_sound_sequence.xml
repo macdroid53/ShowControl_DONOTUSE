@@ -19,7 +19,8 @@
       <sound_name>ring</sound_name>
       <cluster_number>0</cluster_number>
       <tag>telephone-ring</tag>
-      <text_to_display>ding-a-ling</text_to_display>      
+      <text_to_display>ding-a-ling</text_to_display>
+      <importance>2</importance>
       <next_starts>telephone-ring-3</next_starts>
       <next_completion>telephone-ring-5</next_completion>
       <next_termination>telephone-ring-7</next_termination>
@@ -46,6 +47,7 @@
       <cluster_number>0</cluster_number>
       <tag>telephone-ring</tag>
       <text_to_display>pause between rings</text_to_display>
+      <importance>2</importance>
       <next_completion>telephone-ring-6</next_completion>
     </sequence_item>
     
@@ -55,7 +57,8 @@
       <sound_name>ring</sound_name>
       <cluster_number>0</cluster_number>
       <tag>telephone-ring</tag>
-      <text_to_display>ding-a-ling</text_to_display>      
+      <text_to_display>ding-a-ling</text_to_display>
+      <importance>2</importance>
       <next_completion>telephone-ring-5</next_completion>
       <next_termination>telephone-ring-7</next_termination>
     </sequence_item>
@@ -66,7 +69,8 @@
       <sound_name>ringout</sound_name>
       <cluster_number>0</cluster_number>
       <tag>telephone-ring</tag>
-      <text_to_display>pause between rings</text_to_display>      
+      <text_to_display>pause between rings</text_to_display>
+      <importance>2</importance>
     </sequence_item>
 
   </sound_sequence>

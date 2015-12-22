@@ -58,6 +58,8 @@ struct remember_info
   struct sound_info *sound_effect;
   struct sequence_item_info *sequence_item;
   gboolean active;              /* TRUE if the entry is active.  */
+  guint message_id;
+  gboolean being_displayed;
 };
 
 /* Forward declarations, so I can call these subroutines before I define them.  
@@ -99,6 +101,10 @@ static void execute_cease_offering_sound (struct sequence_item_info *the_item,
 static void execute_operator_wait (struct sequence_item_info *the_item,
                                    struct sequence_info *sequence_data,
                                    GApplication * app);
+
+static void update_operator_display (GApplication * app);
+static void cancel_operator_display (struct remember_info *remember_data,
+                                     GApplication * app);
 
 /* Subroutines for handling sequence items.  */
 
@@ -314,9 +320,15 @@ execute_start_sound (struct sequence_item_info *the_item,
       remember_data->sequence_item = the_item;
       remember_data->sound_effect = sound_effect;
       remember_data->active = TRUE;
+      remember_data->message_id = 0;
+      remember_data->being_displayed = FALSE;
       sequence_data->running =
         g_list_append (sequence_data->running, remember_data);
     }
+
+  /* In case this is the most important text to be displayed to the operator,
+   * update the operator display.  */
+  update_operator_display (app);
 
   /* Advance to the next sequence item.  */
   sequence_data->next_item_name = the_item->next_starts;
@@ -614,6 +626,75 @@ execute_operator_wait (struct sequence_item_info *the_item,
   return;
 }
 
+/* Update the operator display.  Show the most important item, preferring
+ * the current item in case of a tie.  */
+void
+update_operator_display (GApplication * app)
+{
+  struct sequence_info *sequence_data;
+  struct remember_info *remember_data;
+  struct sequence_item_info *sequence_item;
+  struct sequence_item_info *most_important;
+  gboolean found_item;
+  GList *item_list;
+
+  sequence_data = sep_get_sequence_data (app);
+  found_item = FALSE;
+  most_important = NULL;
+  for (item_list = sequence_data->running; item_list != NULL;
+       item_list = item_list->next)
+    {
+      remember_data = item_list->data;
+      sequence_item = remember_data->sequence_item;
+      if ((remember_data->active) && (sequence_item->importance > 0))
+        {
+          if (found_item == FALSE)
+            {
+              most_important = sequence_item;
+              found_item = TRUE;
+            }
+          else
+            {
+              if (sequence_item->importance > most_important->importance)
+                {
+                  most_important = sequence_item;
+                }
+              else
+                {
+                  if ((sequence_item->importance ==
+                       most_important->importance)
+                      && (remember_data->being_displayed == TRUE))
+                    {
+                      most_important = sequence_item;
+                    }
+                }
+            }
+        }
+    }
+
+  if (found_item == TRUE)
+    {
+      remember_data->message_id =
+        display_show_message (most_important->text_to_display, app);
+      remember_data->being_displayed = TRUE;
+    }
+}
+
+/* Cease showing some text to the operator.  */
+void
+cancel_operator_display (struct remember_info *remember_data,
+                         GApplication * app)
+{
+
+  if (remember_data->being_displayed == TRUE)
+    {
+      display_remove_message (remember_data->message_id, app);
+      remember_data->being_displayed = FALSE;
+      remember_data->message_id = 0;
+    }
+}
+
+
 /* Execute the Go command from an external sequencer issuing MIDI Show Control
  * commands.  */
 void
@@ -877,6 +958,10 @@ sequence_sound_completion (struct sound_info *sound_effect,
    * completed.  */
   start_sound_sequence_item = remember_data->sequence_item;
 
+  /* If we are showing the status of this sound to the operator,
+   * stop doing that.  */
+  cancel_operator_display (remember_data, app);
+
   /* Remove the sequence item from the running list.  */
   sequence_data->running =
     g_list_remove_link (sequence_data->running, found_item);
@@ -914,6 +999,9 @@ sequence_sound_completion (struct sound_info *sound_effect,
       sound_cluster_set_name ((gchar *) "", sound_effect->cluster_number,
                               app);
     }
+
+  /* If there is another sound running, show its status.  */
+  update_operator_display (app);
 
   /* Now that the Start Sound has completed, run the sequencer
    * from its completion label.  */
@@ -968,6 +1056,9 @@ sequence_sound_termination (struct sound_info *sound_effect,
    * terminated.  */
   start_sound_sequence_item = remember_data->sequence_item;
 
+  /* Stop showing the sound's status.  */
+  cancel_operator_display (remember_data, app);
+
   /* Remove the sequence item from the running list.  */
   sequence_data->running =
     g_list_remove_link (sequence_data->running, found_item);
@@ -1005,6 +1096,9 @@ sequence_sound_termination (struct sound_info *sound_effect,
       sound_cluster_set_name ((gchar *) "", sound_effect->cluster_number,
                               app);
     }
+
+  /* If there is another sound running, show its status.  */
+  update_operator_display (app);
 
   /* Now that the Start Sound has terminated, run the sequencer
    * from its termination label.  */
