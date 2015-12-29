@@ -32,4 +32,5 @@ void gstreamer_async_done (GApplication * app);
 void gstreamer_process_eos (GApplication * app);
 GstElement *gstreamer_get_volume (GstBin * bin_element);
 GstElement *gstreamer_get_pan (GstBin * bin_element);
+GstElement *gstreamer_get_looper (GstBin * bin_element);
 void gstreamer_dump_pipeline (GstPipeline * pipeline_element);

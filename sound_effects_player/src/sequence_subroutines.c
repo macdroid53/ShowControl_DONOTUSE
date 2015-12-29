@@ -48,7 +48,12 @@ struct sequence_info
                                                  * operator.  */
   GList *operator_waiting;      /* The Operator Wait sequence items that are
                                  * waiting for their turn at the operator.  */
-  GList *waiting;               /* The Wait sequence items that are still pending.  */
+  GList *waiting;               /* The Wait sequence items that are still 
+                                 * pending.  */
+  gboolean message_displaying;  /* TRUE if the sequencer is displaying a
+                                 * message to the operator.  */
+  guint message_id;             /* The ID of the message being displayed by the
+                                 * sequencer.  */
 };
 
 /* an entry on the running, offering or operator waiting lists */
@@ -58,7 +63,6 @@ struct remember_info
   struct sound_info *sound_effect;
   struct sequence_item_info *sequence_item;
   gboolean active;              /* TRUE if the entry is active.  */
-  guint message_id;
   gboolean being_displayed;
 };
 
@@ -102,8 +106,11 @@ static void execute_operator_wait (struct sequence_item_info *the_item,
                                    struct sequence_info *sequence_data,
                                    GApplication * app);
 
-static void update_operator_display (GApplication * app);
+static void update_operator_display (struct sequence_info *sequence_data,
+                                     GApplication * app);
+static void clock_tick (void *sequence_data, GApplication * app);
 static void cancel_operator_display (struct remember_info *remember_data,
+                                     struct sequence_info *sequence_data,
                                      GApplication * app);
 
 /* Subroutines for handling sequence items.  */
@@ -121,6 +128,8 @@ sequence_init (GApplication * app)
   sequence_data->current_operator_wait = NULL;
   sequence_data->operator_waiting = NULL;
   sequence_data->waiting = NULL;
+  sequence_data->message_displaying = FALSE;
+  sequence_data->message_id = 0;
   return (sequence_data);
 }
 
@@ -320,7 +329,6 @@ execute_start_sound (struct sequence_item_info *the_item,
       remember_data->sequence_item = the_item;
       remember_data->sound_effect = sound_effect;
       remember_data->active = TRUE;
-      remember_data->message_id = 0;
       remember_data->being_displayed = FALSE;
       sequence_data->running =
         g_list_append (sequence_data->running, remember_data);
@@ -328,7 +336,7 @@ execute_start_sound (struct sequence_item_info *the_item,
 
   /* In case this is the most important text to be displayed to the operator,
    * update the operator display.  */
-  update_operator_display (app);
+  update_operator_display (sequence_data, app);
 
   /* Advance to the next sequence item.  */
   sequence_data->next_item_name = the_item->next_starts;
@@ -442,7 +450,7 @@ execute_wait (struct sequence_item_info *the_item,
 }
 
 /* Call here from the timer when a wait is completed.  */
-void
+static void
 wait_completed (void *user_data, GApplication * app)
 {
   struct remember_info *remember_data = user_data;
@@ -628,44 +636,59 @@ execute_operator_wait (struct sequence_item_info *the_item,
 
 /* Update the operator display.  Show the most important item, preferring
  * the current item in case of a tie.  */
-void
-update_operator_display (GApplication * app)
+static void
+update_operator_display (struct sequence_info *sequence_data,
+                         GApplication * app)
 {
-  struct sequence_info *sequence_data;
   struct remember_info *remember_data;
   struct sequence_item_info *sequence_item;
-  struct sequence_item_info *most_important;
+  struct remember_info *most_important;
+  struct remember_info *current_display;
+  struct sound_info *sound_effect;
   gboolean found_item;
+  guint most_importance;
   GList *item_list;
+  gchar *elapsed_time;
+  gchar *display_text;
 
-  sequence_data = sep_get_sequence_data (app);
   found_item = FALSE;
+  most_importance = 0;
   most_important = NULL;
+  current_display = NULL;
   for (item_list = sequence_data->running; item_list != NULL;
        item_list = item_list->next)
     {
       remember_data = item_list->data;
+
+      /* Note which item is currently being displayed.  */
+      if (remember_data->being_displayed)
+        {
+          current_display = remember_data;
+        }
+
+      /* Find the item that should be displayed.  */
       sequence_item = remember_data->sequence_item;
       if ((remember_data->active) && (sequence_item->importance > 0))
         {
           if (found_item == FALSE)
             {
-              most_important = sequence_item;
+              most_important = remember_data;
+              most_importance = sequence_item->importance;
               found_item = TRUE;
             }
           else
             {
-              if (sequence_item->importance > most_important->importance)
+              if (sequence_item->importance > most_importance)
                 {
-                  most_important = sequence_item;
+                  most_important = remember_data;
+                  most_importance = sequence_item->importance;
                 }
               else
                 {
-                  if ((sequence_item->importance ==
-                       most_important->importance)
+                  if ((sequence_item->importance == most_importance)
                       && (remember_data->being_displayed == TRUE))
                     {
-                      most_important = sequence_item;
+                      most_important = remember_data;
                     }
                 }
             }
@@ -674,23 +697,74 @@ update_operator_display (GApplication * app)
 
   if (found_item == TRUE)
     {
-      remember_data->message_id =
-        display_show_message (most_important->text_to_display, app);
-      remember_data->being_displayed = TRUE;
+
+      /* most_important is the item we should be displaying.  current_display
+       * is the item we are currently displaying, if any.  These may be
+       * the same item.  */
+      sequence_item = most_important->sequence_item;
+      sound_effect = most_important->sound_effect;
+      /* Prepend the elapsed time to the operator message.  */
+      elapsed_time = sound_get_elapsed_time (sound_effect, app);
+      display_text =
+        g_strdup_printf ("%s %s", elapsed_time,
+                         sequence_item->text_to_display);
+      /* If there is a message already being displayed by the sequencer,
+       * remove it.  */
+      if (sequence_data->message_displaying)
+        {
+          display_remove_message (sequence_data->message_id, app);
+        }
+
+      /* Display the most important message.  */
+      sequence_data->message_id = display_show_message (display_text, app);
+      sequence_data->message_displaying = TRUE;
+      g_free (display_text);
+      display_text = NULL;
+      g_free (elapsed_time);
+      elapsed_time = NULL;
+
+      /* Mark the most important item as the one currently being displayed.  */
+      if (current_display != NULL)
+        {
+          current_display->being_displayed = FALSE;
+        }
+      most_important->being_displayed = TRUE;
+
+      if (TRACE_SEQUENCER)
+        {
+          g_print ("Display message %d.\n", sequence_data->message_id);
+        }
+      /* Keep updating the display every 0.1 second until there is nothing
+       * to show.  */
+      timer_create_entry (clock_tick, 0.1, sequence_data, app);
     }
 }
 
+/* Come here when the 0.1-second clock ticks to update the operator display.  */
+static void
+clock_tick (void *user_data, GApplication * app)
+{
+  struct sequence_info *sequence_data = user_data;
+  update_operator_display (sequence_data, app);
+}
+
 /* Cease showing some text to the operator.  */
-void
+static void
 cancel_operator_display (struct remember_info *remember_data,
+                         struct sequence_info *sequence_data,
                          GApplication * app)
 {
 
-  if (remember_data->being_displayed == TRUE)
+  if (sequence_data->message_displaying && remember_data->being_displayed)
     {
-      display_remove_message (remember_data->message_id, app);
+      if (TRACE_SEQUENCER)
+        {
+          g_print ("Cancel message %d.\n", sequence_data->message_id);
+        }
+      display_remove_message (sequence_data->message_id, app);
       remember_data->being_displayed = FALSE;
-      remember_data->message_id = 0;
+      sequence_data->message_id = 0;
+      sequence_data->message_displaying = FALSE;
     }
 }
 
@@ -960,7 +1034,7 @@ sequence_sound_completion (struct sound_info *sound_effect,
 
   /* If we are showing the status of this sound to the operator,
    * stop doing that.  */
-  cancel_operator_display (remember_data, app);
+  cancel_operator_display (remember_data, sequence_data, app);
 
   /* Remove the sequence item from the running list.  */
   sequence_data->running =
@@ -1001,7 +1075,7 @@ sequence_sound_completion (struct sound_info *sound_effect,
     }
 
   /* If there is another sound running, show its status.  */
-  update_operator_display (app);
+  update_operator_display (sequence_data, app);
 
   /* Now that the Start Sound has completed, run the sequencer
    * from its completion label.  */
@@ -1057,7 +1131,7 @@ sequence_sound_termination (struct sound_info *sound_effect,
   start_sound_sequence_item = remember_data->sequence_item;
 
   /* Stop showing the sound's status.  */
-  cancel_operator_display (remember_data, app);
+  cancel_operator_display (remember_data, sequence_data, app);
 
   /* Remove the sequence item from the running list.  */
   sequence_data->running =
@@ -1098,7 +1172,7 @@ sequence_sound_termination (struct sound_info *sound_effect,
     }
 
   /* If there is another sound running, show its status.  */
-  update_operator_display (app);
+  update_operator_display (sequence_data, app);
 
   /* Now that the Start Sound has terminated, run the sequencer
    * from its termination label.  */

@@ -216,7 +216,7 @@ sound_start_playing (struct sound_info *sound_data, GApplication * app)
   /* Send a start message to the bin.  It will be routed to the source, and
    * flow from there downstream through the looper and envelope.  
    * The looper element will start sending its local buffer,
-   * and the envelope element will start shaping the volume.  */
+   * and the envelope element will start shapeing the volume.  */
   structure = gst_structure_new_empty ((gchar *) "start");
   event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
   gst_element_send_event (GST_ELEMENT (bin_element), event);
@@ -242,6 +242,31 @@ sound_stop_playing (struct sound_info *sound_data, GApplication * app)
   gst_element_send_event (GST_ELEMENT (bin_element), event);
 
   return;
+}
+
+/* Get the elapsed time of a playing sound.  */
+gchar *
+sound_get_elapsed_time (struct sound_info * sound_data, GApplication * app)
+{
+  GstElement *looper_element;
+  gchar *string_value;
+
+  looper_element = gstreamer_get_looper (sound_data->sound_control);
+  g_object_get (looper_element, (gchar *) "elapsed-time", &string_value,
+                NULL);
+  return string_value;
+}
+
+/* Get the remaining run time of a playing sound.  */
+gchar *
+sound_get_remaining_time (struct sound_info * sound_data, GApplication * app)
+{
+  GstBin *bin_element;
+  gchar *string_value;
+
+  bin_element = sound_data->sound_control;
+  g_object_get (bin_element, (gchar *) "remaining-time", &string_value, NULL);
+  return string_value;
 }
 
 /* Receive a completed message, which indicates that a sound has entered

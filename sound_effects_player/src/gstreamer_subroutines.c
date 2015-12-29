@@ -63,7 +63,8 @@ gstreamer_init (int sound_count, GApplication * app)
     {
       monitor_enabled = TRUE;
     }
-  /* We always do output.  */
+
+  /* We always send sound to the default sound output device.  */
   output_enabled = TRUE;
 
   /* Create the top-level pipeline.  */
@@ -442,6 +443,9 @@ gstreamer_shutdown (GApplication * app)
 
   if (pipeline_element != NULL)
     {
+      /* For debugging, write out a graphical representation of the pipeline. */
+      gstreamer_dump_pipeline (pipeline_element);
+
       /* Send a shutdown message to the pipeline.  The message will be
        * received by every element, so the looper element will stop
        * sending data in anticipation of being shut down.  */
@@ -488,8 +492,12 @@ gstreamer_process_eos (GApplication * app)
 {
   GstPipeline *pipeline_element;
 
-  /* Tell the pipeline to shut down.  */
   pipeline_element = sep_get_pipeline_from_app (app);
+
+  /* For debugging, write out a graphical representation of the pipeline. */
+  gstreamer_dump_pipeline (pipeline_element);
+
+  /* Tell the pipeline to shut down.  */
   gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_NULL);
 
   /* Now we can quit.  */
@@ -528,6 +536,22 @@ gstreamer_get_pan (GstBin * bin_element)
   g_free (element_name);
 
   return (pan_element);
+}
+
+/* Find the looper element in a bin. */
+GstElement *
+gstreamer_get_looper (GstBin * bin_element)
+{
+  GstElement *looper_element;
+  gchar *element_name, *bin_name;
+
+  bin_name = gst_element_get_name (bin_element);
+  element_name = g_strconcat (bin_name, (gchar *) "/looper", NULL);
+  g_free (bin_name);
+  looper_element = gst_bin_get_by_name (bin_element, element_name);
+  g_free (element_name);
+
+  return (looper_element);
 }
 
 /* For debugging, write out an annotated, graphical representation

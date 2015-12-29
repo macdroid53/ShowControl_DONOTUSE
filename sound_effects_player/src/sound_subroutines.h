@@ -48,6 +48,14 @@ void sound_start_playing (struct sound_info *sound_data, GApplication * app);
 /* Stop playing a sound.  */
 void sound_stop_playing (struct sound_info *sound_data, GApplication * app);
 
+/* Get the elapsed time of a playing sound.  */
+gchar *sound_get_elapsed_time (struct sound_info *sound_data,
+                               GApplication * app);
+
+/* Get the remaining time of a playing sound.  */
+gchar *sound_get_remaining_time (struct sound_info *sound_data,
+                                 GApplication * app);
+
 /* Note that a sound has completed.  */
 void sound_completed (const gchar * sound_name, GApplication * app);
 

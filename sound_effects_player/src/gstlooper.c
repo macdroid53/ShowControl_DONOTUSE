@@ -1,7 +1,8 @@
 /*
  * gstlooper.c, a file in sound_effects_player, a component of Show_control, 
- * which is a Gstreamer application
- * Copyright © 2006 Stefan Kost <ensonic@users.sf.net>
+ * which is a Gstreamer application.  Much of the code in this file is based
+ * on Gstreamer examples and tutorials.
+ *
  * Copyright © 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +60,7 @@
  * An even faster alternative to getting the data in pull mode is to specify
  * the file-location parameter.  Gstlooper will read the data segements from
  * that file rather than wait for the data to come from upstream.  The metadata
- * will still come from upstream.
+ * will still come from upstream.  The specified file must be a WAV file.
  *
  * <refsect2>
  * <title>Example launch line</title>
@@ -116,7 +117,9 @@ enum
   PROP_MAX_DURATION,
   PROP_START_TIME,
   PROP_AUTOSTART,
-  PROP_FILE_LOCATION
+  PROP_FILE_LOCATION,
+  PROP_ELAPSED_TIME,
+  PROP_REMAINING_TIME
 };
 
 #define DEBUG_INIT \
@@ -198,7 +201,7 @@ gst_looper_class_init (GstLooperClass * klass)
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
   GParamSpec *param_spec;
-  gchar *file_location_default;
+  gchar *string_default;
 
   gobject_class = (GObjectClass *) klass;
   gstelement_class = (GstElementClass *) klass;
@@ -248,16 +251,31 @@ gst_looper_class_init (GstLooperClass * klass)
                           G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_AUTOSTART, param_spec);
 
-  file_location_default = g_strdup ("");
+  string_default = g_strdup ("");
   param_spec =
     g_param_spec_string ("file-location", "File_location",
                          "The location of the WAV file "
-                         "for fast loading of data", file_location_default,
+                         "for fast loading of data", string_default,
                          G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_FILE_LOCATION,
                                    param_spec);
-  g_free (file_location_default);
-  file_location_default = NULL;
+
+  param_spec =
+    g_param_spec_string ("elapsed-time", "elapsed_time",
+                         "Time in seconds since the sound was started",
+                         string_default, G_PARAM_READABLE);
+  g_object_class_install_property (gobject_class, PROP_ELAPSED_TIME,
+                                   param_spec);
+
+  param_spec =
+    g_param_spec_string ("remaining-time", "remaining_time",
+                         "Time in seconds until the sound stops",
+                         string_default, G_PARAM_READABLE);
+  g_object_class_install_property (gobject_class, PROP_REMAINING_TIME,
+                                   param_spec);
+
+  g_free (string_default);
+  string_default = NULL;
 
   /* Set several parent class virtual functions.  */
   gobject_class->finalize = gst_looper_finalize;
@@ -306,6 +324,7 @@ gst_looper_init (GstLooper * self)
   self->local_buffer_size = 0;
   self->bytes_per_ns = 0.0;
   self->local_clock = 0;
+  self->elapsed_time = 0;
   self->width = 0;
   self->channel_count = 0;
   self->format = NULL;
@@ -887,6 +906,11 @@ gst_looper_push_data_downstream (GstPad * pad)
   /* Advance our clock.  */
   self->local_clock =
     self->local_clock + (memory_out_info.size / self->bytes_per_ns);
+  /* Keep track of the amount of time we have been sending sound.  */
+  self->elapsed_time =
+    self->elapsed_time + (memory_out_info.size / self->bytes_per_ns);
+  GST_DEBUG_OBJECT (self, "elapsed time is %" G_GUINT64_FORMAT ".",
+		    self->elapsed_time);
   /* Note the byte offsets in the source.  */
   GST_BUFFER_OFFSET (buffer) = self->local_buffer_drain_level;
   GST_BUFFER_OFFSET_END (buffer) =
@@ -1139,6 +1163,7 @@ gst_looper_pull_data_from_upstream (GstPad * pad)
         {
           self->started = TRUE;
           self->local_clock = 0;
+          self->elapsed_time = 0;
         }
       /* Begin pushing data from our local buffer downstream using the
        * source pad.  Unless we are autostarted, that task will send silence 
@@ -1302,6 +1327,7 @@ gst_looper_chain (GstPad * pad, GstObject * parent, GstBuffer * buffer)
         {
           self->started = TRUE;
           self->local_clock = 0;
+          self->elapsed_time = 0;
         }
       /* Begin pushing data from our local buffer downstream using the 
        * source pad.  Unless we are autostarted, this task will send 
@@ -1654,6 +1680,7 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
                 {
                   self->started = TRUE;
                   self->local_clock = 0;
+                  self->elapsed_time = 0;
                 }
               /* It is too early to start pushing data downstream.  Wait until
                * we get some data from upstream.  */
@@ -1692,6 +1719,7 @@ gst_looper_handle_sink_event (GstPad * pad, GstObject * parent,
             {
               self->started = TRUE;
               self->local_clock = 0;
+              self->elapsed_time = 0;
             }
           /* Begin pushing data from our local buffer downstream using the 
            * source pad.  Unless we are autostarted, this task will send 
@@ -1786,7 +1814,10 @@ gst_looper_handle_src_event (GstPad * pad, GstObject * parent,
        * and shutdown.
        * The release event is processed mostly in the envelope plugin,
        * but we also use it here to terminate looping.
-       * The start event causes the buffered data to be transmitted.
+       *
+       * The start event causes the buffered data to be transmitted
+       * from its beginning.
+       *
        * The shutdown event is issued prior to closing down the
        * pipeline.  The looper sends EOS and stops sending data.
        *
@@ -1808,6 +1839,7 @@ gst_looper_handle_src_event (GstPad * pad, GstObject * parent,
           self->completion_sent = FALSE;
           start_position = round_down_to_position (self, self->start_time);
           self->local_buffer_drain_level = start_position;
+          self->elapsed_time = 0;
         }
 
       if (g_strcmp0 (structure_name, (gchar *) "pause") == 0)
@@ -2340,6 +2372,8 @@ gst_looper_get_property (GObject * object, guint prop_id, GValue * value,
                          GParamSpec * pspec)
 {
   GstLooper *self = GST_LOOPER (object);
+  gchar *string_value;
+  gdouble double_value;
 
   g_rec_mutex_lock (&self->interlock);
   switch (prop_id)
@@ -2389,6 +2423,21 @@ gst_looper_get_property (GObject * object, guint prop_id, GValue * value,
     case PROP_FILE_LOCATION:
       GST_OBJECT_LOCK (self);
       g_value_set_string (value, self->file_location);
+      GST_OBJECT_UNLOCK (self);
+      break;
+
+    case PROP_ELAPSED_TIME:
+      GST_OBJECT_LOCK (self);
+      double_value = (gdouble) self->elapsed_time / (gdouble) 1e9;
+      string_value = g_strdup_printf ("%4.1f", double_value);
+      g_value_set_string (value, string_value);
+      g_free (string_value);
+      string_value = NULL;
+      GST_OBJECT_UNLOCK (self);
+      break;
+
+    case PROP_REMAINING_TIME:
+      GST_OBJECT_LOCK (self);
       GST_OBJECT_UNLOCK (self);
       break;
 

@@ -71,6 +71,8 @@ struct _GstLooper
   guint64 timestamp_offset;
   guint64 local_clock;          /* The current time, in nanoseconds.  
                                  * This counts continuously through loops.  */
+  guint64 elapsed_time;         /* The amount of time, in nanoseconds, that
+				 * we have been sending sound.  */
   gdouble bytes_per_ns;         /* data rate in bytes per nanosecond */
   gchar *format;                /* The format of incoming data--for example,
                                  * F32LE.  */

@@ -1,6 +1,8 @@
 /*
  * File: gstenvelope.c, part of Show_control, a Gstreamer application
- * Copyright © 2006 Stefan Kost <ensonic@users.sf.net>
+ *
+ * Much of this code is based on Gstreamer examples and tutorials.
+ *
  * Copyright © 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
  * This library is free software; you can redistribute it and/or
@@ -1234,13 +1236,13 @@ envelope_src_event_handler (GstBaseTransform * trans, GstEvent * event)
   switch (GST_EVENT_TYPE (event))
     {
     case GST_EVENT_CUSTOM_UPSTREAM:
-      GST_INFO_OBJECT (self, "Processing %s.", structure_name);
       if (g_strcmp0 (structure_name, (gchar *) "release") == 0)
         {
           /* This is a release event, which might be caused by receipt
            * of a Note Off MIDI message, or by an operator pushing a
            * stop button.  Set a flag that will force release processing
            * to begin.  */
+          GST_INFO_OBJECT (self, "Received custom release event");
           GST_OBJECT_LOCK (self);
           self->external_release_seen = TRUE;
           GST_OBJECT_UNLOCK (self);
@@ -1252,6 +1254,7 @@ envelope_src_event_handler (GstBaseTransform * trans, GstEvent * event)
            * start button.  Flag that we have seen the message; the
            * next incoming buffer will start the envelope running
            * as soon as the previous release is complete.  */
+          GST_INFO_OBJECT (self, "Received custom start event");
           GST_OBJECT_LOCK (self);
           self->started = TRUE;
           GST_OBJECT_UNLOCK (self);
@@ -1261,6 +1264,7 @@ envelope_src_event_handler (GstBaseTransform * trans, GstEvent * event)
           /* This is a pause event, caused by an operator pushing the
            * pause button.  Flag that we have seen the message; we will not
            * advance through the envelope until we see a continue event.  */
+          GST_INFO_OBJECT (self, "Received custom pause event");
           GST_OBJECT_LOCK (self);
           self->pause_seen = TRUE;
           GST_OBJECT_UNLOCK (self);
@@ -1271,6 +1275,7 @@ envelope_src_event_handler (GstBaseTransform * trans, GstEvent * event)
            * continue button to cancel a previous pause.  Flag that we
            * have seen the message.  We don't simply clear the pause flag
            * because we want to notice the transition.  */
+          GST_INFO_OBJECT (self, "Received custom continue event");
           GST_OBJECT_LOCK (self);
           self->continue_seen = TRUE;
           GST_OBJECT_UNLOCK (self);
