@@ -1,3 +1,6 @@
+Version 0.59, January 1, 2016
+  Start support of gtk-doc.
+  
 Version 0.58, December 29, 2015
   Display the running time of the current sound.
   

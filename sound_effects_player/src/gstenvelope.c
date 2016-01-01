@@ -3,7 +3,7 @@
  *
  * Much of this code is based on Gstreamer examples and tutorials.
  *
- * Copyright © 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>
+ * Copyright © 2016 John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -95,7 +95,6 @@
 
 GST_DEBUG_CATEGORY_STATIC (envelope);
 #define GST_CAT_DEFAULT envelope
-GST_DEBUG_CATEGORY_STATIC (GST_CAT_PERFORMANCE);
 
 /* Filter signals and args */
 enum
@@ -142,8 +141,7 @@ enum
 
 #define DEBUG_INIT \
   GST_DEBUG_CATEGORY_INIT (envelope, "envelope", 0, \
-			   "Shape the amplitude of the sound"); \
-  GST_DEBUG_CATEGORY_GET (GST_CAT_PERFORMANCE, "GST_PERFORMANCE");
+			   "Shape the amplitude of the sound");
 #define gst_envelope_parent_class parent_class
 
 /* By basing this filter on GstAudioFilter, we impose the requirement

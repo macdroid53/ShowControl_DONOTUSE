@@ -4,7 +4,7 @@ dnl Created originally by the Anjuta application wizard.
 dnl required version of autoconf
 AC_PREREQ([2.53])
 
-AC_INIT(sound_effects_player, 0.58, [John_Sauter@systemeyescomputerstore.com], sound_effects_player)
+AC_INIT(sound_effects_player, [0.59], [John_Sauter@systemeyescomputerstore.com], sound_effects_player)
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([1.11])
 AM_SILENT_RULES([yes])
@@ -93,6 +93,13 @@ AC_SUBST(plugindir)
 dnl set proper LDFLAGS for plugins
 GST_PLUGIN_LDFLAGS='-module -avoid-version -export-symbols-regex [_]*\(gst_\|Gst\|GST_\).*'
 AC_SUBST(GST_PLUGIN_LDFLAGS)
+
+# check for gtk-doc
+m4_ifdef([GTK_DOC_CHECK], [
+GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
+],[
+AM_CONDITIONAL([ENABLE_GTK_DOC], false)
+])
 
 dnl set license, copyright notice, package name and package origin
 dnl for the gstreamer plugins

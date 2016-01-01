@@ -12,9 +12,9 @@ dist_doc_DATA = \
 	ChangeLog \
 	INSTALL \
 	NEWS \
-	doc/sound_effects_player.odt \
-	doc/sound_effects_player.pdf \
-	doc/sound_effects_player.rtf 
+	doc/sound_effects_player_overview.odt \
+	doc/sound_effects_player_overview.pdf \
+	doc/sound_effects_player_overview.rtf 
 
 
 INTLTOOL_FILES = intltool-extract.in \
@@ -43,3 +43,10 @@ DISTCLEANFILES = intltool-extract \
 # Remove doc directory on uninstall
 uninstall-local:
 	-rm -r $(docdir)
+
+# Rules to create pdf and rtf files from odt files
+doc/sound_effects_player_overview.pdf : doc/sound_effects_player_overview.odt
+	libreoffice --headless --convert-to pdf doc/sound_effects_player_overview.odt --outdir doc
+
+doc/sound_effects_player_overview.rtf : doc/sound_effects_player_overview.odt
+	libreoffice --headless --convert-to rtf doc/sound_effects_player_overview.odt --outdir doc

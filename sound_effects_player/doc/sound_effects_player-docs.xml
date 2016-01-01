@@ -1,0 +1,13 @@
+<?xml version='1.0'?>
+<!DOCTYPE book>
+<book xmlns="http://docbook.org/ns/docbook" version="5.0">
+
+  <bookinfo>
+    <title>Sound Effects Player Internals Manual</title>
+  </bookinfo>
+
+  <chapter>
+    <title>[Sound Effects Player Internals Manual]</title>
+  </chapter>
+  
+</book>

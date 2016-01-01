@@ -3,7 +3,7 @@
  * which is a Gstreamer application.  Much of the code in this file is based
  * on Gstreamer examples and tutorials.
  *
- * Copyright © 2015 John Sauter <John_Sauter@systemeyescomputerstore.com>
+ * Copyright © 2016 John Sauter <John_Sauter@systemeyescomputerstore.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -26,41 +26,60 @@
 
 /**
  * SECTION:element-looper
+ * @short_description: Repeat a section of the input stream.
  *
- * Repeat a section of the input stream a specified number of times.
- * loop-to is the beginning of the section to repeat, in nanoseconds from
- * the beginning of the input.  loop-from is the end of the section to repeat,
- * also in nanoseconds.  If the sample rate is less than 1,000,000,000
+ * This element places its input into a buffer, then sends it downstream
+ * a specified number of times.  Parameters control the number of times
+ * the data is sent, and can specify a start and end point within the data.
+ * Messages are used to start and stop the element, and to pause it.
+ *
+ * Properties are:
+ *
+ * #GstLooper:loop-to is the beginning of the section to repeat, in nanoseconds 
+ * from the beginning of the input.  Default is 0.  
+ *
+ * #GstLooper:loop-from is the end of the section to repeat, also in 
+ * nanoseconds.  If the sample rate is less than 1,000,000,000
  * samples per second, looping at exactly loop-from and loop-to might not
- * be possible, in which case the loop includes all of the sample at loop-to
- * and all of the sample at loop-from.  Loop-limit is the number of times to 
- * repeat; 0 means repeat indefinitely.  Max-duration-time, if specified, 
- * is the maximum amount of time from the source to be held for repeating.  
- * This can be useful with live or infinite sources.  Note that this plugin 
+ * be possible, in which case the loop starts at the beginning of the sample
+ * at loop-to and ends after the sample at loop-from.  Default is 0, which
+ * suppresses looping.
+ *
+ * #GstLooper:loop-limit is the number of times to repeat the loop; 0 means 
+ * repeat indefinitely, which is the default.  
+ *
+ * #GstLooper:max-duration-time, if specified, is the maximum amount of time 
+ * from the source to be held for repeating, in nanoseconds.  
+ * This can be useful with live or infinite sources.  Note that this element 
  * can itself be an infinite source for its downstream consumers, even if its 
  * upstream is finite or limited by max-duration.  If max-duration is not 
- * specified, the looper plugin will attempt to absorb all sound provided to 
- * its sink pad.  Start-time is the offset from the beginning of the input to 
- * start the output, in nanoseconds.
+ * specified, the looper element will attempt to absorb all sound provided to 
+ * its sink pad.  Default is that max-duration-time is not specified.
  *
- * Receipt of a Release message causes looping to terminate,
- * which means reaching the end of the loop no longer causes sound to be
- * sent from the beginning.  The amount of sound sent after a Release message
- * can be as little as 0, if the looper element was about to loop, and there
- * is no sound after the loop-from time.  Therefore, if you need sound after
- * the Release message, leave enough sound after loop-from to handle the
- * worst case.
+ * #GstLooper:start-time is the offset from the beginning of the input to 
+ * start the output, in nanoseconds.  Sound before start-time is not sent
+ * downstream unless loop-to is before start-time.  Default is 0.
  *
- * Normally, this element sends silence until it receives a Start message.
- * By setting the Autostart parameter to TRUE you can make it start as soon
- * as it has gotten all the sound data from its sink pad.
+ * #GstLooper:autostart.  Normally, this element sends silence until it 
+ * receives a Start message.  By setting the Autostart parameter to TRUE you 
+ * can make it start as soon as it has gotten all the sound data it needs.
+ * Default is FALSE.
  *
- * This element will attempt to use pull mode to get sound data as quickly as
- * possible from its upstream source, but fall back to push mode if necessary.
- * An even faster alternative to getting the data in pull mode is to specify
- * the file-location parameter.  Gstlooper will read the data segements from
- * that file rather than wait for the data to come from upstream.  The metadata
- * will still come from upstream.  The specified file must be a WAV file.
+ * #GstLooper:file-location.  This element will attempt to use pull mode to get 
+ * sound data as quickly as possible from its upstream source, but fall back to 
+ * push mode if necessary.  An even faster alternative to getting the data in 
+ * pull mode is to specify the file-location parameter.  Gstlooper will read 
+ * the data segements from that file rather than wait for the data to come from 
+ * upstream.  The metadata will still come from upstream.  The specified file 
+ * must be a WAV file.  Default is that file-location is not specified, so
+ * no file is read.
+ *
+ * Receipt of a Release message causes looping to terminate, which means 
+ * reaching the end of the loop no longer causes sound to be sent from the 
+ * beginning of the loop.  The amount of sound sent after a Release message can 
+ * be as little as 0, if the looper element was about to loop, and there is no 
+ * sound after the loop-from time.  Therefore, if you need sound after the 
+ * Release message, leave enough sound after loop-from to handle the worst case.
  *
  * <refsect2>
  * <title>Example launch line</title>
@@ -98,7 +117,6 @@ static GstStaticPadTemplate srctemplate = SRC_TEMPLATE;
 
 GST_DEBUG_CATEGORY_STATIC (looper);
 #define GST_CAT_DEFAULT (looper)
-GST_DEBUG_CATEGORY_STATIC (GST_CAT_PERFORMANCE);
 
 /* Filter signals and args */
 enum
@@ -124,8 +142,7 @@ enum
 
 #define DEBUG_INIT \
   GST_DEBUG_CATEGORY_INIT (looper, "looper", 0, \
-			   "Repeat a section of the stream"); \
-  GST_DEBUG_CATEGORY_GET (GST_CAT_PERFORMANCE, "GST_PERFORMANCE");
+			   "Repeat a section of the stream");
 #define gst_looper_parent_class parent_class
 G_DEFINE_TYPE_WITH_CODE (GstLooper, gst_looper, GST_TYPE_ELEMENT, DEBUG_INIT);
 
@@ -303,7 +320,7 @@ gst_looper_init (GstLooper * self)
 {
 
   self->silent = FALSE;
-  self->loop_from = 0;
+  self->loop_to = 0;
   self->loop_from = 0;
   self->loop_limit = 0;
   self->loop_counter = 0;
@@ -910,7 +927,7 @@ gst_looper_push_data_downstream (GstPad * pad)
   self->elapsed_time =
     self->elapsed_time + (memory_out_info.size / self->bytes_per_ns);
   GST_DEBUG_OBJECT (self, "elapsed time is %" G_GUINT64_FORMAT ".",
-		    self->elapsed_time);
+                    self->elapsed_time);
   /* Note the byte offsets in the source.  */
   GST_BUFFER_OFFSET (buffer) = self->local_buffer_drain_level;
   GST_BUFFER_OFFSET_END (buffer) =
