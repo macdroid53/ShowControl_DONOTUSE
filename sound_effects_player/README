@@ -1,2 +1,12 @@
 Sound_effects_player is a component of ShowControl, an application to control
-lighting and sound in theatrical productions.
+lighting and sound in theatrical productions.  This component plays sound
+effects.
+
+When installing on a Fedora 23 computer I had to first install the following
+packages: gcc, intltool, gstreamer1-devel, gstreamer-plugins-base-devel,
+gtk3-devel and gtk-doc.  I could then do the usual ./configure, make,
+sudo make install.
+
+This program uses custom gstreamer plugins.  To get gstreamer to load them,
+execute this bash command before running the program:
+export GST_PLUGIN_PATH=/usr/local/lib/gstreamer-1.0
