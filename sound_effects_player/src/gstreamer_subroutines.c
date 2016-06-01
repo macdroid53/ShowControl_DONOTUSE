@@ -47,6 +47,7 @@ gstreamer_init (int sound_count, GApplication * app)
   GstElement *resample_element;
   GstElement *final_bin_element;
   GstElement *level_element;
+  GstElement *volume_element;
   GstPipeline *pipeline_element;
   GstBus *bus;
   gchar *pad_name;
@@ -78,15 +79,18 @@ gstreamer_init (int sound_count, GApplication * app)
   /* Create the final bin, to collect the output of the sound effects bins
    * and play them. */
   final_bin_element = gst_bin_new ("final");
+
+  /* Create the elements that will go in the final bin.  */
   adder_element = gst_element_factory_make ("adder", "final/adder");
   level_element = gst_element_factory_make ("level", "final/master_level");
   convert_element =
     gst_element_factory_make ("audioconvert", "final/convert");
   resample_element =
     gst_element_factory_make ("audioresample", "final/resample");
+  volume_element = gst_element_factory_make ("volume", "final/volume");
   if ((final_bin_element == NULL) || (adder_element == NULL)
       || (level_element == NULL) || (convert_element == NULL)
-      || (resample_element == NULL))
+      || (resample_element == NULL) || (volume_element == NULL))
     {
       GST_ERROR ("Unable to create the final gstreamer elements.\n");
       return NULL;
@@ -140,7 +144,7 @@ gstreamer_init (int sound_count, GApplication * app)
 
   /* Put the needed elements into the final bin.  */
   gst_bin_add_many (GST_BIN (final_bin_element), adder_element, level_element,
-                    convert_element, resample_element, NULL);
+                    convert_element, resample_element, volume_element, NULL);
   if (output_enabled == TRUE)
     {
       gst_bin_add_many (GST_BIN (final_bin_element), sink_element, NULL);
@@ -184,18 +188,19 @@ gstreamer_init (int sound_count, GApplication * app)
   gst_element_link (adder_element, level_element);
   gst_element_link (level_element, convert_element);
   gst_element_link (convert_element, resample_element);
+  gst_element_link (resample_element, volume_element);
   if ((output_enabled == TRUE) && (monitor_enabled == FALSE))
     {
-      gst_element_link (resample_element, sink_element);
+      gst_element_link (volume_element, sink_element);
     }
   if ((output_enabled == FALSE) && (monitor_enabled == TRUE))
     {
-      gst_element_link (resample_element, wavenc_element);
+      gst_element_link (volume_element, wavenc_element);
       gst_element_link (wavenc_element, filesink_element);
     }
   if ((output_enabled == TRUE) && (monitor_enabled == TRUE))
     {
-      gst_element_link (resample_element, tee_element);
+      gst_element_link (volume_element, tee_element);
       gst_element_link (tee_element, queue_file_element);
       gst_element_link (tee_element, queue_output_element);
       gst_element_link (queue_output_element, sink_element);

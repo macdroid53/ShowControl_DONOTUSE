@@ -23,6 +23,40 @@
 #include "sound_structure.h"
 #include "sequence_subroutines.h"
 
+/* The Mute button has been toggled.  */
+void
+button_mute_toggled (GtkToggleButton * button, gpointer user_data)
+{
+  GApplication *app;
+  gboolean button_state;
+  GstPipeline *pipeline_element;
+  GstElement *volume_element;
+  GstElement *final_bin_element;
+
+  app = sep_get_application_from_widget (user_data);
+  button_state = gtk_toggle_button_get_active (button);
+  pipeline_element = sep_get_pipeline_from_app (app);
+  if (pipeline_element == NULL)
+    return;
+
+  /* Find the final bin.  */
+  final_bin_element =
+    gst_bin_get_by_name (GST_BIN (pipeline_element), (gchar *) "final");
+  if (final_bin_element == NULL)
+    return;
+
+  /* Find the volume element in the final bin */
+  volume_element = gstreamer_get_volume (GST_BIN (final_bin_element));
+  if (volume_element == NULL)
+    return;
+
+  /* Set the mute property of the volume element based on whether
+   * the mute button has been activated or deactivated.  */
+  g_object_set (volume_element, "mute", button_state, NULL);
+
+  return;
+}
+
 /* The Pause button has been pushed.  */
 void
 button_pause_clicked (GtkButton * button, gpointer user_data)

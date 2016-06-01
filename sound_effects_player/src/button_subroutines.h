@@ -24,6 +24,7 @@
 #include "sound_structure.h"
 
 /* Subroutines defined in button_subroutines.c */
+void button_mute_toggled (GtkToggleButton * button, gpointer user_data);
 void button_start_clicked (GtkButton * button, gpointer user_data);
 void button_stop_clicked (GtkButton * button, gpointer user_data);
 void button_set_cluster_playing (struct sound_info *sound_data,
