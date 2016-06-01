@@ -2004,6 +2004,7 @@ audio-volume-medium-symbolic</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="focus_on_click">False</property>
+					<property name="value">1</property>
                                         <property name="icons">audio-volume-muted-symbolic
 audio-volume-high-symbolic
 audio-volume-low-symbolic
@@ -2204,6 +2205,7 @@ audio-volume-medium-symbolic</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="focus_on_click">False</property>
+                                        <property name="value">1</property>
                                         <property name="icons">audio-volume-muted-symbolic
 audio-volume-high-symbolic
 audio-volume-low-symbolic
@@ -2408,6 +2410,7 @@ audio-volume-medium-symbolic</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="focus_on_click">False</property>
+					<property name="value">1</property>
                                         <property name="icons">audio-volume-muted-symbolic
 audio-volume-high-symbolic
 audio-volume-low-symbolic
