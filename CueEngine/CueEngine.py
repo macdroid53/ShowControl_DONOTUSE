@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 __author__ = 'mac'
 
-import os, sys, inspect
+import os, sys, inspect, subprocess
 import types
 import argparse
 
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QColor, QBrush
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
@@ -147,14 +148,20 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
         self.setWindowTitle(The_Show.show_conf.settings['name'])
         self.nextButton.clicked.connect(self.on_buttonNext_clicked)
         self.prevButton.clicked.connect(self.on_buttonPrev_clicked)
-        self.tableView.doubleClicked.connect(self.on_table_click)
+        self.tableView.doubleClicked.connect(self.on_table_dblclick)
+        self.tableView.clicked.connect(self.on_table_click)
         self.actionOpen_Show.triggered.connect(self.openShow)
+        self.actionSave.triggered.connect(self.saveShow)
+        self.action_Stage_Cues.triggered.connect(self.ShowStageCues)
+        self.action_Sound_Cues.triggered.connect(self.ShowSoundCues)
+        self.action_Lighting_Cues.triggered.connect(self.ShowLightCues)
+        self.action_Sound_FX.triggered.connect(self.ShowSFXApp)
+
         self.editcuedlg = EditCue('0')
 
 
     def on_buttonNext_clicked(self):
         print('Next')
-
         previdx = The_Show.cues.currentcueindex
         The_Show.cues.currentcueindex += 1
         tblvw = self.findChild(QtWidgets.QTableView)
@@ -169,7 +176,6 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
     def on_buttonPrev_clicked(self):
         print('Prev')
         if The_Show.cues.currentcueindex > 0:
-
             previdx = The_Show.cues.currentcueindex
             The_Show.cues.currentcueindex -= 1
             print('Old index: ' + str(previdx) + '   New: ' + str(The_Show.cues.currentcueindex))
@@ -183,6 +189,11 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
         sender.send(msg)
 
     def on_table_click(self,index):
+        tblvw = self.findChild(QtWidgets.QTableView)
+        tblvw.selectRow(index.row())
+
+
+    def on_table_dblclick(self,index):
         print(index.row())
         self.editcuedlg.editidx = index.row()
         print(self.tabledata[index.row()])
@@ -236,7 +247,7 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
     def disptext(self):
         self.get_table_data()
         # set the table model
-        header = ['Cue Number', 'Act', 'Scene', 'Page', 'ID', 'Title','Dialog/Prompt']
+        header = ['Cue Number', 'Act', 'Scene', 'Page', 'ID', 'Title','Dialog/Prompt','Cue Type']
         tablemodel = MyTableModel(self.tabledata, header, self)
         self.tableView.setModel(tablemodel)
         self.tableView.resizeColumnsToContents()
@@ -254,8 +265,11 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
                     q.find('Page').text,
                     q.find('Id').text,
                     q.find('Title').text,
-                    q.find('Cue').text])
-        #print(self.tabledata)
+                    q.find('Cue').text,
+                    q.find('CueType').text])
+        print(self.tabledata)
+
+#Menu and Tool Bar functions
 
     def openShow(self):
         '''
@@ -274,6 +288,26 @@ class CueDlg(QtWidgets.QMainWindow, CueEngine_ui.Ui_MainWindow):
         self.setfirstcue()
         self.setWindowTitle(self.show_conf.settings('name'))
 
+    def saveShow(self):
+        print("Save show.")
+        pass
+
+    def ShowStageCues(self):
+        print("Show stage cues.")
+        pass
+
+    def ShowSoundCues(self):
+        print("Show sound cues.")
+        pass
+
+
+    def ShowLightCues(self):
+        print("Show Light cues.")
+        pass
+
+    def ShowSFXApp(self):
+        print("Launch SFX App.")
+        bla = subprocess.Popen(['python3', '/home/mac/PycharmProjs/linux-show-player/linux-show-player', '-f', '/home/mac/Shows/Pauline/sfx.lsp'])
 
 
 class MyTableModel(QtCore.QAbstractTableModel):
@@ -298,11 +332,24 @@ class MyTableModel(QtCore.QAbstractTableModel):
     def data(self, index, role):
         if not index.isValid():
             return QVariant()
+        elif role == Qt.BackgroundColorRole:
+            #print (self.arraydata[index.row()][7])
+            if self.arraydata[index.row()][7] == 'Stage':
+                return QBrush(Qt.blue)
+            elif self.arraydata[index.row()][7] == 'Sound':
+                return QBrush(Qt.yellow)
+            elif self.arraydata[index.row()][7] == 'Light':
+                return QBrush(Qt.darkGreen)
+            elif self.arraydata[index.row()][7] == 'Mixer':
+                return QBrush(Qt.darkYellow)
         elif role != QtCore.Qt.DisplayRole:
             return QtCore.QVariant()
         return QtCore.QVariant(self.arraydata[index.row()][index.column()])
 
     def setData(self, index, value, role):
+        #if role == Qt.BackgroundColorRole:
+        #    rowColor = Qt.blue
+        #    self.setData(index, rowColor, Qt.BackgroundRole )
         pass         # not sure what to put here
 
     def headerData(self, col, orientation, role):

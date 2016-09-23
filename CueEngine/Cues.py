@@ -57,6 +57,7 @@ class CueList:
         cuetomod.find("Id").text =newcuelist[4]
         cuetomod.find("Title").text =newcuelist[5]
         cuetomod.find("Cue").text =newcuelist[6]
+        cuetomod.find("CueType").text =newcuelist[7]
 
         print('End---------updatecue---------')
 
