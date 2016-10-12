@@ -213,10 +213,15 @@ sound_start_playing (struct sound_info *sound_data, GApplication * app)
   if (bin_element == NULL)
     return;
 
+  /* If the sound has already been started, don't try to start it again.  */
+  if (sound_data->running)
+    return;
+  
   /* Send a start message to the bin.  It will be routed to the source, and
    * flow from there downstream through the looper and envelope.  
    * The looper element will start sending its local buffer,
    * and the envelope element will start shapeing the volume.  */
+  sound_data->running = TRUE;
   structure = gst_structure_new_empty ((gchar *) "start");
   event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
   gst_element_send_event (GST_ELEMENT (bin_element), event);
@@ -236,7 +241,13 @@ sound_stop_playing (struct sound_info *sound_data, GApplication * app)
 
   /* Send a release message to the bin.  The looper element will stop
    * looping, and the envelope element will start shutting down the sound.
-   * We should get a call to sound_terminated shortly.  */
+   * We should get a call to sound_terminated shortly.
+   * However, if the sound has completed and the message is still
+   * making its way down the pipeline, we will get a completion message.
+   * Flag the sound so we will interpret the completion message as
+   * a termination.  */
+  sound_data->released = TRUE;
+
   structure = gst_structure_new_empty ((gchar *) "release");
   event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
   gst_element_send_event (GST_ELEMENT (bin_element), event);
@@ -296,8 +307,23 @@ sound_completed (const gchar * sound_name, GApplication * app)
   if (!sound_effect_found)
     return;
 
+  /* Flag that the sound is no longer playing.  */
+  sound_effect->running = FALSE;
+
+  /* Note that a termination signal may get sent up the pipeline
+   * while a completion message is coming down.  In that case
+   * a termination will end with a completion signal.  Watch for
+   * this case, and turn the completion into a termination. */
+
   /* Let the internal sequencer handle it.  */
-  sequence_sound_completion (sound_effect, app);
+  if (sound_effect->released)
+    {
+      sequence_sound_termination (sound_effect, app);
+    }
+  else
+    {
+      sequence_sound_completion (sound_effect, app);
+    }
 
   return;
 }
@@ -328,6 +354,9 @@ sound_terminated (const gchar * sound_name, GApplication * app)
   /* If there isn't one, ignore the termination message.  */
   if (!sound_effect_found)
     return;
+
+  /* Flag that the sound is no longer playing.  */
+  sound_effect->running = FALSE;
 
   /* Let the internal sequencer handle it.  */
   sequence_sound_termination (sound_effect, app);

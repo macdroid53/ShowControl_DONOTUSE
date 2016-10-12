@@ -105,6 +105,8 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
           sound_data->sound_control = NULL;
           sound_data->cluster_widget = NULL;
           sound_data->cluster_number = 0;
+	  sound_data->running = FALSE;
+          sound_data->released = FALSE;
 
           /* Collect information from the XML file.  */
           while (sound_loc != NULL)

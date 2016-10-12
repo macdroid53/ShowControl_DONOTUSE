@@ -1,3 +1,7 @@
+Version 0.63, October 12, 2016
+  Make telephone ringing more robust by fixing race conditions between
+  the sequencer and the pipeline.
+  
 Version 0.62, June 1, 2016
   Add a Mute button.
   

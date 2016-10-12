@@ -63,6 +63,8 @@ struct sound_info
   GtkWidget *cluster_widget;    /* The cluster this sound is in.  */
   GstBin *sound_control;        /* The Gstreamer bin for this sound effect */
   gint cluster_number;          /* The number of the cluster the sound is in */
+  gboolean running;             /* The sound is playing.  */
+  gboolean released;            /* A Release command was given.  */
 };
 
 #endif /* ifndef SOUND_STRUCTURE_H */

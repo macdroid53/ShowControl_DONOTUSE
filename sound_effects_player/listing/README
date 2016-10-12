@@ -1,0 +1,3 @@
+The file code.tex has a section for each source file.  Run it through
+pdflatex -shell-escape to get a PDF file of all the code in
+sound_effects_player.

@@ -31,7 +31,7 @@
 /* When debugging it can be useful to trace what is happening in the
  * internal sequencer.  */
 #define TRACE_SEQUENCER FALSE
-
+#define TRACE_SEQUENCER_DISPLAY_MESSAGE FALSE
 /* the persistent data used by the internal sequencer */
 struct sequence_info
 {
@@ -471,9 +471,9 @@ wait_completed (void *user_data, GApplication * app)
           /* This is the item on the list.  Remove it.  */
           remember_data->active = FALSE;
           current_sequence_item = remember_data->sequence_item;
-
-          g_list_free (list_element);
           g_free (remember_data);
+          sequence_data->waiting =
+            g_list_delete_link (sequence_data->waiting, list_element);
         }
       list_element = next_list_element;
     }
@@ -493,6 +493,7 @@ wait_completed (void *user_data, GApplication * app)
                current_sequence_item->next_completion,
                current_sequence_item->text_to_display,
                current_sequence_item->next);
+      g_print ("sequence_data->waiting  == %p.\n", sequence_data->waiting);
     }
   /* TODO: display the wait list item that will end soonest,
    * or the current operator wait if there is one.  */
@@ -730,7 +731,7 @@ update_operator_display (struct sequence_info *sequence_data,
         }
       most_important->being_displayed = TRUE;
 
-      if (TRACE_SEQUENCER)
+      if (TRACE_SEQUENCER && TRACE_SEQUENCER_DISPLAY_MESSAGE)
         {
           g_print ("Display message %d.\n", sequence_data->message_id);
         }
@@ -1103,9 +1104,10 @@ sequence_sound_termination (struct sound_info *sound_effect,
     {
       g_print ("termination of sound %s.\n", sound_effect->name);
     }
+  sound_effect->released = FALSE;
 
-  /* See if there is a Start Sound sequence item outstanding which names
-   * this cluster.  */
+  /* See if there is a Start Sound sequence item outstanding for this
+   * sound effect.  */
   item_found = FALSE;
   for (item_list = sequence_data->running; item_list != NULL;
        item_list = item_list->next)

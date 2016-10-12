@@ -37,7 +37,7 @@
       <name>telephone-ring-4</name>
       <type>stop</type>
       <tag>telephone-ring</tag>
-      <next>telephone-ring</next>
+      <next>telephone-ring-8</next>
     </sequence_item>
 
     <sequence_item>
@@ -46,7 +46,7 @@
       <sound_name>ringout</sound_name>
       <cluster_number>0</cluster_number>
       <tag>telephone-ring</tag>
-      <text_to_display>pause between rings</text_to_display>
+      <text_to_display>ringout between rings</text_to_display>
       <importance>2</importance>
       <next_completion>telephone-ring-6</next_completion>
     </sequence_item>
@@ -69,9 +69,18 @@
       <sound_name>ringout</sound_name>
       <cluster_number>0</cluster_number>
       <tag>telephone-ring</tag>
-      <text_to_display>pause between rings</text_to_display>
+      <text_to_display>ringout after last ring</text_to_display>
       <importance>2</importance>
     </sequence_item>
+
+    <sequence_item>
+      <name>telephone-ring-8</name>
+      <type>wait</type>
+      <time_to_wait>5000000000</time_to_wait>
+      <text_to_display>wait for ringing to finish</text_to_display>
+      <next_completion>telephone-ring</next_completion>
+    </sequence_item>
+    
 
   </sound_sequence>
 </show_control>
