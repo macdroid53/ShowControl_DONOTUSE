@@ -1,3 +1,6 @@
+Version 0.64, October 12, 2016
+  Update the documentation, and move it to ShowControlDocs.
+  
 Version 0.63, October 12, 2016
   Make telephone ringing more robust by fixing race conditions between
   the sequencer and the pipeline.
