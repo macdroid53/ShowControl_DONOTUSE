@@ -100,13 +100,15 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
           sound_data->OSC_name_specified = FALSE;
           sound_data->function_key = NULL;
           sound_data->function_key_specified = FALSE;
+          sound_data->omit_panning = FALSE;
 
           /* These fields will be filled at run time.  */
           sound_data->sound_control = NULL;
           sound_data->cluster_widget = NULL;
           sound_data->cluster_number = 0;
-	  sound_data->running = FALSE;
-          sound_data->released = FALSE;
+          sound_data->running = FALSE;
+          sound_data->release_sent = FALSE;
+	  sound_data->release_has_started = FALSE;
 
           /* Collect information from the XML file.  */
           while (sound_loc != NULL)
@@ -466,6 +468,23 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                     }
                 }
 
+              if (xmlStrEqual (name, (const xmlChar *) "omit_panning"))
+                {
+                  /* Do not allow the operator to pan this sound.
+                   * Needed for sounds with more than two channels, or
+                   * sounds with one channel that are directed at a
+                   * specific speaker.  */
+                  name_data =
+                    xmlNodeListGetString (sounds_file,
+                                          sound_loc->xmlChildrenNode, 1);
+                  if (xmlStrEqual (name_data, (const xmlChar *) "True"))
+                    {
+                      sound_data->omit_panning = TRUE;
+                    }
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
               /* Ignore fields we don't recognize, so we can read future
                * XML files. */
 
@@ -539,6 +558,7 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
           sequence_item_data->next_completion = NULL;
           sequence_item_data->next_termination = NULL;
           sequence_item_data->next_starts = NULL;
+          sequence_item_data->next_release_started = NULL;
           sequence_item_data->importance = 1;
           sequence_item_data->Q_number = NULL;
           sequence_item_data->text_to_display = NULL;
@@ -562,6 +582,7 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
           /* Fields used in the Operator Wait sequence item but not mentioned
            * above.  */
           sequence_item_data->next_play = NULL;
+          sequence_item_data->omit_from_display = FALSE;
 
           /* The Cease Offering Sounds and Start Sequence
            *  sequence items uses only fields already mentioned.  */
@@ -834,6 +855,23 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
                   name_data = NULL;
                 }
 
+              if (xmlStrEqual
+                  (name, (const xmlChar *) "next_release_started"))
+                {
+                  /* The next sequence item to execute when this sound has
+                   * reached the release stage of its amplitude envelope.  
+                   * This can be used to fork the sequencer.
+                   */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  sequence_item_data->next_release_started =
+                    g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
               if (xmlStrEqual (name, (const xmlChar *) "importance"))
                 {
                   /* The importance of this sound to the sound effects
@@ -1030,6 +1068,22 @@ parse_sequence_info (xmlDocPtr sequence_file, gchar * sequence_file_name,
                                           1);
                   sequence_item_data->next_play =
                     g_strdup ((gchar *) name_data);
+                  xmlFree (name_data);
+                  name_data = NULL;
+                }
+
+              if (xmlStrEqual (name, (const xmlChar *) "omit_from_display"))
+                {
+                  /* In the Operator Wait sequence item, do not display this
+                   * item to the operator.  */
+                  name_data =
+                    xmlNodeListGetString (sequence_file,
+                                          sequence_item_loc->xmlChildrenNode,
+                                          1);
+                  if (xmlStrEqual (name_data, (const xmlChar *) "True"))
+                    {
+                      sequence_item_data->omit_from_display = TRUE;
+                    }
                   xmlFree (name_data);
                   name_data = NULL;
                 }

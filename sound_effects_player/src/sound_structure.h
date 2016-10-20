@@ -64,7 +64,9 @@ struct sound_info
   GstBin *sound_control;        /* The Gstreamer bin for this sound effect */
   gint cluster_number;          /* The number of the cluster the sound is in */
   gboolean running;             /* The sound is playing.  */
-  gboolean released;            /* A Release command was given.  */
+  gboolean release_sent;        /* A Release command was given.  */
+  gboolean release_has_started; /* The sound has started its release stage.  */
+  gboolean omit_panning;        /* Do not let the operator pan this sound.  */
 };
 
 #endif /* ifndef SOUND_STRUCTURE_H */

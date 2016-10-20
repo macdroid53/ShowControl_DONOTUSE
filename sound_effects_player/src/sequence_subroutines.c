@@ -62,8 +62,11 @@ struct remember_info
   guint cluster_number;
   struct sound_info *sound_effect;
   struct sequence_item_info *sequence_item;
-  gboolean active;              /* TRUE if the entry is active.  */
+  gboolean active;
   gboolean being_displayed;
+  gboolean release_sent;
+  gboolean release_seen;
+  gboolean off_cluster;
 };
 
 /* Forward declarations, so I can call these subroutines before I define them.  
@@ -295,7 +298,10 @@ execute_start_sound (struct sequence_item_info *the_item,
 {
   gint cluster_number;
   struct sound_info *sound_effect;
+  struct sound_info *old_sound_effect;
   struct remember_info *remember_data;
+  gboolean item_found;
+  GList *item_list;
 
   if (TRACE_SEQUENCER)
     {
@@ -306,6 +312,33 @@ execute_start_sound (struct sequence_item_info *the_item,
     }
 
   cluster_number = the_item->cluster_number;
+
+  /* See if there is already a sound on this cluster.  */
+  item_found = FALSE;
+  for (item_list = sequence_data->running; item_list != NULL;
+       item_list = item_list->next)
+    {
+      remember_data = item_list->data;
+      old_sound_effect = remember_data->sound_effect;
+      if ((remember_data->cluster_number == cluster_number)
+          && (remember_data->off_cluster == FALSE))
+        {
+          item_found = TRUE;
+          break;
+        }
+    }
+  if (item_found)
+    {
+      if (!old_sound_effect->release_has_started)
+        {
+          g_print ("Cannot start a sound on a busy cluster.");
+          return;
+        }
+      /* There is a sound on this cluster, but it is releasing.
+       * Remove it from the cluster in favor of this new sound.  */
+      button_reset_cluster (old_sound_effect, app);
+      remember_data->off_cluster = TRUE;
+    }
 
   /* Set the name of the cluster to the specified text.  */
   sound_cluster_set_name (the_item->text_to_display, cluster_number, app);
@@ -330,6 +363,9 @@ execute_start_sound (struct sequence_item_info *the_item,
       remember_data->sound_effect = sound_effect;
       remember_data->active = TRUE;
       remember_data->being_displayed = FALSE;
+      remember_data->release_seen = FALSE;
+      remember_data->release_sent = FALSE;
+      remember_data->off_cluster = FALSE;
       sequence_data->running =
         g_list_append (sequence_data->running, remember_data);
     }
@@ -366,8 +402,8 @@ execute_stop_sound (struct sequence_item_info *the_item,
 
   while (still_searching)
     {
-      /* Find a running sound whose Start Sound sequence item has the specified
-       * tag.  */
+      /* Find all running sounds whose Start Sound sequence item has 
+       * the specified tag.  */
       item_found = FALSE;
       for (item_list = sequence_data->running; item_list != NULL;
            item_list = item_list->next)
@@ -375,7 +411,7 @@ execute_stop_sound (struct sequence_item_info *the_item,
           remember_data = item_list->data;
           sequence_item = remember_data->sequence_item;
           if ((g_strcmp0 (the_item->tag, sequence_item->tag) == 0)
-              && (remember_data->active))
+              && remember_data->active && !remember_data->release_sent)
             {
               item_found = TRUE;
               break;
@@ -384,7 +420,7 @@ execute_stop_sound (struct sequence_item_info *the_item,
       if (item_found)
         {
           /* Stop the sound.  When the sound terminates we will clean up.  */
-          remember_data->active = FALSE;
+          remember_data->release_sent = TRUE;
           sound_stop_playing (remember_data->sound_effect, app);
         }
       else
@@ -434,6 +470,9 @@ execute_wait (struct sequence_item_info *the_item,
     {
       remember_data->active = FALSE;
     }
+  remember_data->release_seen = FALSE;
+  remember_data->release_sent = FALSE;
+  remember_data->off_cluster = FALSE;
 
   /* Place this item on the wait list.  */
   sequence_data->waiting =
@@ -531,6 +570,9 @@ execute_offer_sound (struct sequence_item_info *the_item,
   remember_data->sound_effect = NULL;
   remember_data->sequence_item = the_item;
   remember_data->active = TRUE;
+  remember_data->release_seen = FALSE;
+  remember_data->release_sent = FALSE;
+  remember_data->off_cluster = FALSE;
   sequence_data->offering =
     g_list_append (sequence_data->offering, remember_data);
 
@@ -612,6 +654,9 @@ execute_operator_wait (struct sequence_item_info *the_item,
   remember_data->cluster_number = 0;
   remember_data->sound_effect = NULL;
   remember_data->sequence_item = the_item;
+  remember_data->release_seen = FALSE;
+  remember_data->release_sent = FALSE;
+  remember_data->off_cluster = FALSE;
 
   if (sequence_data->current_operator_wait == NULL)
     {
@@ -698,10 +743,9 @@ update_operator_display (struct sequence_info *sequence_data,
 
   if (found_item == TRUE)
     {
-
-      /* most_important is the item we should be displaying.  current_display
-       * is the item we are currently displaying, if any.  These may be
-       * the same item.  */
+      /* "most_important" is the item we should be displaying.  
+       * "current_display" is the item we are currently displaying, if any.  
+       * These may be the same item.  */
       sequence_item = most_important->sequence_item;
       sound_effect = most_important->sound_effect;
       /* Prepend the elapsed time to the operator message.  */
@@ -840,10 +884,10 @@ sequence_MIDI_show_control_go_off (gchar * Q_number, GApplication * app)
       sequence_item = remember_data->sequence_item;
       if (((Q_number == NULL) || (g_strcmp0 (Q_number, (gchar *) ""))
            || (g_strcmp0 (Q_number, sequence_item->Q_number) == 0))
-          && (remember_data->active))
+          && remember_data->active && !remember_data->release_sent)
         {
           /* Stop the sound.  When the sound terminates we will clean up.  */
-          remember_data->active = FALSE;
+          remember_data->release_sent = TRUE;
           sound_stop_playing (remember_data->sound_effect, app);
         }
     }
@@ -915,7 +959,7 @@ sequence_cluster_stop (guint cluster_number, GApplication * app)
     {
       remember_data = item_list->data;
       if ((remember_data->cluster_number == cluster_number)
-          && (remember_data->active))
+          && remember_data->active && !remember_data->release_sent)
         {
           item_found = TRUE;
           break;
@@ -931,7 +975,7 @@ sequence_cluster_stop (guint cluster_number, GApplication * app)
   /* We have a Start Sound sequence item on this cluster.
    * Tell the sound to stop.  When it has stopped, the termination
    * process will be invoked.  */
-  remember_data->active = FALSE;
+  remember_data->release_sent = TRUE;
   sound_stop_playing (remember_data->sound_effect, app);
 
   return;
@@ -991,7 +1035,7 @@ sequence_button_play (GApplication * app)
 /* Process the completion of a sound.  */
 void
 sequence_sound_completion (struct sound_info *sound_effect,
-                           GApplication * app)
+                           gboolean terminated, GApplication * app)
 {
   struct sequence_info *sequence_data;
   struct remember_info *remember_data;
@@ -1014,7 +1058,8 @@ sequence_sound_completion (struct sound_info *sound_effect,
        item_list = item_list->next)
     {
       remember_data = item_list->data;
-      if (remember_data->sound_effect == sound_effect)
+      if ((remember_data->sound_effect == sound_effect)
+          && remember_data->active)
         {
           found_item = item_list;
           item_found = TRUE;
@@ -1037,74 +1082,87 @@ sequence_sound_completion (struct sound_info *sound_effect,
    * stop doing that.  */
   cancel_operator_display (remember_data, sequence_data, app);
 
+  /* If this sound is still showing on the cluster, set the start label 
+   * back to "Start".  */
+  if (!remember_data->off_cluster)
+    {
+      button_reset_cluster (sound_effect, app);
+      remember_data->off_cluster = TRUE;
+
+/* See if there is an Offer Sound sequence item outstanding which names
+ * this cluster.  */
+      item_found = FALSE;
+      for (item_list = sequence_data->offering; item_list != NULL;
+           item_list = item_list->next)
+        {
+          remember_data = item_list->data;
+          if ((remember_data->cluster_number == sound_effect->cluster_number)
+              && (remember_data->active))
+            {
+              offer_sound_sequence_item = remember_data->sequence_item;
+              item_found = TRUE;
+              break;
+            }
+        }
+
+/* If there is, restore its text to the cluster.  If there isn't, clear
+ * the text field.  */
+      if (item_found)
+        {
+          sound_cluster_set_name (offer_sound_sequence_item->text_to_display,
+                                  remember_data->cluster_number, app);
+        }
+      else
+        {
+          sound_cluster_set_name ((gchar *) "", sound_effect->cluster_number,
+                                  app);
+        }
+    }
+
   /* Remove the sequence item from the running list.  */
   sequence_data->running =
     g_list_remove_link (sequence_data->running, found_item);
   g_free (remember_data);
   g_list_free (found_item);
 
-  /* Set the start label on the cluster back to "Start".  */
-  button_reset_cluster (sound_effect, app);
-
-  /* See if there is an Offer Sound sequence item outstanding which names
-   * this cluster.  */
-  item_found = FALSE;
-  for (item_list = sequence_data->offering; item_list != NULL;
-       item_list = item_list->next)
-    {
-      remember_data = item_list->data;
-      if ((remember_data->cluster_number == sound_effect->cluster_number)
-          && (remember_data->active))
-        {
-          offer_sound_sequence_item = remember_data->sequence_item;
-          item_found = TRUE;
-          break;
-        }
-    }
-
-  /* If there is, restore its text to the cluster.  If there isn't, clear
-   * the text field.  */
-  if (item_found)
-    {
-      sound_cluster_set_name (offer_sound_sequence_item->text_to_display,
-                              remember_data->cluster_number, app);
-    }
-  else
-    {
-      sound_cluster_set_name ((gchar *) "", sound_effect->cluster_number,
-                              app);
-    }
-
   /* If there is another sound running, show its status.  */
   update_operator_display (sequence_data, app);
 
   /* Now that the Start Sound has completed, run the sequencer
-   * from its completion label.  */
-  sequence_data->next_item_name = start_sound_sequence_item->next_completion;
+   * from its completion or termination label.  */
+  if (terminated)
+    {
+      sequence_data->next_item_name =
+        start_sound_sequence_item->next_termination;
+    }
+  else
+    {
+      sequence_data->next_item_name =
+        start_sound_sequence_item->next_completion;
+    }
   execute_items (sequence_data, app);
 
   return;
 }
 
-/* Process the termination of a sound.  */
+/* Process the start of the release stage of a sound.  */
 void
-sequence_sound_termination (struct sound_info *sound_effect,
-                            GApplication * app)
+sequence_sound_release_started (struct sound_info *sound_effect,
+                                GApplication * app)
 {
   struct sequence_info *sequence_data;
   struct remember_info *remember_data;
   struct sequence_item_info *start_sound_sequence_item;
-  struct sequence_item_info *offer_sound_sequence_item;
   gboolean item_found;
-  GList *item_list, *found_item;
+  GList *item_list;
 
   sequence_data = sep_get_sequence_data (app);
 
   if (TRACE_SEQUENCER)
     {
-      g_print ("termination of sound %s.\n", sound_effect->name);
+      g_print ("release started on sound %s.\n", sound_effect->name);
     }
-  sound_effect->released = FALSE;
+  sound_effect->release_has_started = TRUE;
 
   /* See if there is a Start Sound sequence item outstanding for this
    * sound effect.  */
@@ -1113,9 +1171,9 @@ sequence_sound_termination (struct sound_info *sound_effect,
        item_list = item_list->next)
     {
       remember_data = item_list->data;
-      if (remember_data->sound_effect == sound_effect)
+      if ((remember_data->sound_effect == sound_effect)
+          && (remember_data->active))
         {
-          found_item = item_list;
           item_found = TRUE;
           break;
         }
@@ -1123,63 +1181,33 @@ sequence_sound_termination (struct sound_info *sound_effect,
 
   if (!item_found)
     {
-      /* There isn't.  Ignore the termination.  */
-      display_show_message ("Termination but sound not running.", app);
+      /* There isn't.  Ignore the release.  */
+      display_show_message ("Release started but sound not running.", app);
       return;
     }
 
+  remember_data->release_seen = TRUE;
+
   /* We have a Start Sound sequence item for this sound.  It has
-   * terminated.  */
+   * started the release stage of its amplitude envelope.  */
   start_sound_sequence_item = remember_data->sequence_item;
 
-  /* Stop showing the sound's status.  */
-  cancel_operator_display (remember_data, sequence_data, app);
-
-  /* Remove the sequence item from the running list.  */
-  sequence_data->running =
-    g_list_remove_link (sequence_data->running, found_item);
-  g_free (remember_data);
-  g_list_free (found_item);
-
-  /* Set the start label on the cluster back to "Start".  */
-  button_reset_cluster (sound_effect, app);
-
-  /* See if there is an Offer Sound sequence item outstanding which names
-   * this cluster.  */
-  item_found = FALSE;
-  for (item_list = sequence_data->offering; item_list != NULL;
-       item_list = item_list->next)
-    {
-      remember_data = item_list->data;
-      if ((remember_data->cluster_number == sound_effect->cluster_number)
-          && (remember_data->active))
-        {
-          offer_sound_sequence_item = remember_data->sequence_item;
-          item_found = TRUE;
-          break;
-        }
-    }
-
-  /* If there is, restore its text to the cluster.  If there isn't, erase
-   * the text field.  */
-  if (item_found)
-    {
-      sound_cluster_set_name (offer_sound_sequence_item->text_to_display,
-                              remember_data->cluster_number, app);
-    }
-  else
-    {
-      sound_cluster_set_name ((gchar *) "", sound_effect->cluster_number,
-                              app);
-    }
+  /* Show the operator that the sound is now releasing.  */
+  button_set_cluster_releasing (sound_effect, app);
 
   /* If there is another sound running, show its status.  */
   update_operator_display (sequence_data, app);
 
-  /* Now that the Start Sound has terminated, run the sequencer
-   * from its termination label.  */
-  sequence_data->next_item_name = start_sound_sequence_item->next_termination;
-  execute_items (sequence_data, app);
+  /* Run the sequencer from the release_started label unless we have
+   * sent a release command to the sound, in which case we will run
+   * from the termination label when the sound completes, instead.  */
+
+  if (!remember_data->release_sent)
+    {
+      sequence_data->next_item_name =
+        start_sound_sequence_item->next_release_started;
+      execute_items (sequence_data, app);
+    }
 
   return;
 }

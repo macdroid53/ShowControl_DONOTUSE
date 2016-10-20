@@ -199,24 +199,12 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
     gst_object_sync_values (GST_OBJECT (self), timestamp);
 
   /* If we have reached the release portion of the envelope, tell the
-   * application that the sound has completed or terminated.  
-   * If the release was caused
-   * by reaching the release start time or the end of upstream data
-   * the application is told that the sound completed.  
-   * If it was caused by receiving a Release event,
-   * the application is told that the sound was terminated.  */
-  if (self->running && self->release_started && !self->application_notified)
+   * application.  */
+  if (self->running && self->release_started
+      && !self->application_notified_release)
     {
-      if (self->external_release_seen)
-        {
-          structure = gst_structure_new_empty ("terminated");
-          GST_INFO_OBJECT (self, "sound is terminated");
-        }
-      else
-        {
-          structure = gst_structure_new_empty ("completed");
-          GST_INFO_OBJECT (self, "sound is completed");
-        }
+      GST_INFO_OBJECT (self, "sound has entered its Release stage");
+      structure = gst_structure_new_empty ("release_started");
       g_value_init (&sound_name_value, G_TYPE_STRING);
       g_value_set_string (&sound_name_value, self->sound_name);
       gst_structure_set_value (structure, (gchar *) "sound_name",
@@ -226,17 +214,35 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
       result = gst_element_post_message (GST_ELEMENT (self), message);
       if (!result)
         {
-          GST_DEBUG_OBJECT (self,
-                            "unable to post a completed or terminated "
-                            "message");
+          GST_DEBUG_OBJECT (self, "unable to post a release_started message");
         }
-      self->application_notified = TRUE;
+      self->application_notified_release = TRUE;
       g_value_unset (&sound_name_value);
     }
 
+  /* If we have completed the sound, tell the application.  */
+  if (self->completed && !self->application_notified_completion)
+    {
+      GST_INFO_OBJECT (self, "sound has completed");
+      structure = gst_structure_new_empty ("completed");
+      g_value_init (&sound_name_value, G_TYPE_STRING);
+      g_value_set_string (&sound_name_value, self->sound_name);
+      gst_structure_set_value (structure, (gchar *) "sound_name",
+                               &sound_name_value);
+
+      message = gst_message_new_element (GST_OBJECT (self), structure);
+      result = gst_element_post_message (GST_ELEMENT (self), message);
+      if (!result)
+        {
+          GST_DEBUG_OBJECT (self, "unable to post a completed message");
+        }
+      self->application_notified_completion = TRUE;
+      g_value_unset (&sound_name_value);
+    }
+
+
   /* If we have completed the envelope, including the release stage,
-   * recycle it so we can use it again
-   * unless we are autostarting, in which case don't bother.  
+   * and we are not autostarting, recycle it so we can use it again.  
    * Note that this test is performed before the start test, so a Start
    * message that arrives during the release stage of the envelope will
    * restart it immediately after the release is complete.  */
@@ -250,7 +256,8 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
       self->release_started = FALSE;
       self->base_time = 0;
       self->last_volume = 0;
-      self->application_notified = FALSE;
+      self->application_notified_release = FALSE;
+      self->application_notified_completion = FALSE;
     }
 
   if (self->running)
@@ -1000,7 +1007,8 @@ gst_envelope_init (GstEnvelope * self)
   self->continue_seen = FALSE;
   self->pausing = FALSE;
   self->last_message = NULL;
-  self->application_notified = FALSE;
+  self->application_notified_release = FALSE;
+  self->application_notified_completion = FALSE;
   self->base_time = 0;
   self->pause_time = 0;
   self->pause_start_time = 0;

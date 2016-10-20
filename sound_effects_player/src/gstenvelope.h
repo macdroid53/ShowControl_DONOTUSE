@@ -70,7 +70,8 @@ struct _GstEnvelope
   gchar *last_message;
   gboolean external_release_seen;
   gboolean external_completion_seen;
-  gboolean application_notified;
+  gboolean application_notified_release;
+  gboolean application_notified_completion;
   gboolean completed;
   gboolean running;
   gboolean started;

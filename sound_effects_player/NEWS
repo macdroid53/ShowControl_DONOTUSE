@@ -1,3 +1,6 @@
+Version 0.65, October 20, 2016
+  Let the sequencer handle the release of a sound.
+  
 Version 0.64, October 12, 2016
   Update the documentation, and move it to ShowControlDocs.
   

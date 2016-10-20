@@ -59,8 +59,9 @@ gchar *sound_get_remaining_time (struct sound_info *sound_data,
 /* Note that a sound has completed.  */
 void sound_completed (const gchar * sound_name, GApplication * app);
 
-/* Note that a sound has terminated.  */
-void sound_terminated (const gchar * sound_name, GApplication * app);
+/* Note that a sound has entered the release stage of its amplitude envelope.  
+ */
+void sound_release_started (const gchar * sound_name, GApplication * app);
 
 /* The Pause button has been pushed.  */
 void sound_button_pause (GApplication * app);
