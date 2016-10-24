@@ -277,11 +277,12 @@ sound_get_elapsed_time (struct sound_info * sound_data, GApplication * app)
 gchar *
 sound_get_remaining_time (struct sound_info * sound_data, GApplication * app)
 {
-  GstBin *bin_element;
+  GstElement *looper_element;
   gchar *string_value;
 
-  bin_element = sound_data->sound_control;
-  g_object_get (bin_element, (gchar *) "remaining-time", &string_value, NULL);
+  looper_element = gstreamer_get_looper (sound_data->sound_control);
+  g_object_get (looper_element, (gchar *) "remaining-time", &string_value,
+		NULL);
   return string_value;
 }
 

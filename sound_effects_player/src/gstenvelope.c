@@ -240,7 +240,6 @@ envelope_before_transform (GstBaseTransform * base, GstBuffer * buffer)
       g_value_unset (&sound_name_value);
     }
 
-
   /* If we have completed the envelope, including the release stage,
    * and we are not autostarting, recycle it so we can use it again.  
    * Note that this test is performed before the start test, so a Start

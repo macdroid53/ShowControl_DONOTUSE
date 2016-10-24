@@ -192,7 +192,7 @@ sequence_start (GApplication * app)
 }
 
 /* Execute the named next item, and continue execution until we must
- * wait for something.  */
+ * wait for something or we run out of items to execute.  */
 static void
 execute_items (struct sequence_info *sequence_data, GApplication * app)
 {
@@ -331,7 +331,8 @@ execute_start_sound (struct sequence_item_info *the_item,
     {
       if (!old_sound_effect->release_has_started)
         {
-          g_print ("Cannot start a sound on a busy cluster.");
+          display_show_message ("Cannot start a sound on a busy cluster.",
+                                app);
           return;
         }
       /* There is a sound on this cluster, but it is releasing.
@@ -694,7 +695,7 @@ update_operator_display (struct sequence_info *sequence_data,
   gboolean found_item;
   guint most_importance;
   GList *item_list;
-  gchar *elapsed_time;
+  gchar *elapsed_time, *remaining_time;
   gchar *display_text;
 
   found_item = FALSE;
@@ -748,11 +749,13 @@ update_operator_display (struct sequence_info *sequence_data,
        * These may be the same item.  */
       sequence_item = most_important->sequence_item;
       sound_effect = most_important->sound_effect;
-      /* Prepend the elapsed time to the operator message.  */
+      /* Prepend the elapsed time to the operator message, and append
+       * the remaining time.  */
       elapsed_time = sound_get_elapsed_time (sound_effect, app);
+      remaining_time = sound_get_remaining_time (sound_effect, app);
       display_text =
-        g_strdup_printf ("%s %s", elapsed_time,
-                         sequence_item->text_to_display);
+        g_strdup_printf ("%s %s (%s)", elapsed_time,
+                         sequence_item->text_to_display, remaining_time);
       /* If there is a message already being displayed by the sequencer,
        * remove it.  */
       if (sequence_data->message_displaying)

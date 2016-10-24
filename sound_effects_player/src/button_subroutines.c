@@ -346,6 +346,7 @@ button_pan_changed (GtkButton * button, gpointer user_data)
        */
       bin_element = sound_data->sound_control;
       pan_element = gstreamer_get_pan (bin_element);
+      /* The pan control may be omitted by the sound designer.  */
       if (pan_element == NULL)
         return;
 
