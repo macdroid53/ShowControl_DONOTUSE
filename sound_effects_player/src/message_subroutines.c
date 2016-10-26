@@ -129,8 +129,7 @@ message_handler (GstBus * bus_element, GstMessage * message,
 
         if (gst_structure_has_name (s, (gchar *) "completed"))
           {
-            /* The completed message means a sound has entered the release
-             * portion of its envelope.  */
+            /* The completed message means a sound has finished.  */
             const gchar *sound_name;
 
             /* The structure in the message contains the name of the sound.  
@@ -139,16 +138,16 @@ message_handler (GstBus * bus_element, GstMessage * message,
             sound_completed (sound_name, G_APPLICATION (user_data));
           }
 
-        if (gst_structure_has_name (s, (gchar *) "terminated"))
+        if (gst_structure_has_name (s, (gchar *) "release_started"))
           {
-            /* The terminated message means a sound has entered the release
-             * portion of its envelope due to an external event.  */
+            /* The release_started message means a sound has entered the 
+             * release portion of its envelope.  */
             const gchar *sound_name;
 
             /* The structure in the message contains the name of the sound.  
              */
             sound_name = gst_structure_get_string (s, (gchar *) "sound_name");
-            sound_terminated (sound_name, G_APPLICATION (user_data));
+            sound_release_started (sound_name, G_APPLICATION (user_data));
           }
 
         /* Catchall for unrecognized messages */

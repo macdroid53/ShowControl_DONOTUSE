@@ -60,6 +60,8 @@ struct sequence_item_info
   gchar *next_termination;      /* sequence item to execute on termination.  */
   gchar *next_starts;           /* sequence item to execute when this sound 
                                  * starts.  */
+  gchar *next_release_started;  /* sequence item to execute when this sound
+                                 * starts the release stage of its envelope. */
   guint importance;             /* importance of this sound, 
                                  * for display purposes.  */
   gchar *Q_number;              /* The Q_number is used by MIDI Show 
@@ -82,6 +84,7 @@ struct sequence_item_info
                                  * to trigger this cluster.  */
   gchar *function_key;          /* The function key which triggers this 
                                  * cluster */
+  gboolean omit_from_display;   /* Do not show this item to the operator.  */
 
 };
 

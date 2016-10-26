@@ -22,7 +22,7 @@
       <text_to_display>ding-a-ling</text_to_display>
       <importance>2</importance>
       <next_starts>telephone-ring-3</next_starts>
-      <next_completion>telephone-ring-5</next_completion>
+      <next_release_started>telephone-ring-5</next_release_started>
       <next_termination>telephone-ring-7</next_termination>
     </sequence_item>
 
@@ -37,7 +37,6 @@
       <name>telephone-ring-4</name>
       <type>stop</type>
       <tag>telephone-ring</tag>
-      <next>telephone-ring</next>
     </sequence_item>
 
     <sequence_item>
@@ -46,9 +45,10 @@
       <sound_name>ringout</sound_name>
       <cluster_number>0</cluster_number>
       <tag>telephone-ring</tag>
-      <text_to_display>pause between rings</text_to_display>
+      <text_to_display>ringout between rings</text_to_display>
       <importance>2</importance>
       <next_completion>telephone-ring-6</next_completion>
+      <next_termination>telephone-ring-8</next_termination>
     </sequence_item>
     
     <sequence_item>
@@ -59,7 +59,7 @@
       <tag>telephone-ring</tag>
       <text_to_display>ding-a-ling</text_to_display>
       <importance>2</importance>
-      <next_completion>telephone-ring-5</next_completion>
+      <next_release_started>telephone-ring-5</next_release_started>
       <next_termination>telephone-ring-7</next_termination>
     </sequence_item>
 
@@ -69,9 +69,19 @@
       <sound_name>ringout</sound_name>
       <cluster_number>0</cluster_number>
       <tag>telephone-ring</tag>
-      <text_to_display>pause between rings</text_to_display>
+      <text_to_display>ringout after last ring</text_to_display>
+      <next_completion>telephone-ring-8</next_completion>
       <importance>2</importance>
     </sequence_item>
+
+    <sequence_item>
+      <name>telephone-ring-8</name>
+      <type>wait</type>
+      <time_to_wait>1000000000</time_to_wait>
+      <text_to_display>wait for ringing to finish</text_to_display>
+      <next_completion>telephone-ring</next_completion>
+    </sequence_item>
+    
 
   </sound_sequence>
 </show_control>

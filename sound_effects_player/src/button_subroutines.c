@@ -165,6 +165,44 @@ button_set_cluster_playing (struct sound_info *sound_data, GApplication * app)
   return;
 }
 
+/* Show that the release stage of a sound is running.  */
+void
+button_set_cluster_releasing (struct sound_info *sound_data,
+                              GApplication * app)
+{
+  GtkButton *start_button = NULL;
+  GtkWidget *parent_container;
+  GList *children_list = NULL;
+  const gchar *child_name = NULL;
+
+  /* Find the start button and set its text to "Releasing...". 
+   * The start button will be a child of the cluster, and will be named
+   * "start_button".  */
+  parent_container = sound_data->cluster_widget;
+
+  /* It is possible, though unlikely, that the sound will no longer
+   * be in a cluster.  */
+  if (parent_container != NULL)
+    {
+      children_list =
+        gtk_container_get_children (GTK_CONTAINER (parent_container));
+      while (children_list != NULL)
+        {
+          child_name = gtk_widget_get_name (children_list->data);
+          if (g_strcmp0 (child_name, "start_button") == 0)
+            {
+              start_button = children_list->data;
+              break;
+            }
+          children_list = children_list->next;
+        }
+      g_list_free (children_list);
+      gtk_button_set_label (start_button, "Releasing...");
+    }
+
+  return;
+}
+
 /* Reset the appearance of a cluster after its sound has finished playing. */
 void
 button_reset_cluster (struct sound_info *sound_data, GApplication * app)
@@ -308,6 +346,7 @@ button_pan_changed (GtkButton * button, gpointer user_data)
        */
       bin_element = sound_data->sound_control;
       pan_element = gstreamer_get_pan (bin_element);
+      /* The pan control may be omitted by the sound designer.  */
       if (pan_element == NULL)
         return;
 

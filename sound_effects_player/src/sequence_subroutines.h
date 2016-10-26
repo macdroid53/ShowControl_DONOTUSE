@@ -51,10 +51,10 @@ void sequence_button_play (GApplication * app);
 
 /* A sound has completed.  */
 void sequence_sound_completion (struct sound_info *sound_effect,
-                                GApplication * app);
+                                gboolean terminated, GApplication * app);
 
-/* A sound has been terminated.  */
-void sequence_sound_termination (struct sound_info *sound_effect,
-                                 GApplication * app);
+/* A sound has reached its release stage.  */
+void sequence_sound_release_started (struct sound_info *sound_effect,
+                                     GApplication * app);
 
 /* End of file sequence_subroutines.h */

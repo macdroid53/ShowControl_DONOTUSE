@@ -26,9 +26,6 @@
 #include "main.h"
 #include <math.h>
 
-/* If true, provide more flexibility for WAV files.  */
-#define GSTREAMER_FLEXIBILITY TRUE
-
 /* If true, print trace information as we proceed.  */
 #define GSTREAMER_TRACE FALSE
 
@@ -233,59 +230,87 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
    */
   sound_name = g_strconcat ((gchar *) "sound/", sound_data->name, NULL);
   bin_element = gst_bin_new (sound_name);
+  if (bin_element == NULL)
+    {
+      GST_ERROR ("Unable to create the bin element.\n");
+      return NULL;
+    }
   element_name = g_strconcat (sound_name, (gchar *) "/source", NULL);
   source_element = gst_element_factory_make ("filesrc", element_name);
+  if (source_element == NULL)
+    {
+      GST_ERROR ("Unable to create the file source element.\n");
+      return NULL;
+    }
   g_free (element_name);
   element_name = g_strconcat (sound_name, (gchar *) "/parse", NULL);
   parse_element = gst_element_factory_make ("wavparse", element_name);
+  if (parse_element == NULL)
+    {
+      GST_ERROR ("Unable to create the wave file parse element.\n");
+      return NULL;
+    }
   g_free (element_name);
   element_name = g_strconcat (sound_name, (gchar *) "/looper", NULL);
   looper_element = gst_element_factory_make ("looper", element_name);
-  g_free (element_name);
-  if (GSTREAMER_FLEXIBILITY)
+  if (looper_element == NULL)
     {
-      element_name = g_strconcat (sound_name, (gchar *) "/convert", NULL);
-      convert_element =
-        gst_element_factory_make ("audioconvert", element_name);
-      g_free (element_name);
-      element_name = g_strconcat (sound_name, (gchar *) "/resample", NULL);
-      resample_element =
-        gst_element_factory_make ("audioresample", element_name);
+      GST_ERROR ("Unable to create the looper element.\n");
+      return NULL;
+    }
+  g_free (element_name);
+  element_name = g_strconcat (sound_name, (gchar *) "/convert", NULL);
+  convert_element = gst_element_factory_make ("audioconvert", element_name);
+  if (convert_element == NULL)
+    {
+      GST_ERROR ("Unable to create the audio convert element.\n");
+      return NULL;
+    }
+  g_free (element_name);
+  element_name = g_strconcat (sound_name, (gchar *) "/resample", NULL);
+  resample_element = gst_element_factory_make ("audioresample", element_name);
+  if (resample_element == NULL)
+    {
+      GST_ERROR ("Unable to create the resample element.\n");
+      return NULL;
+    }
+  g_free (element_name);
+  element_name = g_strconcat (sound_name, (gchar *) "/envelope", NULL);
+  envelope_element = gst_element_factory_make ("envelope", element_name);
+  if (envelope_element == NULL)
+    {
+      GST_ERROR ("Unable to create the envelope element.\n");
+      return NULL;
+    }
+  g_free (element_name);
+  if (!sound_data->omit_panning)
+    {
+      element_name = g_strconcat (sound_name, (gchar *) "/pan", NULL);
+      pan_element = gst_element_factory_make ("audiopanorama", element_name);
+      if (pan_element == NULL)
+        {
+          GST_ERROR ("Unable to create the pan element.\n");
+          return NULL;
+        }
       g_free (element_name);
     }
   else
     {
-      convert_element = NULL;
-      resample_element = NULL;
+      pan_element = NULL;
     }
-  element_name = g_strconcat (sound_name, (gchar *) "/envelope", NULL);
-  envelope_element = gst_element_factory_make ("envelope", element_name);
-  g_free (element_name);
-  element_name = g_strconcat (sound_name, (gchar *) "/pan", NULL);
-  pan_element = gst_element_factory_make ("audiopanorama", element_name);
-  g_free (element_name);
+
   element_name = g_strconcat (sound_name, (gchar *) "/volume", NULL);
   volume_element = gst_element_factory_make ("volume", element_name);
+  if (volume_element == NULL)
+    {
+      GST_ERROR ("Unable to create the volume element.\n");
+      return NULL;
+    }
   g_free (element_name);
+
   g_free (sound_name);
   element_name = NULL;
   sound_name = NULL;
-  if ((bin_element == NULL) || (source_element == NULL)
-      || (parse_element == NULL) || (looper_element == NULL)
-      || (envelope_element == NULL) || (pan_element == NULL)
-      || (volume_element == NULL))
-    {
-      GST_ERROR
-        ("Unable to create all the gstreamer sound effect elements.\n");
-      return NULL;
-    }
-  if (GSTREAMER_FLEXIBILITY
-      && ((convert_element == NULL) || (resample_element == NULL)))
-    {
-      GST_ERROR
-        ("Unable to create all the gstreamer sound effect elements.\n");
-      return NULL;
-    }
 
   /* Set parameter values of the elements.  */
   g_object_set (source_element, "location", sound_data->wav_file_name_full,
@@ -330,37 +355,40 @@ gstreamer_create_bin (struct sound_info * sound_data, int sound_number,
                 NULL);
   g_object_set (envelope_element, "sound-name", sound_data->name, NULL);
 
-  g_object_set (pan_element, "panorama", sound_data->designer_pan, NULL);
+  if (!sound_data->omit_panning)
+    {
+      g_object_set (pan_element, "panorama", sound_data->designer_pan, NULL);
+    }
 
   /* Place the various elements in the bin. */
   gst_bin_add_many (GST_BIN (bin_element), source_element, parse_element,
-                    looper_element, envelope_element, pan_element,
-                    volume_element, NULL);
-  if (GSTREAMER_FLEXIBILITY)
+                    looper_element, convert_element, resample_element,
+                    envelope_element, volume_element, NULL);
+  if (!sound_data->omit_panning)
     {
-      gst_bin_add_many (GST_BIN (bin_element), convert_element,
-                        resample_element, NULL);
+      gst_bin_add_many (GST_BIN (bin_element), pan_element, NULL);
     }
 
   /* Link them together in this order: 
    * source->parse->looper->convert->resample->envelope->pan->volume.
    * Note that because the looper reads the wave file directly, as well
    * as getting it through the pipeline, the audio converter must be
-   * after it.  */
+   * after it.  It is for this reason that the looper handles a variety
+   * of audio formats.  Note also that the pan element is optional.  */
   gst_element_link (source_element, parse_element);
   gst_element_link (parse_element, looper_element);
-  if (GSTREAMER_FLEXIBILITY)
+  gst_element_link (looper_element, convert_element);
+  gst_element_link (convert_element, resample_element);
+  gst_element_link (resample_element, envelope_element);
+  if (!sound_data->omit_panning)
     {
-      gst_element_link (looper_element, convert_element);
-      gst_element_link (convert_element, resample_element);
-      gst_element_link (resample_element, envelope_element);
+      gst_element_link (envelope_element, pan_element);
+      gst_element_link (pan_element, volume_element);
     }
   else
     {
-      gst_element_link (looper_element, envelope_element);
+      gst_element_link (envelope_element, volume_element);
     }
-  gst_element_link (envelope_element, pan_element);
-  gst_element_link (pan_element, volume_element);
 
   /* The output of the bin is the output of the last element. */
   last_source_pad = gst_element_get_static_pad (volume_element, "src");
@@ -409,8 +437,9 @@ gstreamer_complete_pipeline (GstPipeline * pipeline_element,
   /* For debugging, write out a graphical representation of the pipeline. */
   gstreamer_dump_pipeline (pipeline_element);
 
-  /* Now that the pipeline is constructed, start it running.  There will be no
-   * sound until a sound effect bin receives a start message.  */
+  /* Now that the pipeline is constructed, start it running.  Unless a sound
+   * is autostarted, there will be no sound until a sound effect bin receives 
+   * a start message.  */
   set_state_val =
     gst_element_set_state (GST_ELEMENT (pipeline_element), GST_STATE_PLAYING);
   if (set_state_val == GST_STATE_CHANGE_FAILURE)
@@ -527,7 +556,8 @@ gstreamer_get_volume (GstBin * bin_element)
   return (volume_element);
 }
 
-/* Find the pan control in a bin. */
+/* Find the pan control in a bin. It might have been omitted by the
+* sound designer.  */
 GstElement *
 gstreamer_get_pan (GstBin * bin_element)
 {

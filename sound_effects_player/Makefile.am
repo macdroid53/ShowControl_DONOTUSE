@@ -12,9 +12,8 @@ dist_doc_DATA = \
 	ChangeLog \
 	INSTALL \
 	NEWS \
-	doc/sound_effects_player_overview.odt \
-	doc/sound_effects_player_overview.pdf \
-	doc/sound_effects_player_overview.rtf 
+	listing/code.tex \
+	listing/code.pdf
 
 
 INTLTOOL_FILES = intltool-extract.in \

@@ -59,16 +59,17 @@ timer_init (GApplication * app)
   /* Allocate the persistent data.  */
   timer_data = g_malloc (sizeof (struct timer_info));
 
-  /* Specify where to go on each tick.  */
-  timer_data->tick_source = g_timeout_add (100, timer_tick, app);
-
-  /* The list of timer entries is empty.  */
-  timer_data->timer_entry_list = NULL;
-
   if (TRACE_TIMER)
     {
       timer_data->last_trace_time = g_get_monotonic_time () / 1e6;
     }
+
+  /* The list of timer entries is empty.  */
+  timer_data->timer_entry_list = NULL;
+
+  /* Specify where to go on each tick.  */
+  timer_data->tick_source = g_timeout_add (100, timer_tick, app);
+
   return (timer_data);
 }
 
@@ -102,7 +103,7 @@ timer_finalize (GApplication * app)
   return;
 }
 
-/* Call back after a specified internal, or slightly later.  */
+/* Arrange to call back after a specified interval, or slightly later.  */
 void
 timer_create_entry (void (*subroutine) (void *, GApplication *),
                     gdouble interval, gpointer user_data, GApplication * app)
@@ -114,7 +115,8 @@ timer_create_entry (void (*subroutine) (void *, GApplication *),
   timer_data = sep_get_timer_data (app);
   if (TRACE_TIMER)
     {
-      g_print ("create timer entry at %p.\n", subroutine);
+      g_print ("create timer entry at %p for %4.1f seconds from now.\n",
+	       subroutine, interval);
     }
   current_time = g_get_monotonic_time () / 1e6;
 

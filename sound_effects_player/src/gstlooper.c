@@ -155,6 +155,8 @@ static void gst_looper_finalize (GObject * object);
 static void gst_looper_set_property (GObject * object, guint prop_id,
                                      const GValue * value,
                                      GParamSpec * pspec);
+/* Compute the remaining running time of the sound.  */
+static gint64 compute_remaining_time (GstLooper * object);
 /* fetch the value of a property */
 static void gst_looper_get_property (GObject * object, guint prop_id,
                                      GValue * value, GParamSpec * pspec);
@@ -799,6 +801,8 @@ gst_looper_push_data_downstream (GstPad * pad)
   if (self->started && buffer_complete && !self->completion_sent)
     {
       GST_DEBUG_OBJECT (self, "pushing a completion event");
+      self->started = FALSE;
+      self->released = FALSE;
       structure = gst_structure_new_empty ((gchar *) "complete");
       event = gst_event_new_custom (GST_EVENT_CUSTOM_DOWNSTREAM, structure);
       result = gst_pad_push_event (self->srcpad, event);
@@ -2275,7 +2279,8 @@ read_wav_file_data (GstLooper * self, guint64 max_position)
     }
 
 
-  /* We failed to read a new chunk header.  Take this to mean end of file.  */
+  /* We failed to read the header of the next chunk, or we have reached
+   * max_duration.  Stop reading the file.  */
   self->local_buffer_fill_level = local_buffer_fill_level;
   GST_DEBUG_OBJECT (self, "Loaded %" G_GUINT64_FORMAT " bytes from file %s.",
                     local_buffer_fill_level, self->file_location);
@@ -2371,7 +2376,7 @@ gst_looper_set_property (GObject * object, guint prop_id,
       GST_OBJECT_LOCK (self);
       g_free (self->file_location);
       self->file_location = g_value_dup_string (value);
-      GST_INFO_OBJECT (self, "file-location set to %s.", self->file_location);
+      GST_INFO_OBJECT (self, "file-location: %s.", self->file_location);
       self->file_location_specified = TRUE;
       GST_OBJECT_UNLOCK (self);
       break;
@@ -2383,6 +2388,54 @@ gst_looper_set_property (GObject * object, guint prop_id,
   g_rec_mutex_unlock (&self->interlock);
 }
 
+/* Compute the remaining run time of the sound, in nanoseconds.  -1 means
+ * infinity.  */
+static gint64
+compute_remaining_time (GstLooper * object)
+{
+  GstLooper *self = GST_LOOPER (object);
+  guint64 time_before_loop, time_inside_loop, time_after_loop;
+  gdouble total_time;
+  gdouble current_time;
+  gdouble current_time_int;
+  guint64 total_time_int;
+
+  /* Compute the total time of the sound assuming no looping.  */
+  total_time = (gdouble) self->local_buffer_size / self->bytes_per_ns;
+  total_time_int = (guint64) total_time;
+
+  if (self->loop_from == 0)
+    {
+      /* If there is no looping, the time is simple to compute.  */
+      return (total_time_int - self->start_time - self->elapsed_time);
+    }
+
+  if ((self->loop_limit == 0) && (!self->released))
+    {
+      /* If we will loop forever, the time is also simple to compute.  */
+      return -1;
+    }
+
+  if (self->released)
+    {
+      /* We are looping, but we have received a release message,
+       * so looping has stopped.  We will run from the current
+       * position to the end of the buffer.  */
+      current_time =
+        (gdouble) self->local_buffer_drain_level / self->bytes_per_ns;
+      current_time_int = (guint64) current_time;
+      return (total_time_int - current_time_int);
+    }
+
+  /* Otherwise, we must compute the time before the loop, the time
+   * after the loop, and the time spent inside the loop.  */
+  time_before_loop = self->loop_to - self->start_time;
+  time_inside_loop = (self->loop_from - self->loop_to) * self->loop_limit;
+  time_after_loop = total_time_int - self->loop_from;
+  return (time_before_loop + time_inside_loop + time_after_loop -
+          self->start_time);
+}
+
 /* Return the value of a property.  */
 static void
 gst_looper_get_property (GObject * object, guint prop_id, GValue * value,
@@ -2391,6 +2444,7 @@ gst_looper_get_property (GObject * object, guint prop_id, GValue * value,
   GstLooper *self = GST_LOOPER (object);
   gchar *string_value;
   gdouble double_value;
+  gint64 remaining_time;
 
   g_rec_mutex_lock (&self->interlock);
   switch (prop_id)
@@ -2455,6 +2509,21 @@ gst_looper_get_property (GObject * object, guint prop_id, GValue * value,
 
     case PROP_REMAINING_TIME:
       GST_OBJECT_LOCK (self);
+      remaining_time = compute_remaining_time (self);
+      if (remaining_time == -1)
+        {
+          /* Remaining time is infinite.  */
+          string_value = g_strdup ("∞");
+        }
+      else
+        {
+          double_value = (gdouble) (remaining_time) / (gdouble) 1e9;
+          string_value = g_strdup_printf ("%4.1f", double_value);
+        }
+
+      g_value_set_string (value, string_value);
+      g_free (string_value);
+      string_value = NULL;
       GST_OBJECT_UNLOCK (self);
       break;
 

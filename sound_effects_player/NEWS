@@ -1,3 +1,20 @@
+Version 0.67, October 26, 2016
+  Add an offered sound to The Perils of Pauline.
+  Make offered sound and looping sounds work.
+  
+Version 0.66, October 23, 2016
+  Display the remaining time for a sound.
+  
+Version 0.65, October 20, 2016
+  Let the sequencer handle the release of a sound.
+  
+Version 0.64, October 12, 2016
+  Update the documentation, and move it to ShowControlDocs.
+  
+Version 0.63, October 12, 2016
+  Make telephone ringing more robust by fixing race conditions between
+  the sequencer and the pipeline.
+  
 Version 0.62, June 1, 2016
   Add a Mute button.
   

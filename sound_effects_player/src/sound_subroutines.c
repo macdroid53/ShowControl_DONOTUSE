@@ -213,10 +213,22 @@ sound_start_playing (struct sound_info *sound_data, GApplication * app)
   if (bin_element == NULL)
     return;
 
+  /* If the sound has already been started, and is not yet releasing, 
+   * don't try to start it again.  A sound is releasing if we have sent
+   * a release message or if it has entered its release stage on its own.  */
+  if (sound_data->running && !sound_data->release_sent
+      && !sound_data->release_has_started)
+    {
+      return;
+    }
+
   /* Send a start message to the bin.  It will be routed to the source, and
    * flow from there downstream through the looper and envelope.  
-   * The looper element will start sending its local buffer,
-   * and the envelope element will start shapeing the volume.  */
+   * The looper element will start sending its local buffer
+   * and the envelope element will start to shape the volume.  */
+  sound_data->running = TRUE;
+  sound_data->release_sent = FALSE;
+  sound_data->release_has_started = FALSE;
   structure = gst_structure_new_empty ((gchar *) "start");
   event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
   gst_element_send_event (GST_ELEMENT (bin_element), event);
@@ -236,10 +248,14 @@ sound_stop_playing (struct sound_info *sound_data, GApplication * app)
 
   /* Send a release message to the bin.  The looper element will stop
    * looping, and the envelope element will start shutting down the sound.
-   * We should get a call to sound_terminated shortly.  */
+   * If the sound has a non-zero release time we should get a call to 
+   * release_started shortly, unless the sound has already completed
+   * and the message is still on its way down the pipeline.  */
   structure = gst_structure_new_empty ((gchar *) "release");
   event = gst_event_new_custom (GST_EVENT_CUSTOM_UPSTREAM, structure);
   gst_element_send_event (GST_ELEMENT (bin_element), event);
+
+  sound_data->release_sent = TRUE;
 
   return;
 }
@@ -261,16 +277,16 @@ sound_get_elapsed_time (struct sound_info * sound_data, GApplication * app)
 gchar *
 sound_get_remaining_time (struct sound_info * sound_data, GApplication * app)
 {
-  GstBin *bin_element;
+  GstElement *looper_element;
   gchar *string_value;
 
-  bin_element = sound_data->sound_control;
-  g_object_get (bin_element, (gchar *) "remaining-time", &string_value, NULL);
+  looper_element = gstreamer_get_looper (sound_data->sound_control);
+  g_object_get (looper_element, (gchar *) "remaining-time", &string_value,
+		NULL);
   return string_value;
 }
 
-/* Receive a completed message, which indicates that a sound has entered
- * its release stage.  */
+/* Receive a completed message, which indicates that a sound has finished.  */
 void
 sound_completed (const gchar * sound_name, GApplication * app)
 {
@@ -296,16 +312,19 @@ sound_completed (const gchar * sound_name, GApplication * app)
   if (!sound_effect_found)
     return;
 
-  /* Let the internal sequencer handle it.  */
-  sequence_sound_completion (sound_effect, app);
+  /* Flag that the sound is no longer playing.  */
+  sound_effect->running = FALSE;
 
+  /* Let the internal sequencer distinguish a sound that has completed
+   * normally from one that has been stopped.  */
+  sequence_sound_completion (sound_effect, sound_effect->release_sent, app);
   return;
 }
 
-/* Receive a terminated message, which indicates that a sound has entered
- * its release stage due to an external event.  */
+/* Receive a release_started message, which indicates that a sound has entered
+ * its release stage.  */
 void
-sound_terminated (const gchar * sound_name, GApplication * app)
+sound_release_started (const gchar * sound_name, GApplication * app)
 {
   GList *sound_effect_list;
   struct sound_info *sound_effect = NULL;
@@ -329,8 +348,11 @@ sound_terminated (const gchar * sound_name, GApplication * app)
   if (!sound_effect_found)
     return;
 
+  /* Remember that the sound is in its release stage.  */
+  sound_effect->release_has_started = TRUE;
+
   /* Let the internal sequencer handle it.  */
-  sequence_sound_termination (sound_effect, app);
+  sequence_sound_release_started (sound_effect, app);
 
   return;
 }
