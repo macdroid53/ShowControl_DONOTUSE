@@ -17,12 +17,30 @@
     <sequence_item>
       <name>wait_a_while</name>
       <type>wait</type>
-      <next>special_sound</next>
+      <next>offer_saw_sound</next>
       <time_to_wait>5000000000</time_to_wait>
       <text_to_display>wait five seconds</text_to_display>
       <next_completion>background_sound</next_completion>
     </sequence_item>
 
+    <sequence_item>
+      <name>offer_saw_sound</name>
+      <type>offer_sound</type>
+      <next_to_start>play_saw</next_to_start>
+      <cluster_number>3</cluster_number>
+      <text_to_display>saw</text_to_display>
+      <next>special_sound</next>
+    </sequence_item>
+
+    <sequence_item>
+      <name>play_saw</name>
+      <type>start_sound</type>
+      <sound_name>fancy_saw</sound_name>
+      <cluster_number>3</cluster_number>
+      <text_to_display>sawing</text_to_display>
+      <importance>3</importance>
+    </sequence_item>
+    
     <sequence_item>
       <name>special_sound</name>
       <type>start_sound</type>

@@ -26,6 +26,23 @@
       <designer_pan>0.00</designer_pan>
     </sound>
 
+    <sound>
+      <name>saw</name>
+      <wav_file_name>saw.wav</wav_file_name>
+      <designer_volume_level>1</designer_volume_level>
+      <designer_pan>0.00</designer_pan>
+    </sound>
+
+    <sound>
+      <name>fancy_saw</name>
+      <wav_file_name>fancy_saw.wav</wav_file_name>
+      <designer_volume_level>1</designer_volume_level>
+      <designer_pan>0.00</designer_pan>
+      <loop_from_time>7.325798</loop_from_time>
+      <loop_to_time>2.554220</loop_to_time>
+      <release_duration_time>∞</release_duration_time>
+    </sound>
+
     <routing></routing>
   </sounds>
 </show_control>

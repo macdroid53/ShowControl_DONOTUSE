@@ -279,7 +279,8 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                 }
               if (xmlStrEqual (name, (const xmlChar *) "loop_from_time"))
                 {
-                  /* If we are looping, the end time of the loop.  */
+                  /* If we are looping, the end time of the loop.  
+		  * 0, the default, means do not loop.  */
                   name_data =
                     xmlNodeListGetString (sounds_file,
                                           sound_loc->xmlChildrenNode, 1);
@@ -296,7 +297,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
                 {
                   /* If we are looping, the start time of the loop.  
                    * Each time through the loop we play from start time
-                   * to end time.  */
+                   * to the end time of the loop.  */
                   name_data =
                     xmlNodeListGetString (sounds_file,
                                           sound_loc->xmlChildrenNode, 1);
@@ -312,7 +313,7 @@ parse_sounds_info (xmlDocPtr sounds_file, gchar * sounds_file_name,
               if (xmlStrEqual (name, (const xmlChar *) "loop_limit"))
                 {
                   /* The number of times to pass through the loop.  Zero
-                   * means do not loop.  */
+                   * means loop until stopped by a Release message.  */
                   name_data =
                     xmlNodeListGetString (sounds_file,
                                           sound_loc->xmlChildrenNode, 1);

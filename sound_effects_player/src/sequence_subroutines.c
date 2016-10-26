@@ -32,15 +32,17 @@
  * internal sequencer.  */
 #define TRACE_SEQUENCER FALSE
 #define TRACE_SEQUENCER_DISPLAY_MESSAGE FALSE
+#define DO_OPERATOR_DISPLAY TRUE
+
 /* the persistent data used by the internal sequencer */
 struct sequence_info
 {
   GList *item_list;             /* The sequence  */
   gchar *next_item_name;        /* The name of the next sequence item
                                  * to be executed.  */
-  GList *offering;              /* The list of Offer Sound items 
-                                 * that are still attached to a cluster  */
   GList *running;               /* The list of Start Sound items
+                                 * that are still attached to a cluster  */
+  GList *offering;              /* The list of Offer Sound items 
                                  * that are still attached to a cluster  */
   struct remember_info *current_operator_wait;  /* The Operator Wait sequence 
                                                  * item that is currently 
@@ -309,6 +311,16 @@ execute_start_sound (struct sequence_item_info *the_item,
                " complete = %s, terminate = %s.\n", the_item->cluster_number,
                the_item->sound_name, the_item->next_starts,
                the_item->next_completion, the_item->next_termination);
+
+      g_print ("item_list = %p, " "next_item_name = %p, " "running = %p, "
+               "offering = %p, " "current_operator_wait = %p, "
+               "operator_waiting = %p, " "waiting = %p, "
+               "message_displaying = %d, " "message_id = %d.\n",
+               sequence_data->item_list, sequence_data->next_item_name,
+               sequence_data->running, sequence_data->offering,
+               sequence_data->current_operator_wait,
+               sequence_data->operator_waiting, sequence_data->waiting,
+               sequence_data->message_displaying, sequence_data->message_id);
     }
 
   cluster_number = the_item->cluster_number;
@@ -550,32 +562,41 @@ void
 execute_offer_sound (struct sequence_item_info *the_item,
                      struct sequence_info *sequence_data, GApplication * app)
 {
-  gint cluster_number;
   struct remember_info *remember_data;
 
   if (TRACE_SEQUENCER)
     {
       g_print ("Offer sound, name = %s, cluster = %d, Q number = %s, "
-               "next = %s.\n", the_item->name, the_item->cluster_number,
-               the_item->Q_number, the_item->next_to_start);
+               "next = %s,\n   next_to_start = %s, offering = %p.\n",
+               the_item->name, the_item->cluster_number, the_item->Q_number,
+               the_item->next, the_item->next_to_start,
+               sequence_data->offering);
     }
 
-  cluster_number = the_item->cluster_number;
-
   /* Set the name of the cluster to the specified text.  */
-  sound_cluster_set_name (the_item->text_to_display, cluster_number, app);
+  sound_cluster_set_name (the_item->text_to_display, the_item->cluster_number,
+                          app);
 
   /* Remember that the sound is being offered.  */
+
   remember_data = g_malloc (sizeof (struct remember_info));
-  remember_data->cluster_number = cluster_number;
+  remember_data->cluster_number = the_item->cluster_number;
   remember_data->sound_effect = NULL;
   remember_data->sequence_item = the_item;
   remember_data->active = TRUE;
   remember_data->release_seen = FALSE;
   remember_data->release_sent = FALSE;
   remember_data->off_cluster = FALSE;
+
   sequence_data->offering =
     g_list_append (sequence_data->offering, remember_data);
+
+  if (TRACE_SEQUENCER)
+    {
+      g_print ("End of Offer sound, offering = %p.\n",
+               sequence_data->offering);
+    }
+
 
   /* Advance to the next sequence item.  */
   sequence_data->next_item_name = the_item->next;
@@ -697,6 +718,10 @@ update_operator_display (struct sequence_info *sequence_data,
   GList *item_list;
   gchar *elapsed_time, *remaining_time;
   gchar *display_text;
+
+  /* For debugging, optionally don't update the operator display.  */
+  if (!DO_OPERATOR_DISPLAY)
+    return;
 
   found_item = FALSE;
   most_importance = 0;
@@ -1042,6 +1067,7 @@ sequence_sound_completion (struct sound_info *sound_effect,
 {
   struct sequence_info *sequence_data;
   struct remember_info *remember_data;
+  struct remember_info *offer_remember_data;
   struct sequence_item_info *start_sound_sequence_item;
   struct sequence_item_info *offer_sound_sequence_item;
   gboolean item_found;
@@ -1051,7 +1077,8 @@ sequence_sound_completion (struct sound_info *sound_effect,
 
   if (TRACE_SEQUENCER)
     {
-      g_print ("completion of sound %s.\n", sound_effect->name);
+      g_print ("completion of sound %s on cluster %d.\n", sound_effect->name,
+               sound_effect->cluster_number);
     }
 
   /* See if there is a Start Sound sequence item outstanding which names
@@ -1098,11 +1125,11 @@ sequence_sound_completion (struct sound_info *sound_effect,
       for (item_list = sequence_data->offering; item_list != NULL;
            item_list = item_list->next)
         {
-          remember_data = item_list->data;
-          if ((remember_data->cluster_number == sound_effect->cluster_number)
-              && (remember_data->active))
+          offer_remember_data = item_list->data;
+          if ((offer_remember_data->cluster_number ==
+               sound_effect->cluster_number) && (offer_remember_data->active))
             {
-              offer_sound_sequence_item = remember_data->sequence_item;
+              offer_sound_sequence_item = offer_remember_data->sequence_item;
               item_found = TRUE;
               break;
             }
@@ -1112,6 +1139,10 @@ sequence_sound_completion (struct sound_info *sound_effect,
  * the text field.  */
       if (item_found)
         {
+          if (TRACE_SEQUENCER)
+            {
+              g_print ("Offer sound found.\n");
+            }
           sound_cluster_set_name (offer_sound_sequence_item->text_to_display,
                                   remember_data->cluster_number, app);
         }
@@ -1163,7 +1194,8 @@ sequence_sound_release_started (struct sound_info *sound_effect,
 
   if (TRACE_SEQUENCER)
     {
-      g_print ("release started on sound %s.\n", sound_effect->name);
+      g_print ("release started for sound %s on cluster %d.\n",
+               sound_effect->name, sound_effect->cluster_number);
     }
   sound_effect->release_has_started = TRUE;
 

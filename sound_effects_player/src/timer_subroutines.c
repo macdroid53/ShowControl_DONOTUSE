@@ -115,7 +115,8 @@ timer_create_entry (void (*subroutine) (void *, GApplication *),
   timer_data = sep_get_timer_data (app);
   if (TRACE_TIMER)
     {
-      g_print ("create timer entry at %p.\n", subroutine);
+      g_print ("create timer entry at %p for %4.1f seconds from now.\n",
+	       subroutine, interval);
     }
   current_time = g_get_monotonic_time () / 1e6;
 
