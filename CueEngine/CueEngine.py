@@ -388,7 +388,7 @@ if __name__ == "__main__":
     ui.disptext()
     ui.setfirstcue()
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ip", default="127.0.0.1", help="The ip of the OSC server")
+    parser.add_argument("--ip", default="192.168.53.155", help="The ip of the OSC server")
     parser.add_argument("--port", type=int, default=5005, help="The port the OSC server is listening on")
     args = parser.parse_args()
 
